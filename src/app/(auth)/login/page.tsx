@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import LoginForm from "@/components/auth/LoginForm";
@@ -15,7 +16,20 @@ export default function LoginPage() {
   return (
     <div className="section-shell flex min-h-screen items-center justify-center py-16">
       {hasSupabasePublicEnv() ? (
-        <LoginForm />
+        <Suspense
+          fallback={
+            <Card className="mx-auto w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Cargando acceso</CardTitle>
+              </CardHeader>
+              <CardContent className="text-sm leading-7 text-zinc-400">
+                Preparando el formulario del backoffice...
+              </CardContent>
+            </Card>
+          }
+        >
+          <LoginForm />
+        </Suspense>
       ) : (
         <Card className="max-w-xl">
           <CardHeader>
