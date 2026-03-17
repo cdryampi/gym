@@ -2,15 +2,22 @@ import { cache } from "react";
 
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
-import { defaultLeads, defaultSiteSettings } from "@/lib/data/default-content";
-import { hasLocalAdminEnv, hasSupabasePublicEnv, hasSupabaseServiceRole } from "@/lib/env";
+import { defaultSiteSettings } from "@/lib/data/default-content";
+import { hasSupabasePublicEnv, hasSupabaseServiceRole } from "@/lib/env";
 import { parseSeoKeywordsInput } from "@/lib/seo";
 import { resolveTopbarVariant, toIsoDateTimeOrNull } from "@/lib/topbar";
 import type { ContactFormValues } from "@/lib/validators/contact";
 import type { SiteSettingsValues } from "@/lib/validators/settings";
 import { trimToNull } from "@/lib/utils";
+import {
+  mapStoreCategory,
+  normalizeStoreCategoryPayload,
+  normalizeStoreProductPayload,
+  type StoreCategory,
+} from "@/lib/data/store";
+import type { StoreCategoryValues, StoreProductValues } from "@/lib/validators/store";
 
-import type { Database, Lead, LeadStatus, SiteSettings } from "./database.types";
+import type { Database, DBProduct, Lead, LeadStatus, SiteSettings } from "./database.types";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "./server";
 
 type GymSupabaseClient = SupabaseClient<Database>;
@@ -204,44 +211,54 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   if (!hasSupabasePublicEnv()) {
     return {
       settings: defaultSiteSettings,
-      leads: defaultLeads,
+      leads: [],
       isFallback: true,
       warning: "Supabase no esta configurado. El dashboard usa contenido fallback.",
     };
   }
 
   const publicSupabase = await createSupabaseServerClient();
-  const adminSupabase = hasSupabaseServiceRole() ? createSupabaseAdminClient() : null;
 
-  const [
-    { data: settings, error: settingsError },
-    { data: leads, error: leadsError },
-  ] = await Promise.all([
-    publicSupabase.from("site_settings").select("*").eq("id", SETTINGS_ID).maybeSingle(),
-    (adminSupabase ?? publicSupabase)
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false }),
-  ]);
+  const { data: settings, error: settingsError } = await publicSupabase
+    .from("site_settings")
+    .select("*")
+    .eq("id", SETTINGS_ID)
+    .maybeSingle();
 
   const warnings: string[] = [];
-  const useDemoLeads = hasLocalAdminEnv() && !hasSupabaseServiceRole();
 
   if (settingsError) {
     warnings.push("No se pudieron cargar los ajustes reales del sitio. Se muestran valores fallback.");
   }
 
-  if (useDemoLeads) {
+  if (!hasSupabaseServiceRole()) {
     warnings.push(
-      "Se muestran leads demo para pruebas locales. Anade SUPABASE_SERVICE_ROLE_KEY para leer los leads reales del dashboard.",
+      "Configura SUPABASE_SERVICE_ROLE_KEY para leer contactos reales y operar el dashboard interno.",
     );
-  } else if (leadsError) {
+  }
+
+  if (!hasSupabaseServiceRole()) {
+    return {
+      settings: settingsError ? defaultSiteSettings : normalizeSiteSettings(settings),
+      leads: [],
+      isFallback: true,
+      warning: warnings.join(" "),
+    };
+  }
+
+  const adminSupabase = createSupabaseAdminClient();
+  const { data: leads, error: leadsError } = await adminSupabase
+    .from("leads")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (leadsError) {
     warnings.push("No se pudieron cargar los leads reales del dashboard.");
   }
 
   return {
     settings: settingsError ? defaultSiteSettings : normalizeSiteSettings(settings),
-    leads: useDemoLeads ? defaultLeads : leadsError ? [] : normalizeLeads(leads),
+    leads: leadsError ? [] : normalizeLeads(leads),
     isFallback: warnings.length > 0,
     warning: warnings.length > 0 ? warnings.join(" ") : null,
   };
@@ -286,5 +303,337 @@ export async function updateLeadStatusRecord(
 
   if (!data) {
     throw new Error("El lead que intentas actualizar ya no existe.");
+  }
+}
+
+/**
+ * SHOP / PRODUCTS QUERIES
+ */
+
+export const getStoreProducts = async (
+  supabase: GymSupabaseClient,
+  options?: { includeInactive?: boolean },
+): Promise<DBProduct[]> => {
+  let query = supabase.from("products").select("*").order("order", { ascending: true });
+
+  if (!options?.includeInactive) {
+    query = query.eq("active", true);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching products:", error);
+    return [];
+  }
+
+  return data ?? [];
+};
+
+export const getStoreProductBySlug = async (
+  supabase: GymSupabaseClient,
+  slug: string,
+): Promise<DBProduct | null> => {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("slug", slug)
+    .eq("active", true)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error fetching product ${slug}:`, error);
+    return null;
+  }
+
+  return data;
+};
+
+export async function getStoreCategories(
+  supabase: GymSupabaseClient,
+  options?: { includeInactive?: boolean },
+) {
+  let query = supabase.from("store_categories").select("*").order("order", { ascending: true });
+
+  if (!options?.includeInactive) {
+    query = query.eq("active", true);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("Error fetching store categories:", error);
+    return [];
+  }
+
+  return (data ?? []).map(mapStoreCategory);
+}
+
+export async function getStoreCategoryById(
+  supabase: GymSupabaseClient,
+  id: string,
+): Promise<StoreCategory | null> {
+  const { data, error } = await supabase
+    .from("store_categories")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    console.error(`Error fetching store category ${id}:`, error);
+    return null;
+  }
+
+  return data ? mapStoreCategory(data) : null;
+}
+
+async function assertUniqueCategorySlug(
+  supabase: GymSupabaseClient,
+  slug: string,
+  currentId?: string,
+) {
+  const { data, error } = await supabase
+    .from("store_categories")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("No se pudo validar el slug de la categoria.");
+  }
+
+  if (data && data.id !== currentId) {
+    throw new Error("Ya existe una categoria con ese slug.");
+  }
+}
+
+async function assertUniqueProductSlug(
+  supabase: GymSupabaseClient,
+  slug: string,
+  currentId?: string,
+) {
+  const { data, error } = await supabase
+    .from("products")
+    .select("id")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("No se pudo validar el slug del producto.");
+  }
+
+  if (data && data.id !== currentId) {
+    throw new Error("Ya existe un producto con ese slug.");
+  }
+}
+
+async function assertCategoryHierarchy(
+  supabase: GymSupabaseClient,
+  parentId: string | null,
+  currentId?: string,
+) {
+  if (!parentId) {
+    return;
+  }
+
+  if (currentId && parentId === currentId) {
+    throw new Error("Una categoria no puede ser su propia categoria padre.");
+  }
+
+  const parent = await getStoreCategoryById(supabase, parentId);
+
+  if (!parent) {
+    throw new Error("La categoria padre seleccionada no existe.");
+  }
+
+  if (parent.parent_id) {
+    throw new Error("Solo se permite un nivel de subcategoria en esta fase.");
+  }
+}
+
+async function resolveRootCategoryEnum(
+  supabase: GymSupabaseClient,
+  categoryId: string,
+): Promise<Database["public"]["Enums"]["product_category"]> {
+  const categories = await getStoreCategories(supabase, { includeInactive: true });
+  const byId = new Map(categories.map((category) => [category.id, category]));
+  let current = byId.get(categoryId);
+
+  while (current?.parent_id) {
+    current = byId.get(current.parent_id);
+  }
+
+  const rootSlug = current?.slug?.toLowerCase();
+
+  if (rootSlug === "suplementos" || rootSlug === "accesorios" || rootSlug === "merchandising") {
+    return rootSlug;
+  }
+
+  // Fallback safe vertical for storefront compatibility if we can't map it perfectly
+  return "suplementos";
+}
+
+export async function saveStoreCategoryRecord(
+  supabase: GymSupabaseClient,
+  values: StoreCategoryValues,
+  categoryId?: string,
+) {
+  const payload = normalizeStoreCategoryPayload(values);
+  await assertUniqueCategorySlug(supabase, payload.slug, categoryId);
+  await assertCategoryHierarchy(supabase, payload.parent_id, categoryId);
+
+  if (categoryId) {
+    const { error } = await supabase
+      .from("store_categories")
+      .update(payload)
+      .eq("id", categoryId);
+
+    if (error) {
+      throw new Error(mapSupabaseError(error, "la categoria"));
+    }
+
+    return categoryId;
+  }
+
+  const { data, error } = await supabase
+    .from("store_categories")
+    .insert(payload)
+    .select("id")
+    .single();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "la categoria"));
+  }
+
+  return data.id;
+}
+
+export async function deactivateStoreCategoryRecord(supabase: GymSupabaseClient, categoryId: string) {
+  const { error } = await supabase
+    .from("store_categories")
+    .update({ active: false })
+    .eq("id", categoryId);
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "la categoria"));
+  }
+}
+
+export async function saveStoreProductRecord(
+  supabase: GymSupabaseClient,
+  values: StoreProductValues,
+  productId?: string,
+) {
+  const payload = normalizeStoreProductPayload(values);
+  await assertUniqueProductSlug(supabase, payload.slug, productId);
+  const rootCategory = await resolveRootCategoryEnum(supabase, payload.category_id);
+
+  const dbPayload: Database["public"]["Tables"]["products"]["Insert"] = {
+    name: payload.name,
+    slug: payload.slug,
+    category_id: payload.category_id,
+    category: rootCategory,
+    eyebrow: payload.eyebrow,
+    short_description: payload.short_description,
+    description: payload.description,
+    price: payload.price,
+    compare_price: payload.compare_price,
+    discount_label: payload.discount_label,
+    currency: payload.currency,
+    stock_status: payload.stock_status,
+    featured: payload.featured,
+    pickup_only: payload.pickup_only,
+    pickup_note: payload.pickup_note,
+    pickup_summary: payload.pickup_summary,
+    pickup_eta: payload.pickup_eta,
+    tags: payload.tags,
+    highlights: payload.highlights,
+    benefits: payload.benefits,
+    usage_steps: payload.usage_steps,
+    images: payload.images,
+    specifications: payload.specifications,
+    cta_label: payload.cta_label,
+    order: payload.order,
+    active: payload.active,
+  };
+
+  if (productId) {
+    const { error } = await supabase
+      .from("products")
+      .update(dbPayload)
+      .eq("id", productId);
+
+    if (error) {
+      throw new Error(mapSupabaseError(error, "el producto"));
+    }
+
+    return productId;
+  }
+
+  const { data, error } = await supabase
+    .from("products")
+    .insert(dbPayload)
+    .select("id")
+    .single();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "el producto"));
+  }
+
+  return data.id;
+}
+
+export async function deactivateStoreProductRecord(supabase: GymSupabaseClient, productId: string) {
+  const { error } = await supabase
+    .from("products")
+    .update({ active: false })
+    .eq("id", productId);
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "el producto"));
+  }
+}
+
+export async function deleteStoreProductRecord(supabase: GymSupabaseClient, productId: string) {
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", productId);
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "el producto"));
+  }
+}
+
+export async function deleteStoreCategoryRecord(supabase: GymSupabaseClient, categoryId: string) {
+  // Check if has subcategories
+  const { count: childrenCount, error: childrenError } = await supabase
+    .from("store_categories")
+    .select("id", { count: "exact", head: true })
+    .eq("parent_id", categoryId);
+
+  if (childrenError) throw new Error(mapSupabaseError(childrenError, "la categoria"));
+  if (childrenCount && childrenCount > 0) {
+    throw new Error("No se puede eliminar una categoria que tiene subcategorias.");
+  }
+
+  // Check if has products
+  const { count: productsCount, error: productsError } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("category_id", categoryId);
+
+  if (productsError) throw new Error(mapSupabaseError(productsError, "la categoria"));
+  if (productsCount && productsCount > 0) {
+    throw new Error("No se puede eliminar una categoria que tiene productos asociados.");
+  }
+
+  const { error } = await supabase
+    .from("store_categories")
+    .delete()
+    .eq("id", categoryId);
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "la categoria"));
   }
 }

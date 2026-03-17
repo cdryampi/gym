@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Confirma tu cuenta | Nova Forza</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f0e8;
+      color: #111111;
+      font-family: Inter, Arial, Helvetica, sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      cellpadding="0"
+      cellspacing="0"
+      width="100%"
+      style="background-color: #f4f0e8; padding: 32px 16px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            width="100%"
+            style="
+              max-width: 640px;
+              background-color: #ffffff;
+              border: 1px solid rgba(17, 17, 17, 0.08);
+              border-radius: 28px;
+              overflow: hidden;
+            "
+          >
+            <tr>
+              <td
+                style="
+                  padding: 32px 36px 20px;
+                  background: linear-gradient(135deg, #fff5f5 0%, #ffffff 60%);
+                  border-bottom: 1px solid rgba(17, 17, 17, 0.06);
+                "
+              >
+                <p
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 11px;
+                    line-height: 1;
+                    letter-spacing: 0.28em;
+                    text-transform: uppercase;
+                    font-weight: 700;
+                    color: #d71920;
+                  "
+                >
+                  Nova Forza
+                </p>
+                <h1
+                  style="
+                    margin: 0;
+                    font-size: 32px;
+                    line-height: 1.15;
+                    font-weight: 700;
+                    color: #111111;
+                  "
+                >
+                  Confirma tu cuenta
+                </h1>
+                <p
+                  style="
+                    margin: 14px 0 0;
+                    font-size: 16px;
+                    line-height: 1.7;
+                    color: #5f6368;
+                  "
+                >
+                  Ya casi está listo tu acceso privado al gimnasio. Solo falta confirmar tu correo
+                  para activar la cuenta.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding: 28px 36px 20px">
+                <p
+                  style="
+                    margin: 0 0 16px;
+                    font-size: 16px;
+                    line-height: 1.8;
+                    color: #111111;
+                  "
+                >
+                  Hola{{ if .Email }}, <strong>{{ .Email }}</strong>{{ end }}:
+                </p>
+
+                <p
+                  style="
+                    margin: 0 0 24px;
+                    font-size: 15px;
+                    line-height: 1.8;
+                    color: #5f6368;
+                  "
+                >
+                  Pulsa el botón para confirmar tu correo y terminar el registro. Cuando lo hagas,
+                  podrás entrar con tu cuenta y acceder a tu espacio privado.
+                </p>
+
+                <table role="presentation" cellpadding="0" cellspacing="0" style="margin: 0 0 24px">
+                  <tr>
+                    <td align="center" bgcolor="#d71920" style="border-radius: 999px">
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        style="
+                          display: inline-block;
+                          padding: 15px 28px;
+                          font-size: 14px;
+                          font-weight: 700;
+                          letter-spacing: 0.08em;
+                          text-transform: uppercase;
+                          color: #ffffff;
+                          text-decoration: none;
+                        "
+                      >
+                        Confirmar cuenta
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <div
+                  style="
+                    margin: 0 0 24px;
+                    padding: 18px 20px;
+                    border-radius: 20px;
+                    background-color: #fbfbf8;
+                    border: 1px solid rgba(17, 17, 17, 0.06);
+                  "
+                >
+                  <p
+                    style="
+                      margin: 0 0 8px;
+                      font-size: 12px;
+                      line-height: 1.4;
+                      letter-spacing: 0.16em;
+                      text-transform: uppercase;
+                      font-weight: 700;
+                      color: #7a7f87;
+                    "
+                  >
+                    Importante
+                  </p>
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 14px;
+                      line-height: 1.7;
+                      color: #5f6368;
+                    "
+                  >
+                    Si no has solicitado esta cuenta, puedes ignorar este correo y no se activará
+                    ningún acceso.
+                  </p>
+                </div>
+
+                <p
+                  style="
+                    margin: 0 0 12px;
+                    font-size: 14px;
+                    line-height: 1.7;
+                    color: #5f6368;
+                  "
+                >
+                  Si el botón no funciona, copia y pega este enlace en tu navegador:
+                </p>
+                <p style="margin: 0 0 12px; word-break: break-word">
+                  <a
+                    href="{{ .ConfirmationURL }}"
+                    style="font-size: 14px; line-height: 1.7; color: #d71920; text-decoration: underline"
+                  >
+                    {{ .ConfirmationURL }}
+                  </a>
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td
+                style="
+                  padding: 22px 36px 32px;
+                  border-top: 1px solid rgba(17, 17, 17, 0.06);
+                "
+              >
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 13px;
+                    line-height: 1.7;
+                    color: #7a7f87;
+                  "
+                >
+                  Nova Forza
+                  <br />
+                  Fuerza, disciplina y progreso real.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

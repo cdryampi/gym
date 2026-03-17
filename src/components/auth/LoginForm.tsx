@@ -28,9 +28,13 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginForm() {
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const [error, setError] = useState<string | null>(
+    searchParams.get("error") === "admin-only"
+      ? "Esta cuenta no tiene acceso al backoffice."
+      : null,
+  );
+  const router = useRouter();
   const next = searchParams.get("next") || "/dashboard";
 
   const form = useForm<LoginValues>({
@@ -85,7 +89,7 @@ export default function LoginForm() {
       <CardHeader>
         <CardTitle>Acceso al backoffice</CardTitle>
         <CardDescription>
-          Usa Supabase Auth con email o, en local, las credenciales de admin definidas en entorno.
+          Usa un email admin autorizado en Supabase Auth o, en local, las credenciales de entorno.
         </CardDescription>
       </CardHeader>
       <CardContent>

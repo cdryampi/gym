@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import type { SiteSettings } from "@/lib/supabase/database.types";
 import { formatTopbarDeadline, resolveActiveTopbar } from "@/lib/topbar";
+import { cn } from "@/lib/utils";
 
 const topbarStyles = {
   promotion: "bg-[#d71920] text-white",
@@ -33,25 +34,32 @@ export default function SiteTopbar({ settings }: { settings: SiteSettings }) {
   const badgePalette = badgeStyles[topbar.variant];
 
   return (
-    <div className={palette}>
-      <div className="section-shell flex flex-col gap-3 py-3 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <span className={`inline-flex w-fit items-center px-3 py-1 text-[10px] font-bold uppercase tracking-[0.24em] ${badgePalette}`}>
+    <div className={cn(palette, "relative z-[60]")}>
+      <div className="section-shell flex items-center justify-between py-2 sm:py-3">
+        {/* Left: Badge + Text */}
+        <div className="flex items-center gap-3 overflow-hidden">
+          <span className={cn(
+            "hidden shrink-0 items-center px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.2em] xs:inline-flex",
+            badgePalette
+          )}>
             {variantLabels[topbar.variant]}
           </span>
-          <p className="text-sm font-medium leading-6">{topbar.text}</p>
+          <p className="truncate text-[11px] font-medium leading-tight sm:text-sm">
+            {topbar.text}
+          </p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        {/* Right: Deadline + CTA */}
+        <div className="flex shrink-0 items-center gap-4">
           {deadline ? (
-            <span className="text-[11px] font-bold uppercase tracking-[0.22em] opacity-80">
+            <span className="hidden text-[10px] font-bold uppercase tracking-[0.15em] opacity-70 md:block">
               Hasta {deadline}
             </span>
           ) : null}
           {topbar.ctaLabel && topbar.ctaUrl ? (
             <Link
               href={topbar.ctaUrl}
-              className="inline-flex w-fit items-center justify-center border border-current/20 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.22em] transition hover:border-current/50 hover:bg-black/10"
+              className="inline-flex items-center justify-center border border-current/20 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] transition hover:border-current/50 hover:bg-black/10 sm:px-4 sm:py-2 sm:text-[10px]"
             >
               {topbar.ctaLabel}
             </Link>

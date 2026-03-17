@@ -9,7 +9,9 @@ export default defineConfig({
     },
   },
   test: {
+    exclude: ["apps/medusa/**", "node_modules/**"],
     environment: "node",
     globals: true,
+    setupFiles: "./vitest.setup.ts",
   },
 });

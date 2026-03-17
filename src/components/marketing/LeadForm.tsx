@@ -1,169 +1,160 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2, Send } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { contactFormSchema, type ContactFormValues } from "@/lib/validators/contact";
 
-const initialValues: ContactFormValues = {
-  name: "",
-  email: "",
-  phone: "",
-  message: "",
-};
-
-type SubmitState =
-  | { type: "idle" }
-  | { type: "success"; message: string }
-  | { type: "error"; message: string };
-
 export default function LeadForm() {
-  const [submitState, setSubmitState] = useState<SubmitState>({ type: "idle" });
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const form = useForm<ContactFormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactFormValues>({
     resolver: zodResolver(contactFormSchema),
-    defaultValues: initialValues,
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      message: "",
+    },
   });
 
-  async function onSubmit(values: ContactFormValues) {
-    setSubmitState({ type: "idle" });
+  async function onSubmit(data: ContactFormValues) {
+    setStatus("loading");
+    setErrorMessage(null);
 
     try {
-      const response = await fetch("/api/contact", {
+      const response = await fetch("/api/leads", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
       });
 
-      const data = (await response.json()) as { error?: string; message?: string; success?: boolean };
-
-      if (!response.ok || !data.success) {
-        setSubmitState({
-          type: "error",
-          message: data.error ?? "No se pudo enviar el formulario.",
-        });
-        return;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Algo salió mal al enviar el mensaje.");
       }
 
-      form.reset(initialValues);
-      setSubmitState({
-        type: "success",
-        message: data.message ?? "Hemos recibido tu mensaje.",
-      });
-    } catch {
-      setSubmitState({
-        type: "error",
-        message: "No se pudo enviar el formulario.",
-      });
+      setStatus("success");
+      reset();
+    } catch (err) {
+      setStatus("error");
+      setErrorMessage(err instanceof Error ? err.message : "Error inesperado.");
     }
   }
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5" noValidate>
-        <div className="space-y-2">
-          <p className="font-display text-3xl uppercase text-[#111111]">Solicita informacion</p>
-          <p className="text-sm leading-7 text-[#4b5563]">
-            Cuentanos que buscas y te ayudamos a encontrar el plan o la prueba que mejor encaja contigo.
-          </p>
+  if (status === "success") {
+    return (
+      <div className="bg-white p-12 text-center shadow-2xl">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-none bg-green-100 text-green-600">
+          <Send className="h-8 w-8" />
         </div>
-
-        <div className="grid gap-5 md:grid-cols-2">
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nombre</FormLabel>
-                <FormControl>
-                  <Input placeholder="Tu nombre completo" autoComplete="name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="tu@email.com" type="email" autoComplete="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
-
-        <FormField
-          control={form.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telefono</FormLabel>
-              <FormControl>
-                <Input placeholder="+51 987 654 321" autoComplete="tel" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="message"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Mensaje</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Cuentanos si buscas una prueba, informacion sobre planes, horarios o una visita guiada."
-                  rows={6}
-                  maxLength={2000}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        {submitState.type === "error" ? (
-          <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {submitState.message}
-          </div>
-        ) : null}
-
-        {submitState.type === "success" ? (
-          <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            {submitState.message}
-          </div>
-        ) : null}
-
-        <Button type="submit" size="lg" className="w-full" disabled={form.formState.isSubmitting}>
-          {form.formState.isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          {form.formState.isSubmitting ? "Enviando..." : "Reservar prueba o pedir informacion"}
+        <h3 className="mt-6 font-display text-2xl font-bold uppercase tracking-tight text-foreground">
+          ¡Mensaje Enviado!
+        </h3>
+        <p className="mt-4 text-muted">
+          Gracias por tu interés. Un asesor se pondrá en contacto contigo a la brevedad.
+        </p>
+        <Button
+          variant="outline"
+          className="mt-8 border-accent text-accent hover:bg-accent hover:text-white"
+          onClick={() => setStatus("idle")}
+        >
+          Enviar otro mensaje
         </Button>
-      </form>
-    </Form>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-6 bg-white p-10 shadow-2xl sm:p-12"
+    >
+      <div className="space-y-2">
+        <label htmlFor="name" className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/50">
+          Nombre completo
+        </label>
+        <Input
+          id="name"
+          placeholder="Ej: Juan Pérez"
+          className="bg-[#f8f8f6] border-none h-14"
+          {...register("name")}
+        />
+        {errors.name && <p className="text-xs font-medium text-accent">{errors.name.message}</p>}
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/50">
+            Email
+          </label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="juan@email.com"
+            className="bg-[#f8f8f6] border-none h-14"
+            {...register("email")}
+          />
+          {errors.email && <p className="text-xs font-medium text-accent">{errors.email.message}</p>}
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/50">
+            Teléfono (Opcional)
+          </label>
+          <Input
+            id="phone"
+            placeholder="+54 9..."
+            className="bg-[#f8f8f6] border-none h-14"
+            {...register("phone")}
+          />
+          {errors.phone && <p className="text-xs font-medium text-accent">{errors.phone.message}</p>}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="message" className="text-[10px] font-bold uppercase tracking-[0.2em] text-foreground/50">
+          Mensaje
+        </label>
+        <Textarea
+          id="message"
+          placeholder="Cuéntanos tus objetivos..."
+          className="bg-[#f8f8f6] border-none min-h-[120px] resize-none"
+          {...register("message")}
+        />
+        {errors.message && <p className="text-xs font-medium text-accent">{errors.message.message}</p>}
+      </div>
+
+      {status === "error" && (
+        <p className="bg-accent/10 p-4 text-sm font-medium text-accent">
+          {errorMessage}
+        </p>
+      )}
+
+      <Button
+        type="submit"
+        disabled={status === "loading"}
+        className="btn-athletic btn-primary h-16 w-full text-base"
+      >
+        {status === "loading" ? (
+          <>
+            <Loader2 className="mr-3 h-5 w-5 animate-spin" />
+            Enviando...
+          </>
+        ) : (
+          "Enviar solicitud de prueba"
+        )}
+      </Button>
+    </form>
   );
 }

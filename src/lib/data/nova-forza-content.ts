@@ -52,12 +52,12 @@ export interface Testimonial {
 
 export const novaForzaHomeContent = {
   navItems: [
-    { href: "#inicio", label: "Inicio" },
-    { href: "#planes", label: "Planes" },
-    { href: "#horarios", label: "Horarios" },
-    { href: "#entrenadores", label: "Entrenadores" },
-    { href: "#tienda", label: "Tienda" },
-    { href: "#contacto", label: "Contacto" },
+    { href: "/#inicio", label: "Inicio" },
+    { href: "/#planes", label: "Planes" },
+    { href: "/#horarios", label: "Horarios" },
+    { href: "/#entrenadores", label: "Entrenadores" },
+    { href: "/tienda", label: "Tienda" },
+    { href: "/#contacto", label: "Contacto" },
   ] satisfies NavItem[],
   valueProps: [
     {

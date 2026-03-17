@@ -9,8 +9,11 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    "apps/medusa/**",
     "out/**",
     "build/**",
+    "output/**",
+    "kill_pg.js",
     "next-env.d.ts",
   ]),
 ]);

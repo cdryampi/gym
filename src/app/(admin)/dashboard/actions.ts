@@ -2,31 +2,23 @@
 
 import { revalidatePath } from "next/cache";
 
-import { getCurrentUser, isLocalAdminSession } from "@/lib/auth";
+import { requireAdminUser } from "@/lib/auth";
 import { hasSupabaseServiceRole } from "@/lib/env";
-import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { saveSiteSettingsRecord, updateLeadStatusRecord } from "@/lib/supabase/queries";
 import { leadStatusSchema } from "@/lib/validators/lead";
 import { siteSettingsSchema, type SiteSettingsValues } from "@/lib/validators/settings";
 
 async function getAuthenticatedSupabase() {
-  const user = await getCurrentUser();
+  await requireAdminUser();
 
-  if (!user) {
-    throw new Error("Unauthorized");
+  if (!hasSupabaseServiceRole()) {
+    throw new Error(
+      "Configura SUPABASE_SERVICE_ROLE_KEY para gestionar datos reales del backoffice.",
+    );
   }
 
-  if (await isLocalAdminSession()) {
-    if (!hasSupabaseServiceRole()) {
-      throw new Error(
-        "La sesion local necesita SUPABASE_SERVICE_ROLE_KEY para editar datos reales del backoffice.",
-      );
-    }
-
-    return createSupabaseAdminClient();
-  }
-
-  return createSupabaseServerClient();
+  return createSupabaseAdminClient();
 }
 
 function revalidateApp() {

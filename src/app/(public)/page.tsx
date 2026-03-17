@@ -12,6 +12,7 @@ import TeamSection from "@/components/marketing/TeamSection";
 import TestimonialsSection from "@/components/marketing/TestimonialsSection";
 import TrainingZonesSection from "@/components/marketing/TrainingZonesSection";
 import ValueSection from "@/components/marketing/ValueSection";
+import { getCurrentMemberUser } from "@/lib/auth";
 import { getMarketingData } from "@/lib/data/site";
 import { buildMarketingMetadata } from "@/lib/seo";
 
@@ -24,12 +25,13 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PublicHomePage() {
   const { settings, warning } = await getMarketingData();
+  const currentUser = await getCurrentMemberUser();
 
   return (
     <div className="min-h-screen bg-[#151518]">
       <div className="sticky top-0 z-50">
         <SiteTopbar settings={settings} />
-        <SiteHeader settings={settings} />
+        <SiteHeader settings={settings} currentUser={currentUser} />
       </div>
       <main>
         <HeroSection settings={settings} />

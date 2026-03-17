@@ -1,11 +1,30 @@
+import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { ADMIN_LOGIN_PATH } from "@/lib/admin";
-import { getLocalAdminEnv, hasLocalAdminEnv, hasSupabasePublicEnv } from "@/lib/env";
+import { isAllowedAdminEmail as isAllowedAdminEmailInList } from "@/lib/admin-access";
+import {
+  getAdminAllowedEmails,
+  getLocalAdminEnv,
+  hasLocalAdminEnv,
+  hasSupabasePublicEnv,
+  hasSupabaseServiceRole,
+} from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const LOCAL_ADMIN_COOKIE = "gym_admin_session";
+export const MEMBER_LOGIN_PATH = "/acceso";
+
+export interface LocalAdminUser {
+  email: string;
+  id: string;
+  isLocalAdmin: true;
+}
+
+export function isAllowedAdminEmail(email: string | null | undefined) {
+  return isAllowedAdminEmailInList(email, getAdminAllowedEmails());
+}
 
 export async function isLocalAdminSession() {
   if (!hasLocalAdminEnv()) {
@@ -19,16 +38,28 @@ export async function isLocalAdminSession() {
   return Boolean(adminEnv && localSession === adminEnv.user);
 }
 
-export async function getCurrentUser() {
-  if (hasSupabasePublicEnv()) {
-    const supabase = await createSupabaseServerClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+export async function getSupabaseUser() {
+  if (!hasSupabasePublicEnv()) {
+    return null;
+  }
 
-    if (user) {
-      return user;
-    }
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user;
+}
+
+export async function getCurrentMemberUser() {
+  return getSupabaseUser();
+}
+
+export async function getCurrentAdminUser(): Promise<User | LocalAdminUser | null> {
+  const supabaseUser = await getSupabaseUser();
+
+  if (supabaseUser?.email && isAllowedAdminEmail(supabaseUser.email)) {
+    return supabaseUser;
   }
 
   if (await isLocalAdminSession()) {
@@ -37,6 +68,7 @@ export async function getCurrentUser() {
       return {
         email: `${adminEnv.user} (local)`,
         id: `local-admin:${adminEnv.user}`,
+        isLocalAdmin: true,
       };
     }
   }
@@ -44,8 +76,18 @@ export async function getCurrentUser() {
   return null;
 }
 
-export async function requireUser(redirectTo = ADMIN_LOGIN_PATH) {
-  const user = await getCurrentUser();
+export async function requireMemberUser(redirectTo = MEMBER_LOGIN_PATH) {
+  const user = await getCurrentMemberUser();
+
+  if (!user) {
+    redirect(redirectTo);
+  }
+
+  return user;
+}
+
+export async function requireAdminUser(redirectTo = `${ADMIN_LOGIN_PATH}?error=admin-only`) {
+  const user = await getCurrentAdminUser();
 
   if (!user) {
     redirect(redirectTo);
@@ -56,10 +98,11 @@ export async function requireUser(redirectTo = ADMIN_LOGIN_PATH) {
 
 export async function getDashboardCapabilities() {
   const localAdminSession = await isLocalAdminSession();
-  const canManageRealData = !localAdminSession || Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const canManageRealData = hasSupabaseServiceRole();
 
   return {
     canManageRealData,
     isLocalReadOnly: localAdminSession && !canManageRealData,
+    isReadOnly: !canManageRealData,
   };
 }

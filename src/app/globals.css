@@ -91,7 +91,7 @@ body {
 }
 
 .section-title {
-  @apply font-display text-5xl uppercase leading-[1.05] tracking-tight text-foreground sm:text-6xl md:text-8xl italic;
+  @apply font-display text-5xl uppercase leading-[1.05] tracking-[0.02em] text-foreground sm:text-6xl md:text-8xl italic;
   font-weight: 800;
 }
 

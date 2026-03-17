@@ -32,18 +32,71 @@ export interface Trainer {
   active: boolean;
 }
 
+export const productCategories = ["suplementos", "accesorios", "merchandising"] as const;
+export type ProductCategory = (typeof productCategories)[number];
+
+export const productStockStatuses = [
+  "in_stock",
+  "low_stock",
+  "out_of_stock",
+  "coming_soon",
+] as const;
+export type ProductStockStatus = (typeof productStockStatuses)[number];
+
+export interface ProductOption {
+  id: string;
+  title: string;
+  values: string[];
+}
+
+export interface ProductVariantOptionValue {
+  option_id?: string;
+  option_title?: string;
+  value: string;
+}
+
+export interface ProductVariantPreview {
+  id: string;
+  title: string;
+  sku?: string;
+  inventory_quantity?: number | null;
+  price?: number | null;
+  currency?: string | null;
+  options: ProductVariantOptionValue[];
+}
+
+export interface ProductSpecification {
+  label: string;
+  value: string;
+}
+
 export interface Product {
   id: string;
   slug: string;
   name: string;
-  category: 'suplementos' | 'accesorios' | 'merchandising';
+  eyebrow?: string;
+  category: ProductCategory;
   short_description: string;
+  description: string;
   price: number;
+  compare_price?: number | null;
+  discount_label?: string;
   currency: string;
-  stock_status: 'in_stock' | 'out_of_stock' | 'low_stock';
+  stock_status: ProductStockStatus;
   pickup_only: boolean;
+  pickup_note?: string;
+  pickup_summary?: string;
+  pickup_eta?: string;
   featured: boolean;
-  image: string;
+  images: string[];
+  tags: string[];
+  highlights: string[];
+  benefits?: string[];
+  usage_steps?: string[];
+  specifications?: ProductSpecification[];
+  options?: ProductOption[];
+  variants?: ProductVariantPreview[];
+  cta_label: string;
   order: number;
   active: boolean;
 }

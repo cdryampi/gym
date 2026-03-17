@@ -4,15 +4,7 @@ import { NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export function middleware(request: NextRequest) {
-  if (
-    request.nextUrl.pathname.startsWith("/dashboard") ||
-    request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/api")
-  ) {
-    return updateSession(request);
-  }
-
-  return NextResponse.next({ request });
+  return updateSession(request, NextResponse.next({ request }));
 }
 
 export const config = {

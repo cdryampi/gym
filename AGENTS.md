@@ -133,6 +133,21 @@ Si cambias esquema o queries, revisa tambien:
 - `supabase/migrations/`
 - `supabase/seed.sql`
 
+## Medusa E-commerce
+
+Para manejar la capa de tienda de manera aislada, utilizamos **Medusa v2**.
+
+- **Ubicación**: El servidor backend vive en `apps/medusa` y provee la API en el puerto `9000`.
+- **Conexión a Supabase**: Medusa comparte la base de datos de Supabase. **IMPORTANTE**: Medusa requiere usar el puerto directo `5432` en el `DATABASE_URL` (no uses el puerto del pooler `6543` transaccional).
+- **Ejecución Local**: Arranca el servidor con `npm run dev:medusa` desde la raíz.
+- **Seeding de Productos**: Ingresa a `apps/medusa` y ejecuta `npm run seed:nova` para generar el perfil de envío, la región de venta y los productos iniciales de manera idempotente. 
+- **Integración Front-end**: En `.env.local` de Next.js debes configurar:
+  - `COMMERCE_PROVIDER=medusa`
+  - `MEDUSA_BACKEND_URL=http://localhost:9000`
+  - `MEDUSA_PUBLISHABLE_KEY=pk_...` (Extraída tras ejecutar el seed)
+  - `MEDUSA_REGION_ID=reg_...`
+- **Reglas del Cliente**: La lógica de fetching `src/lib/commerce/medusa.ts` no debe enviar parámetros deprecados como `currency_code` o `country_code` (Medusa v2 usa el contexto de `region_id`).
+
 ## QA y validacion
 
 Antigravity se usa como capa de QA y validacion.

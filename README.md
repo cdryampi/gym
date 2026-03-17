@@ -1,126 +1,111 @@
-# Nova Forza - Gym & Backoffice
+# Nova Forza
 
-[![Antigravity QA Checked](https://img.shields.io/badge/Antigravity-QA--Verified-blueviolet)](https://github.com/google-deepmind/antigravity)
+Base de producto para el gimnasio **Nova Forza** con dos superficies activas:
 
-Plataforma integral para el gimnasio **Nova Forza**, que combina un sitio web público de alto impacto comercial con un backoffice operativo para la gestión diaria.
+- web publica en `src/app/(public)`
+- backoffice interno en `src/app/(admin)/dashboard`
 
-![Home Hero](docs/images/home-hero.png)
+La capa commerce entra ahora en una migracion progresiva hacia **Medusa + Next.js**, manteniendo **Supabase** como infraestructura PostgreSQL cuando encaja.
 
-## 🎯 Propósito
+## Arquitectura actual
 
-Este proyecto centraliza la presencia digital del gimnasio en una única base de código, permitiendo una evolución coherente de:
-- **Web Pública:** Captación de leads y exhibición de marca.
-- **Backoffice:** Gestión de leads, ajustes globales y futura operativa (CMS).
-- **Backend Unificado:** Infraestructura preparada para alimentar una futura App Móvil.
+- `Next.js 16` y `React 19` para storefront y panel interno
+- `Supabase` para auth, leads, ajustes globales y resto de dominio propio
+- `apps/medusa` como backend de comercio separado
 
----
+Mas detalle en [docs/commerce-medusa-migration.md](/C:/digitalbitsolutions/gym/docs/commerce-medusa-migration.md).
 
-## 🚀 Tecnologías Principales
+## Frontera de responsabilidades
 
-- **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
-- **UI:** [React 19](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/)
-- **Lenguaje:** [TypeScript](https://www.typescriptlang.org/)
-- **Backend & Auth:** [Supabase](https://supabase.com/)
-- **Formularios:** React Hook Form + Zod
-- **Testing:** Vitest
+### Next.js + Supabase propio
 
----
+- marketing
+- contenido
+- login
+- dashboard
+- leads
+- ajustes del sitio
+- modulos del gimnasio no-commerce
 
-## 🛠️ Configuración Local
+### Medusa
 
-### 1. Clonar e Instalar
+- productos
+- categorias
+- precios
+- inventario base
+- futura base para carrito y checkout
+
+## Desarrollo local
+
+### Storefront y panel
+
 ```bash
 npm install
-```
-
-### 2. Variables de Entorno
-Crea un archivo `.env.local` con las siguientes claves:
-```env
-NEXT_PUBLIC_SUPABASE_URL=tu_url_supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_anon_key
-SUPABASE_SERVICE_ROLE_KEY=tu_service_role_key
-
-# Opcionales para acceso local (fallback)
-ADMIN_USER=admin
-ADMIN_PASSWORD=password
-```
-*Si no se configuran las variables de Supabase, el sistema utilizará datos de fallback (mock).*
-
-### 3. Iniciar Servidor
-```bash
 npm run dev
 ```
-- **Web:** [http://localhost:3001](http://localhost:3001)
-- **Login:** [http://localhost:3001/login](http://localhost:3001/login)
 
----
+### Backend commerce
 
-## 📂 Estructura del Proyecto
-
-```txt
-src/
-  app/
-    (public)/          # Home comercial
-    (auth)/login       # Acceso al panel
-    (admin)/dashboard  # Backoffice (Leads, Ajustes, Contenido)
-  components/
-    marketing/         # Bloques de la web pública
-    admin/             # Componentes del dashboard
-    ui/                # Primitivos de interfaz (shadcn-like)
-  lib/
-    data/              # Mock data y constantes
-    supabase/          # Cliente y consultas
-    validators/        # Esquemas de validación (Zod)
-supabase/              # Migraciones y Seed SQL
-docs/                  # Documentación y assets
+```bash
+npm --prefix apps/medusa install
+npm run dev:medusa
 ```
 
----
+## Variables de entorno
 
-## 🖼️ Vistas Actuales
+Completa `.env.local` a partir de `.env.example`.
 
-### Dashboard Operativo
-Gestión centralizada de leads y configuración del sitio.
+### Propias del proyecto actual
 
-| Resumen General | Leads |
-| :--- | :--- |
-| ![Dashboard Overview](docs/images/dashboard-overview.png) | ![Dashboard Leads](docs/images/dashboard-leads.png) |
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `ADMIN_ALLOWED_EMAILS`
+- `ADMIN_USER`
+- `ADMIN_PASSWORD`
 
-### Gestión de Contenidos
-Ajustes globales del sitio desde el panel administrativo.
-![Dashboard Settings](docs/images/dashboard-settings.png)
+### Nuevas para commerce
 
----
+- `COMMERCE_PROVIDER=auto|medusa|supabase|mock`
+- `MEDUSA_BACKEND_URL`
+- `MEDUSA_PUBLISHABLE_KEY`
+- `MEDUSA_REGION_ID`
+- `MEDUSA_COUNTRY_CODE`
+- `MEDUSA_DEFAULT_CURRENCY_CODE`
 
-## 📋 Módulos y Estado
+`COMMERCE_PROVIDER=auto` usa este orden:
 
-- [x] **Home Pública:** Diseño atlético y premium con video hero.
-- [x] **Training Zones:** Carrusel dinámico de disciplinas.
-- [x] **Lead Management:** Captura y visualización de prospectos en backoffice.
-- [x] **Mock System:** Sistema de fallback robusto para desarrollo sin backend.
-- [ ] **Módulos Futuros:** Planes, Horarios, Reservas, Tienda Pickup (en roadmap).
+1. Medusa
+2. Supabase `products` legacy
+3. mock local
 
----
+## Supabase y Medusa
 
-## ⚙️ Scripts Disponibles
+Medusa debe conectarse a PostgreSQL por `DATABASE_URL` directa. No usa el cliente JS de Supabase para resolver comercio.
 
-- `npm run dev`: Arranca el entorno de desarrollo.
-- `npm run build`: Genera el bundle de producción.
-- `npm run lint`: Ejecuta el análisis estático de código.
-- `npm run typecheck`: Valida la integridad de tipos TS.
-- `npm run test`: Ejecuta la suite de pruebas con Vitest.
+La recomendacion operativa mas segura es:
 
----
+- usar **Supabase Postgres** para Medusa
+- mantener **Medusa** como propietario de sus tablas
+- evitar mezclar tablas internas de Medusa con el dominio del gym sin una frontera clara
 
-## 📽️ Assets y Media
+## Seeds de comercio
 
-Para cambiar el video principal del Hero, sustituya el archivo en:
-- `public/videos/video.mp4`
+La app Medusa incluye un seed inicial de Nova Forza:
 
-Las imágenes de las zonas de entrenamiento se gestionan en:
-- `src/data/training-zones.ts`
+```bash
+npm run medusa:seed:nova
+```
 
----
+Ese seed deja la base para catalogo, categorias, stock simple y la publishable key del storefront.
 
-> [!IMPORTANT]
-> Este proyecto utiliza **Antigravity** como herramienta de QA y validación visual. Cada cambio importante es revisado para asegurar coherencia técnica y visual.
+## QA
+
+Antes de cerrar cambios relevantes:
+
+```bash
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```

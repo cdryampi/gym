@@ -1,151 +1,171 @@
-import { Dumbbell, Inbox, Megaphone, Package, Settings2, ShieldCheck, Users } from "lucide-react";
+import {
+  Building2,
+  Inbox,
+  Megaphone,
+  Package,
+  ShieldCheck,
+  ShoppingBag,
+  Users,
+} from "lucide-react";
 
+import AdminMetricCard from "@/components/admin/AdminMetricCard";
+import AdminSection from "@/components/admin/AdminSection";
+import AdminSurface from "@/components/admin/AdminSurface";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  buildCommerceMetrics,
+  buildDashboardMetrics,
+  countLeadsByStatus,
+  getCommerceSourceMeta,
+  getTopbarStatusMeta,
+} from "@/lib/admin-dashboard";
 import { getOrderedTrainingZones } from "@/data/training-zones";
-import { novaForzaHomeContent } from "@/lib/data/nova-forza-content";
 import { plannedModules } from "@/lib/data/default-content";
+import { novaForzaHomeContent } from "@/lib/data/nova-forza-content";
 import { getDashboardData } from "@/lib/data/site";
+import { getStoreAdminSnapshot } from "@/lib/data/store-admin";
 import { resolveTopbarStatus } from "@/lib/topbar";
 
-function countNewLeads(totalStatuses: Array<"new" | "contacted" | "closed">) {
-  return totalStatuses.filter((status) => status === "new").length;
-}
-
 export default async function DashboardPage() {
-  const { leads, settings, warning } = await getDashboardData();
-  const newLeads = countNewLeads(leads.map((lead) => lead.status));
-  const topbarStatus = resolveTopbarStatus(settings);
-  const trainingZones = getOrderedTrainingZones();
-  const contentSummary = [
+  const [{ leads, settings, warning }, storeSnapshot] = await Promise.all([
+    getDashboardData(),
+    getStoreAdminSnapshot(),
+  ]);
+
+  const leadSummary = countLeadsByStatus(leads);
+  const newLeads = leadSummary.new;
+  const topbarMeta = getTopbarStatusMeta(resolveTopbarStatus(settings));
+  const leadMetrics = buildDashboardMetrics(leads, newLeads);
+  const commerceMetrics = buildCommerceMetrics(storeSnapshot.products, "supabase");
+  const commerceMeta = getCommerceSourceMeta("supabase");
+  const inventory = [
+    { label: "Zonas activas", value: String(getOrderedTrainingZones().length), icon: ShieldCheck },
+    { label: "Productos visibles", value: String(storeSnapshot.products.length), icon: ShoppingBag },
     {
-      label: "Topbar",
-      value: topbarStatus === "active" ? "Activo" : topbarStatus === "expired" ? "Caducado" : "Inactivo",
-      icon: Megaphone,
+      label: "Recogida local",
+      value: String(storeSnapshot.products.filter((product) => product.pickup_only).length),
+      icon: Package,
     },
-    { label: "Zonas", value: trainingZones.length, icon: Dumbbell },
-    { label: "Planes activos", value: novaForzaHomeContent.plans.length, icon: ShieldCheck },
-    { label: "Entrenadores", value: novaForzaHomeContent.team.length, icon: Users },
-    { label: "Productos", value: novaForzaHomeContent.featuredProducts.length, icon: Package },
+    {
+      label: "Productos destacados",
+      value: String(storeSnapshot.products.filter((product) => product.featured).length),
+      icon: Building2,
+    },
+    { label: "Equipo visible", value: String(novaForzaHomeContent.team.length), icon: Users },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <DashboardPageHeader
         title="Resumen"
-        description="Vista rapida del estado comercial de Nova Forza: leads, identidad activa y contenido visible en la home."
+        description="Vista rapida del estado comercial y operativo del sitio publico, los leads y la tienda activa."
       />
 
       {warning ? <DashboardNotice message={warning} /> : null}
+      {storeSnapshot.warning ? <DashboardNotice message={storeSnapshot.warning} /> : null}
 
-      <div className="grid gap-5 xl:grid-cols-3">
-        <Card className="border-white/10 bg-zinc-950/80">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Inbox className="h-4 w-4 text-[#fca5a5]" />
-              Leads totales
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-3xl font-semibold text-white">{leads.length}</p>
-            <p className="text-sm text-zinc-400">{newLeads} pendientes de revisar.</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/10 bg-zinc-950/80">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Settings2 className="h-4 w-4 text-[#fca5a5]" />
-              Identidad actual
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-lg font-semibold text-white">{settings.site_name}</p>
-            <p className="text-sm text-zinc-400">{settings.site_tagline}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-white/10 bg-zinc-950/80">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ShieldCheck className="h-4 w-4 text-[#fca5a5]" />
-              Alcance actual
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <p className="text-lg font-semibold text-white">Web publica + mini backoffice</p>
-            <p className="text-sm text-zinc-400">
-              La base queda lista para crecer sin meter complejidad prematura.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="grid gap-4 xl:grid-cols-3">
+        {leadMetrics.map((metric) => (
+          <AdminMetricCard key={metric.label} {...metric} />
+        ))}
       </div>
 
-      <Card className="border-white/10 bg-zinc-950/80">
-        <CardHeader>
-          <CardTitle>Contenido publicado</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {contentSummary.map((item) => {
-            const Icon = item.icon;
+      <div className="grid gap-4 xl:grid-cols-3">
+        {commerceMetrics.map((metric) => (
+          <AdminMetricCard key={metric.label} {...metric} />
+        ))}
+      </div>
 
-            return (
-              <div key={item.label} className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#d71920]/12 text-[#fca5a5]">
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <AdminSection
+          title="Estado comercial"
+          description="Lo esencial para saber si la captacion, la identidad publica y la tienda estan alineadas."
+          badge={<Badge variant={topbarMeta.tone}>{topbarMeta.label}</Badge>}
+        >
+          <div className="grid gap-4 md:grid-cols-2">
+            <AdminSurface inset className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff5f5] text-[#d71920]">
+                  <Inbox className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#111111]">Embudo de leads</p>
+                  <p className="mt-1 text-sm text-[#5f6368]">
+                    {leadSummary.contacted + leadSummary.closed} de {leads.length} ya avanzaron de fase.
+                  </p>
+                </div>
+              </div>
+            </AdminSurface>
+            <AdminSurface inset className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#fff5f5] text-[#d71920]">
+                  <Megaphone className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-[#111111]">Topbar promocional</p>
+                  <p className="mt-1 text-sm text-[#5f6368]">
+                    {settings.topbar_text ?? "Sin promo cargada por ahora."}
+                  </p>
+                </div>
+              </div>
+            </AdminSurface>
+            <AdminSurface inset className="p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
+                Identidad activa
+              </p>
+              <p className="mt-2 text-lg font-semibold text-[#111111]">{settings.site_name}</p>
+              <p className="mt-2 text-sm leading-6 text-[#5f6368]">{settings.site_tagline}</p>
+            </AdminSurface>
+            <AdminSurface inset className="p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
+                Fuente de tienda
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge variant={commerceMeta.tone}>{commerceMeta.label}</Badge>
+                <p className="text-sm text-[#5f6368]">{commerceMeta.hint}</p>
+              </div>
+            </AdminSurface>
+          </div>
+        </AdminSection>
+
+        <AdminSection
+          title="Inventario publico"
+          description="Conteo rapido del contenido visible hoy entre web comercial y catalogo."
+        >
+          <div className="grid gap-3">
+            {inventory.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <AdminSurface key={item.label} inset className="flex items-center gap-3 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f2efe8] text-[#5f6368]">
                     <Icon className="h-4 w-4" />
                   </div>
                   <div>
-                    <p className="text-xs font-mono uppercase tracking-[0.18em] text-zinc-500">{item.label}</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{item.value}</p>
+                    <p className="text-sm font-semibold text-[#111111]">{item.label}</p>
+                    <p className="mt-1 text-sm text-[#5f6368]">{item.value}</p>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+                </AdminSurface>
+              );
+            })}
+          </div>
+        </AdminSection>
+      </div>
 
-      <Card className="border-white/10 bg-zinc-950/80">
-        <CardHeader>
-          <CardTitle>Contacto visible</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-              Email
-            </p>
-            <p className="mt-3 text-sm text-white">{settings.contact_email}</p>
-          </div>
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-              Telefono
-            </p>
-            <p className="mt-3 text-sm text-white">{settings.contact_phone ?? "Pendiente"}</p>
-          </div>
-          <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-            <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-zinc-500">
-              Horario
-            </p>
-            <p className="mt-3 text-sm text-white">{settings.opening_hours ?? "Pendiente"}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-white/10 bg-zinc-950/80">
-        <CardHeader>
-          <CardTitle>Modulos previstos</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-2">
+      <AdminSection
+        title="Modulos previstos"
+        description="Ruta de crecimiento documentada sin adelantar complejidad en el MVP."
+      >
+        <div className="flex flex-wrap gap-2">
           {plannedModules.map((module) => (
             <Badge key={module} variant="muted">
               {module}
             </Badge>
           ))}
-        </CardContent>
-      </Card>
+        </div>
+      </AdminSection>
     </div>
   );
 }

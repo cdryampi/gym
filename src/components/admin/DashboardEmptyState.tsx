@@ -1,3 +1,5 @@
+import AdminSurface from "./AdminSurface";
+
 interface DashboardEmptyStateProps {
   title: string;
   description: string;
@@ -5,9 +7,9 @@ interface DashboardEmptyStateProps {
 
 export default function DashboardEmptyState({ title, description }: DashboardEmptyStateProps) {
   return (
-    <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] px-6 py-10 text-center">
-      <p className="text-lg font-semibold text-white">{title}</p>
-      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-zinc-400">{description}</p>
-    </div>
+    <AdminSurface inset className="border-dashed px-6 py-10 text-center shadow-none">
+      <p className="text-lg font-semibold text-[#111111]">{title}</p>
+      <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[#5f6368]">{description}</p>
+    </AdminSurface>
   );
 }

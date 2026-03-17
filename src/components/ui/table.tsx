@@ -13,7 +13,7 @@ Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={cn("[&_tr]:border-b [&_tr]:border-white/8", className)} {...props} />
+    <thead ref={ref} className={cn("[&_tr]:border-b [&_tr]:border-black/8", className)} {...props} />
   ),
 );
 TableHeader.displayName = "TableHeader";
@@ -22,7 +22,7 @@ const TableBody = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes
   ({ className, ...props }, ref) => (
     <tbody
       ref={ref}
-      className={cn("[&_tr:last-child]:border-0 [&_tr]:border-b [&_tr]:border-white/6", className)}
+      className={cn("[&_tr:last-child]:border-0 [&_tr]:border-b [&_tr]:border-black/6", className)}
       {...props}
     />
   ),
@@ -31,7 +31,7 @@ TableBody.displayName = "TableBody";
 
 const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTMLTableRowElement>>(
   ({ className, ...props }, ref) => (
-    <tr ref={ref} className={cn("transition-colors hover:bg-white/[0.03]", className)} {...props} />
+    <tr ref={ref} className={cn("transition-colors hover:bg-black/[0.02]", className)} {...props} />
   ),
 );
 TableRow.displayName = "TableRow";
@@ -41,7 +41,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
     <th
       ref={ref}
       className={cn(
-        "h-12 px-4 text-left align-middle font-medium text-zinc-400 [&:has([role=checkbox])]:pr-0",
+        "h-12 px-4 text-left align-middle font-medium text-[#7a7f87] [&:has([role=checkbox])]:pr-0",
         className,
       )}
       {...props}
@@ -52,7 +52,7 @@ TableHead.displayName = "TableHead";
 
 const TableCell = React.forwardRef<HTMLTableCellElement, React.TdHTMLAttributes<HTMLTableCellElement>>(
   ({ className, ...props }, ref) => (
-    <td ref={ref} className={cn("p-4 align-middle text-zinc-200", className)} {...props} />
+    <td ref={ref} className={cn("p-4 align-middle text-[#111111]", className)} {...props} />
   ),
 );
 TableCell.displayName = "TableCell";
