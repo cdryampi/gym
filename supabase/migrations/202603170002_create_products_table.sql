@@ -63,7 +63,12 @@ CREATE TRIGGER set_products_updated_at
     EXECUTE FUNCTION public.handle_updated_at();
 
 -- Seed Data
-INSERT INTO public.products (slug, name, category, short_description, description, price, currency, stock_status, featured, pickup_only, pickup_note, images, tags, highlights, cta_label, "order", active)
+INSERT INTO public.products (
+    slug, name, category, short_description, description, 
+    price, currency, stock_status, featured, pickup_only, 
+    pickup_note, images, tags, highlights, cta_label, 
+    "order", active
+)
 VALUES 
 (
     'creatina-monohidratada-300g', 
@@ -77,13 +82,22 @@ VALUES
     true, 
     true, 
     'Recogida rápida en recepción durante el horario del club.', 
-    '{"/images/products/product-2.png"}', 
-    '{"Fuerza", "Recuperación", "Uso diario"}', 
-    '{"300 g de creatina monohidratada micronizada.", "Formato cómodo para ciclos largos o mantenimiento.", "Fácil de combinar con tu rutina postentrenamiento."}',
+    ARRAY['/images/products/product-2.png'], 
+    ARRAY['Fuerza', 'Recuperación', 'Uso diario'], 
+    ARRAY['300 g de creatina monohidratada micronizada.', 'Formato cómodo para ciclos largos o mantenimiento.', 'Fácil de combinar con tu rutina postentrenamiento.'],
     'Disponible en tienda',
     1,
     true
-),
+)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.products (
+    slug, name, category, short_description, description, 
+    price, currency, stock_status, featured, pickup_only, 
+    pickup_note, images, tags, highlights, cta_label, 
+    "order", active
+)
+VALUES 
 (
     'whey-protein-isolate-2kg', 
     'Whey Protein Isolate 2 kg', 
@@ -96,13 +110,22 @@ VALUES
     true, 
     true, 
     'Últimas unidades disponibles esta semana en el mostrador de Nova Forza.', 
-    '{"/images/products/product-1.png"}', 
-    '{"Recuperación", "Proteína", "Postentreno"}', 
-    '{"2 kg de proteína aislada de suero.", "Ideal para cubrir requerimientos diarios sin pesadez.", "Formato pensado para uso recurrente en fases de volumen o definición."}',
+    ARRAY['/images/products/product-1.png'], 
+    ARRAY['Recuperación', 'Proteína', 'Postentreno'], 
+    ARRAY['2 kg de proteína aislada de suero.', 'Ideal para cubrir requerimientos diarios sin pesadez.', 'Formato pensado para uso recurrente en fases de volumen o definición.'],
     'Consulta por WhatsApp',
     2,
     true
-),
+)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.products (
+    slug, name, category, short_description, description, 
+    price, currency, stock_status, featured, pickup_only, 
+    pickup_note, images, tags, highlights, cta_label, 
+    "order", active
+)
+VALUES 
 (
     'shaker-premium-nova-forza', 
     'Shaker Premium Nova Forza', 
@@ -115,13 +138,22 @@ VALUES
     false, 
     true, 
     'Disponible para recogida inmediata en el club.', 
-    '{"/images/products/product-5.png"}', 
-    '{"Hidratación", "Entreno", "Nova Forza"}', 
-    '{"Capacidad de 700 ml.", "Cierre seguro para mochila o taquilla.", "Acabado limpio y fácil de lavar."}',
+    ARRAY['/images/products/product-5.png'], 
+    ARRAY['Hidratación', 'Entreno', 'Nova Forza'], 
+    ARRAY['Capacidad de 700 ml.', 'Cierre seguro para mochila o taquilla.', 'Acabado limpio y fácil de lavar.'],
     'Disponible en tienda',
     3,
     true
-),
+)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.products (
+    slug, name, category, short_description, description, 
+    price, currency, stock_status, featured, pickup_only, 
+    pickup_note, images, tags, highlights, cta_label, 
+    "order", active
+)
+VALUES 
 (
     'straps-de-levantamiento-pro', 
     'Straps de Levantamiento Pro', 
@@ -134,13 +166,22 @@ VALUES
     true, 
     true, 
     'Recógelos en recepción y pruébalos el mismo día en sala.', 
-    '{"/images/products/product-8.png"}', 
-    '{"Fuerza", "Powerlifting", "Agarre"}', 
-    '{"Tejido resistente con tacto firme.", "Pensados para tirones pesados y trabajo de espalda.", "Fáciles de guardar en mochila o cinturón."}',
+    ARRAY['/images/products/product-8.png'], 
+    ARRAY['Fuerza', 'Powerlifting', 'Agarre'], 
+    ARRAY['Tejido resistente con tacto firme.', 'Pensados para tirones pesados y trabajo de espalda.', 'Fáciles de guardar en mochila o cinturón.'],
     'Reservar en local',
     4,
     true
-),
+)
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO public.products (
+    slug, name, category, short_description, description, 
+    price, currency, stock_status, featured, pickup_only, 
+    pickup_note, images, tags, highlights, cta_label, 
+    "order", active
+)
+VALUES 
 (
     'polo-tecnico-nova-forza', 
     'Polo Técnico Nova Forza', 
@@ -153,9 +194,9 @@ VALUES
     true, 
     false, 
     NULL, 
-    '{"/images/products/product-6.png"}', 
-    '{"Merch", "Nova Forza", "Performance"}', 
-    '{"Tejido técnico ligero.", "Corte limpio para entreno o uso casual.", "Lanzamiento previsto para la próxima reposición."}',
+    ARRAY['/images/products/product-6.png'], 
+    ARRAY['Merch', 'Nova Forza', 'Performance'], 
+    ARRAY['Tejido técnico ligero.', 'Corte limpio para entreno o uso casual.', 'Lanzamiento previsto para la próxima reposición.'],
     'Próximamente',
     6,
     true
