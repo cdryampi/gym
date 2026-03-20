@@ -24,6 +24,7 @@ ENV PORT=9000
 WORKDIR /app
 
 COPY --from=builder /app ./
+RUN mkdir -p /app/public/admin && cp -R /app/.medusa/server/public/admin/. /app/public/admin/
 
 EXPOSE 9000
 
