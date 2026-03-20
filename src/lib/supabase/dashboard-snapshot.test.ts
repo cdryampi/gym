@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const hasSupabasePublicEnvMock = vi.fn();
 const hasSupabaseServiceRoleMock = vi.fn();
-const createSupabaseServerClientMock = vi.fn();
+const createSupabasePublicClientMock = vi.fn();
 const createSupabaseAdminClientMock = vi.fn();
 
 vi.mock("@/lib/env", async () => {
@@ -20,7 +20,7 @@ vi.mock("@/lib/supabase/server", async () => {
   );
   return {
     ...actual,
-    createSupabaseServerClient: () => createSupabaseServerClientMock(),
+    createSupabasePublicClient: () => createSupabasePublicClientMock(),
     createSupabaseAdminClient: () => createSupabaseAdminClientMock(),
   };
 });
@@ -29,7 +29,7 @@ describe("getDashboardSnapshot", () => {
   beforeEach(() => {
     hasSupabasePublicEnvMock.mockReset();
     hasSupabaseServiceRoleMock.mockReset();
-    createSupabaseServerClientMock.mockReset();
+    createSupabasePublicClientMock.mockReset();
     createSupabaseAdminClientMock.mockReset();
   });
 
@@ -37,7 +37,7 @@ describe("getDashboardSnapshot", () => {
     hasSupabasePublicEnvMock.mockReturnValue(true);
     hasSupabaseServiceRoleMock.mockReturnValue(false);
 
-    createSupabaseServerClientMock.mockReturnValue({
+    createSupabasePublicClientMock.mockReturnValue({
       from: () => ({
         select: () => ({
           eq: () => ({
