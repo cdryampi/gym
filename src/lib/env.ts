@@ -1,28 +1,36 @@
 import { z } from "zod";
 
+function emptyStringToUndefined(value: unknown) {
+  return typeof value === "string" && value.trim() === "" ? undefined : value;
+}
+
+function optionalString(schema: z.ZodString) {
+  return z.preprocess(emptyStringToUndefined, schema.optional());
+}
+
 const publicEnvSchema = z.object({
-  NEXT_PUBLIC_COMMERCE_CURRENCY_CODE: z.string().length(3).optional(),
-  NEXT_PUBLIC_COMMERCE_LOCALE: z.string().min(2).optional(),
-  NEXT_PUBLIC_MEDUSA_BACKEND_URL: z.string().url().optional(),
-  NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: z.string().min(1).optional(),
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
-  SUPABASE_URL: z.string().url().optional(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  NEXT_PUBLIC_COMMERCE_CURRENCY_CODE: optionalString(z.string().length(3)),
+  NEXT_PUBLIC_COMMERCE_LOCALE: optionalString(z.string().min(2)),
+  NEXT_PUBLIC_MEDUSA_BACKEND_URL: optionalString(z.string().url()),
+  NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: optionalString(z.string().min(1)),
+  NEXT_PUBLIC_SUPABASE_URL: optionalString(z.string().url()),
+  SUPABASE_URL: optionalString(z.string().url()),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalString(z.string().min(1)),
 });
 
 const serverEnvSchema = publicEnvSchema.extend({
-  ADMIN_ALLOWED_EMAILS: z.string().optional(),
-  ADMIN_PASSWORD: z.string().min(1).optional(),
-  ADMIN_USER: z.string().min(1).optional(),
-  COMMERCE_CURRENCY_CODE: z.string().length(3).optional(),
-  COMMERCE_LOCALE: z.string().min(2).optional(),
+  ADMIN_ALLOWED_EMAILS: optionalString(z.string()),
+  ADMIN_PASSWORD: optionalString(z.string().min(1)),
+  ADMIN_USER: optionalString(z.string().min(1)),
+  COMMERCE_CURRENCY_CODE: optionalString(z.string().length(3)),
+  COMMERCE_LOCALE: optionalString(z.string().min(2)),
   COMMERCE_PROVIDER: z.literal("medusa").optional(),
   STORE_ADMIN_PROVIDER: z.literal("medusa").optional(),
-  MEDUSA_BACKEND_URL: z.string().url().optional(),
-  MEDUSA_ADMIN_API_KEY: z.string().min(1).optional(),
-  MEDUSA_PUBLISHABLE_KEY: z.string().min(1).optional(),
-  MEDUSA_REGION_ID: z.string().min(1).optional(),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  MEDUSA_BACKEND_URL: optionalString(z.string().url()),
+  MEDUSA_ADMIN_API_KEY: optionalString(z.string().min(1)),
+  MEDUSA_PUBLISHABLE_KEY: optionalString(z.string().min(1)),
+  MEDUSA_REGION_ID: optionalString(z.string().min(1)),
+  SUPABASE_SERVICE_ROLE_KEY: optionalString(z.string().min(1)),
 });
 
 const publicEnv = publicEnvSchema.parse({

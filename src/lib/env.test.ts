@@ -68,4 +68,23 @@ describe("env provider constraints", () => {
       locale: "en-US",
     });
   });
+
+  it("treats empty docker build args as undefined instead of invalid env", async () => {
+    const env = await importEnvModule({
+      NODE_ENV: "test",
+      NEXT_PUBLIC_SUPABASE_URL: "",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "",
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: "",
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: "",
+      NEXT_PUBLIC_COMMERCE_CURRENCY_CODE: "",
+      NEXT_PUBLIC_COMMERCE_LOCALE: "",
+    });
+
+    expect(env.hasSupabasePublicEnv()).toBe(false);
+    expect(env.hasMedusaEnv()).toBe(false);
+    expect(env.getCommerceDisplayEnv()).toEqual({
+      currencyCode: "PEN",
+      locale: "es-PE",
+    });
+  });
 });
