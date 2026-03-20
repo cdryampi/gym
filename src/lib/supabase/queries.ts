@@ -18,7 +18,10 @@ import {
 import type { StoreCategoryValues, StoreProductValues } from "@/lib/validators/store";
 
 import type { Database, DBProduct, Lead, LeadStatus, SiteSettings } from "./database.types";
-import { createSupabaseAdminClient, createSupabaseServerClient } from "./server";
+import {
+  createSupabaseAdminClient,
+  createSupabasePublicClient,
+} from "./server";
 
 type GymSupabaseClient = SupabaseClient<Database>;
 
@@ -186,7 +189,7 @@ export const getMarketingSnapshot = cache(async (): Promise<MarketingSnapshot> =
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabasePublicClient();
     const { data: settings } = await supabase
       .from("site_settings")
       .select("*")
@@ -217,7 +220,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
     };
   }
 
-  const publicSupabase = await createSupabaseServerClient();
+  const publicSupabase = createSupabasePublicClient();
 
   const { data: settings, error: settingsError } = await publicSupabase
     .from("site_settings")

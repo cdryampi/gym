@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import PublicPageShell from "@/components/marketing/PublicPageShell";
-import { getCurrentMemberUser } from "@/lib/auth";
 import { getMarketingData } from "@/lib/data/site";
 
 export default async function ShopLayout({
@@ -9,10 +8,10 @@ export default async function ShopLayout({
 }: Readonly<{
   children: ReactNode;
 }>) {
-  const [{ settings }, currentUser] = await Promise.all([getMarketingData(), getCurrentMemberUser()]);
+  const { settings } = await getMarketingData();
 
   return (
-    <PublicPageShell settings={settings} currentUser={currentUser}>
+    <PublicPageShell settings={settings}>
       {children}
     </PublicPageShell>
   );

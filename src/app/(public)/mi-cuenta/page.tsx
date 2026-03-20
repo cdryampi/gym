@@ -7,6 +7,8 @@ import SiteFooter from "@/components/marketing/SiteFooter";
 import SiteHeader from "@/components/marketing/SiteHeader";
 import SiteTopbar from "@/components/marketing/SiteTopbar";
 
+export const dynamic = "force-dynamic";
+
 export default async function MemberAccountPage() {
   const user = await requireMemberUser("/acceso?next=/mi-cuenta");
   const { settings } = await getMarketingData();

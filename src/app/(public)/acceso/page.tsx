@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentMemberUser } from "@/lib/auth";
 import { hasSupabasePublicEnv } from "@/lib/env";
 
+export const dynamic = "force-dynamic";
+
 export default async function MemberLoginPage() {
   const user = await getCurrentMemberUser();
 

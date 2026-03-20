@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { hasSupabasePublicEnv } from "@/lib/env";
 import { createLeadRecord } from "@/lib/supabase/queries";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabasePublicClient } from "@/lib/supabase/server";
 import { contactFormSchema } from "@/lib/validators/contact";
 
 export async function handleLeadIntakeRequest(request: Request) {
@@ -31,7 +31,7 @@ export async function handleLeadIntakeRequest(request: Request) {
   }
 
   try {
-    const supabase = await createSupabaseServerClient();
+    const supabase = createSupabasePublicClient();
     await createLeadRecord(supabase, parsed.data);
 
     return NextResponse.json({

@@ -5,6 +5,17 @@ import { cookies } from "next/headers";
 import { getPublicSupabaseEnv, getServerSupabaseEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 
+export function createSupabasePublicClient() {
+  const { url, anonKey } = getPublicSupabaseEnv();
+
+  return createClient<Database>(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
+
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
   const { url, anonKey } = getPublicSupabaseEnv();
