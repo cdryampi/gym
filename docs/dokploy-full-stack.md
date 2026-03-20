@@ -26,6 +26,12 @@ Usa dos aplicaciones separadas o importa el compose de referencia:
 
 Aunque esten en el mismo VPS, manten `web` y `medusa` como contenedores separados.
 
+Importante en Dokploy:
+
+- no publiques `3000`, `9000` ni `6379` en el host si usas dominios gestionados por Dokploy
+- el compose de referencia usa `expose`, no `ports`
+- el enrutado publico debe hacerlo el proxy de Dokploy hacia `web:3000` y `medusa:9000`
+
 ## Dominios
 
 - `gym.yampi.eu` para `web`

@@ -18,7 +18,7 @@ No intentes usar `gym.yampi.eu` para ambos al mismo tiempo. La web y la API debe
 
 1. Crea una aplicacion Docker apuntando a `apps/medusa`.
 2. Usa el `Dockerfile` incluido.
-3. Expone el puerto interno `9000`.
+3. Usa el puerto interno `9000`, pero no lo publiques manualmente en el host si Dokploy va a poner el dominio.
 4. Asigna el dominio `api.gym.yampi.eu`.
 5. Activa HTTPS en Dokploy/Traefik.
 

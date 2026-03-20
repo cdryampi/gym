@@ -27,8 +27,8 @@ services:
       MEDUSA_REGION_ID: ${MEDUSA_REGION_ID}
       MEDUSA_REGION_NAME: ${MEDUSA_REGION_NAME:-Peru}
       MEDUSA_COUNTRY_CODE: ${MEDUSA_COUNTRY_CODE:-PE}
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
 
   medusa:
     build:
@@ -54,13 +54,13 @@ services:
       COMMERCE_CURRENCY_CODE: ${COMMERCE_CURRENCY_CODE:-PEN}
       MEDUSA_REGION_NAME: ${MEDUSA_REGION_NAME:-Peru}
       MEDUSA_COUNTRY_CODE: ${MEDUSA_COUNTRY_CODE:-PE}
-    ports:
-      - "9000:9000"
+    expose:
+      - "9000"
     depends_on:
       - redis
 
   redis:
     image: redis:7-alpine
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
