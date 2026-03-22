@@ -13,6 +13,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:scope": "node scripts/run-tests-by-path.mjs",
+    "test:cart": "node scripts/run-tests-by-path.mjs src/components/cart src/lib/cart src/lib/data/__tests__/pickup-requests.test.ts src/lib/email/__tests__/pickup-request.test.ts apps/medusa/src/api/admin/gym/pickup-requests",
+    "test:admin": "node scripts/run-tests-by-path.mjs src/components/admin src/lib/admin-access.test.ts src/lib/admin-dashboard.test.ts src/lib/topbar.test.ts src/lib/data/store-admin src/lib/supabase/dashboard-snapshot.test.ts",
+    "test:marketing": "node scripts/run-tests-by-path.mjs src/components/marketing src/lib/data/store.test.ts src/lib/data/products.test.ts src/lib/commerce",
+    "test:medusa": "node scripts/run-tests-by-path.mjs apps/medusa/src",
     "medusa:seed:nova": "npm --prefix apps/medusa run seed:nova",
     "sync:store:medusa": "node scripts/sync-store-supabase-to-medusa.cjs"
   },

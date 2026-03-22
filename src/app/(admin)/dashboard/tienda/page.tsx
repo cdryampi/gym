@@ -73,6 +73,12 @@ export default async function DashboardStorePage() {
               >
                 Gestionar productos
               </Link>
+              <Link
+                href="/dashboard/tienda/pedidos"
+                className="rounded-full border border-black/8 px-4 py-2 text-sm font-semibold text-[#111111]"
+              >
+                Ver pedidos pickup
+              </Link>
             </div>
           </AdminSurface>
         </div>

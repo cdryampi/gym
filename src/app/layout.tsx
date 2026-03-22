@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter, Oswald } from "next/font/google";
 import type { ReactNode } from "react";
 
+import { CartProvider } from "@/components/cart/CartProvider";
+import { getCurrentMemberUser } from "@/lib/auth";
+
 import "./globals.css";
 
 const inter = Inter({
@@ -30,15 +33,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const memberUser = await getCurrentMemberUser();
+
   return (
     <html lang="es" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className={`${inter.variable} ${oswald.variable} bg-background text-foreground antialiased`}>
-        {children}
+        <CartProvider memberEmail={memberUser?.email ?? null}>{children}</CartProvider>
       </body>
     </html>
   );

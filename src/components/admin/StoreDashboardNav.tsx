@@ -9,6 +9,7 @@ const links = [
   { href: "/dashboard/tienda", label: "Catalogo" },
   { href: "/dashboard/tienda/categorias", label: "Categorias" },
   { href: "/dashboard/tienda/productos", label: "Productos" },
+  { href: "/dashboard/tienda/pedidos", label: "Pedidos" },
 ];
 
 export default function StoreDashboardNav() {

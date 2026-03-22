@@ -3,8 +3,19 @@
 import { revalidatePath } from "next/cache";
 
 import { requireAdminUser } from "@/lib/auth";
+import { mapPickupRequest } from "@/lib/cart/pickup-request";
+import type { PickupRequestStatus } from "@/lib/cart/types";
 import { getStoreAdminRepository } from "@/lib/data/store-admin/repository";
 import { getStoreAdminWriteDisabledReason } from "@/lib/data/store-admin";
+import {
+  markPickupRequestEmailResult,
+  retrievePickupRequest,
+  updatePickupRequestStatus,
+} from "@/lib/cart/member-bridge";
+import { getMarketingData } from "@/lib/data/site";
+import { defaultSiteSettings } from "@/lib/data/default-content";
+import { hasMedusaAdminEnv } from "@/lib/env";
+import { sendPickupRequestEmails } from "@/lib/email/pickup-request";
 import {
   storeCategorySchema,
   storeProductSchema,
@@ -28,7 +39,18 @@ function revalidateStore() {
   revalidatePath("/dashboard/tienda");
   revalidatePath("/dashboard/tienda/categorias");
   revalidatePath("/dashboard/tienda/productos");
+  revalidatePath("/dashboard/tienda/pedidos");
   revalidatePath("/tienda");
+}
+
+async function assertPickupRequestsAdminReady() {
+  await requireAdminUser();
+
+  if (!hasMedusaAdminEnv()) {
+    throw new Error(
+      "Configura MEDUSA_ADMIN_API_KEY y MEDUSA_BACKEND_URL (o NEXT_PUBLIC_MEDUSA_BACKEND_URL) para operar pedidos pickup.",
+    );
+  }
 }
 
 export async function saveStoreCategory(values: StoreCategoryInput, categoryId?: string) {
@@ -69,4 +91,54 @@ export async function deleteStoreProduct(id: string) {
   const repository = await getAuthenticatedStoreAdminRepository();
   await repository.deleteProduct(id);
   revalidateStore();
+}
+
+export async function updateDashboardPickupRequestStatus(
+  pickupRequestId: string,
+  status: PickupRequestStatus,
+) {
+  await assertPickupRequestsAdminReady();
+  await updatePickupRequestStatus(pickupRequestId, status);
+  revalidateStore();
+  revalidatePath(`/dashboard/tienda/pedidos/${pickupRequestId}`);
+  revalidatePath("/mi-cuenta");
+}
+
+export async function resendDashboardPickupRequestEmail(pickupRequestId: string) {
+  await assertPickupRequestsAdminReady();
+
+  const pickupRequestResponse = await retrievePickupRequest(pickupRequestId);
+  const pickupRequest = mapPickupRequest(pickupRequestResponse.pickup_request);
+  const { settings } = await getMarketingData();
+  const siteName = settings.site_name ?? defaultSiteSettings.site_name;
+  const internalRecipient = settings.contact_email ?? defaultSiteSettings.contact_email;
+
+  try {
+    await sendPickupRequestEmails({
+      pickupRequest,
+      siteName,
+      internalRecipient,
+    });
+
+    await markPickupRequestEmailResult(pickupRequestId, {
+      emailStatus: "sent",
+      emailSentAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo reenviar el email del pedido pickup.";
+
+    await markPickupRequestEmailResult(pickupRequestId, {
+      emailStatus: "failed",
+      emailError: message,
+    });
+
+    throw new Error(message);
+  }
+
+  revalidateStore();
+  revalidatePath(`/dashboard/tienda/pedidos/${pickupRequestId}`);
+  revalidatePath("/mi-cuenta");
 }

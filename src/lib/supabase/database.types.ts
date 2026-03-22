@@ -45,6 +45,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      member_commerce_customers: {
+        Row: {
+          created_at: string;
+          email: string;
+          medusa_customer_id: string;
+          supabase_user_id: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          medusa_customer_id: string;
+          supabase_user_id: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          medusa_customer_id?: string;
+          supabase_user_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       site_settings: {
         Row: {
           address: string | null;
@@ -302,6 +326,7 @@ export type Database = {
 
 export type Lead = Database["public"]["Tables"]["leads"]["Row"];
 export type LeadStatus = Database["public"]["Enums"]["lead_status"];
+export type DBMemberCommerceCustomer = Database["public"]["Tables"]["member_commerce_customers"]["Row"];
 export type SiteSettings = Database["public"]["Tables"]["site_settings"]["Row"];
 export type DBProduct = Database["public"]["Tables"]["products"]["Row"];
 export type DBStoreCategory = Database["public"]["Tables"]["store_categories"]["Row"];

@@ -18,7 +18,8 @@ interface StoreAdminSnapshot {
 function getStoreAdminReadinessWarning(): string | null {
   if (!hasMedusaAdminEnv()) {
     return (
-      "El dashboard de tienda requiere MEDUSA_BACKEND_URL y MEDUSA_ADMIN_API_KEY. " +
+      "El dashboard de tienda requiere MEDUSA_ADMIN_API_KEY y MEDUSA_BACKEND_URL " +
+      "(o NEXT_PUBLIC_MEDUSA_BACKEND_URL). " +
       "Configuralos para gestionar categorias y productos del dashboard."
     );
   }
@@ -28,7 +29,7 @@ function getStoreAdminReadinessWarning(): string | null {
 
 export function getStoreAdminWriteDisabledReason() {
   if (!hasMedusaAdminEnv()) {
-    return "Configura MEDUSA_BACKEND_URL y MEDUSA_ADMIN_API_KEY para guardar cambios reales en Medusa.";
+    return "Configura MEDUSA_ADMIN_API_KEY y MEDUSA_BACKEND_URL (o NEXT_PUBLIC_MEDUSA_BACKEND_URL) para guardar cambios reales en Medusa.";
   }
 
   if (!hasSupabaseServiceRole()) {

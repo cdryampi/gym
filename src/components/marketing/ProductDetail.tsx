@@ -2,14 +2,12 @@ import Link from "next/link";
 import {
   CheckCircle2,
   FileText,
-  Minus,
-  Plus,
   Store,
   TimerReset,
 } from "lucide-react";
 
+import ProductPurchasePanel from "@/components/cart/ProductPurchasePanel";
 import ProductGallery from "@/components/marketing/ProductGallery";
-import { Button } from "@/components/ui/button";
 import type { Product } from "@/data/types";
 import {
   formatProductPrice,
@@ -19,10 +17,6 @@ import {
 
 interface ProductDetailProps {
   product: Product;
-}
-
-function getPrimaryOption(product: Product) {
-  return product.options?.[0];
 }
 
 function getPickupHeading(product: Product) {
@@ -51,7 +45,6 @@ function getPickupCopy(product: Product) {
 
 export default function ProductDetail({ product }: Readonly<ProductDetailProps>) {
   const stockMeta = getProductStockMeta(product.stock_status);
-  const primaryOption = getPrimaryOption(product);
   const comparePrice = product.compare_price ?? null;
   const showComparePrice = comparePrice !== null && comparePrice > product.price;
   const benefitItems = product.benefits?.length ? product.benefits : product.highlights;
@@ -129,61 +122,7 @@ export default function ProductDetail({ product }: Readonly<ProductDetailProps>)
             </div>
           </div>
 
-          {primaryOption ? (
-            <div className="space-y-3">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#111111]">
-                {primaryOption.title}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {primaryOption.values.map((value, index) => (
-                  <span
-                    key={`${primaryOption.id}-${value}`}
-                    className={`inline-flex min-h-11 items-center border px-5 text-[11px] font-bold uppercase tracking-wider ${
-                      index === 0
-                        ? "border-[#d71920] bg-white text-[#d71920]"
-                        : "border-[#d5d9e2] bg-white text-[#111111]"
-                    }`}
-                  >
-                    {value}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="space-y-3">
-            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#111111]">
-              Cantidad
-            </p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <div className="inline-flex h-12 w-fit items-center border border-[#111111] bg-white">
-                <button
-                  type="button"
-                  aria-label="Reducir cantidad"
-                  className="flex h-full w-12 items-center justify-center text-[#111111]"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className="flex h-full min-w-12 items-center justify-center border-x border-[#111111] px-4 text-sm font-semibold text-[#111111]">
-                  1
-                </span>
-                <button
-                  type="button"
-                  aria-label="Aumentar cantidad"
-                  className="flex h-full w-12 items-center justify-center text-[#111111]"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-
-              <Button
-                type="button"
-                className="h-12 rounded-none bg-[#d71920] px-8 text-[11px] font-bold uppercase tracking-[0.16em] text-white hover:bg-[#bf161c]"
-              >
-                {product.cta_label}
-              </Button>
-            </div>
-          </div>
+          <ProductPurchasePanel product={product} />
 
           <div className="border border-black/8 bg-[#F7F4EF] p-5">
             <div className="flex items-start gap-4">

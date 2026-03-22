@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     short_description TEXT NOT NULL,
     description TEXT NOT NULL,
     price NUMERIC(10, 2) NOT NULL,
-    currency TEXT NOT NULL DEFAULT 'EUR',
+    currency TEXT NOT NULL DEFAULT 'PEN',
     stock_status public.product_stock_status NOT NULL DEFAULT 'in_stock',
     featured BOOLEAN NOT NULL DEFAULT false,
     pickup_only BOOLEAN NOT NULL DEFAULT true,

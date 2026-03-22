@@ -3,6 +3,14 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
 const enableInsecureDbSsl = process.env.MEDUSA_DB_INSECURE_SSL === "true"
+const reservedPayPalSandboxConfig = {
+  clientId: process.env.PAYPAL_CLIENT_ID,
+  clientSecret: process.env.PAYPAL_CLIENT_SECRET,
+  environment: process.env.PAYPAL_ENVIRONMENT || "sandbox",
+  autoCapture: process.env.PAYPAL_AUTO_CAPTURE === "true",
+  webhookId: process.env.PAYPAL_WEBHOOK_ID,
+}
+void reservedPayPalSandboxConfig
 
 module.exports = defineConfig({
   projectConfig: {
@@ -24,8 +32,8 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET || "supersecret",
     }
   },
-  modules: [
-    {
+  modules: {
+    file: {
       resolve: "@medusajs/file",
       options: {
         providers: [
@@ -45,9 +53,12 @@ module.exports = defineConfig({
         ],
       },
     },
-    {
+    product: {
       resolve: "@medusajs/product",
       options: {},
     },
-  ]
+    pickupRequest: {
+      resolve: "./src/modules/pickupRequest",
+    },
+  }
 })

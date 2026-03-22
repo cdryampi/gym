@@ -17,15 +17,26 @@ vi.mock("next/link", () => ({
 }));
 
 vi.mock("next/image", () => ({
-  // eslint-disable-next-line @next/next/no-img-element
-  default: ({ alt, ...props }: ComponentProps<"img">) => <img alt={alt} {...props} />,
+  default: ({ alt, src }: ComponentProps<"img"> & { fill?: boolean; priority?: boolean }) => (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img alt={alt} src={typeof src === "string" ? src : undefined} />
+  ),
+}));
+
+vi.mock("@/components/cart/CartEntry", () => ({
+  default: () => <button type="button">Abrir carrito</button>,
 }));
 
 describe("SiteHeader", () => {
   it("shows public auth actions when there is no member session", () => {
     render(<SiteHeader settings={defaultSiteSettings} currentUser={null} />);
 
-    expect(screen.getByRole("link", { name: /Unirme/i })).toBeInTheDocument();
+    const joinLinks = screen.getAllByRole("link", { name: /Unirme/i });
+
+    expect(joinLinks).toHaveLength(2);
+    joinLinks.forEach((link) => {
+      expect(link).toHaveAttribute("href", "/registro");
+    });
     expect(screen.queryByRole("link", { name: "Mi cuenta" })).not.toBeInTheDocument();
   });
 
@@ -37,7 +48,12 @@ describe("SiteHeader", () => {
       />,
     );
 
-    expect(screen.getByRole("link", { name: "Mi cuenta" })).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Crear cuenta" })).not.toBeInTheDocument();
+    const accountLinks = screen.getAllByRole("link", { name: "Mi cuenta" });
+
+    expect(accountLinks).toHaveLength(2);
+    accountLinks.forEach((link) => {
+      expect(link).toHaveAttribute("href", "/mi-cuenta");
+    });
+    expect(screen.queryByRole("link", { name: /Unirme/i })).not.toBeInTheDocument();
   });
 });

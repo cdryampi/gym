@@ -21,6 +21,10 @@ vi.mock("next/image", () => ({
   ),
 }));
 
+vi.mock("@/components/cart/ProductPurchasePanel", () => ({
+  default: () => <div>Anadir al carrito</div>,
+}));
+
 const product: Product = {
   id: "prod-medusa",
   slug: "whey-nova-forza",
@@ -82,12 +86,10 @@ describe("ProductDetail", () => {
       screen.getByRole("heading", { name: "Nova Forza Isolate Whey Protein" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Ahorra 15%")).toBeInTheDocument();
-    expect(screen.getByText("Sabor")).toBeInTheDocument();
-    expect(screen.getByText("Chocolate Suizo")).toBeInTheDocument();
     expect(screen.getByText("Recogida en Nova Forza Gym")).toBeInTheDocument();
     expect(screen.getByText("Beneficios")).toBeInTheDocument();
     expect(screen.getByText("Como usar")).toBeInTheDocument();
     expect(screen.getByText("Especificaciones")).toBeInTheDocument();
-    expect(screen.getByText("Reservar para recogida")).toBeInTheDocument();
+    expect(screen.getByText("Anadir al carrito")).toBeInTheDocument();
   });
 });

@@ -1,11 +1,20 @@
 // @vitest-environment jsdom
 
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+import type { ComponentProps } from "react";
 import { vi } from "vitest";
 
 import RegistrationSuccessCard from "@/components/auth/RegistrationSuccessCard";
 
 const replaceMock = vi.fn();
+
+vi.mock("next/link", () => ({
+  default: ({ href, children, ...props }: ComponentProps<"a">) => (
+    <a href={href} {...props}>
+      {children}
+    </a>
+  ),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -21,7 +30,9 @@ describe("RegistrationSuccessCard", () => {
   });
 
   afterEach(() => {
-    vi.runOnlyPendingTimers();
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
     vi.useRealTimers();
   });
 
@@ -32,7 +43,9 @@ describe("RegistrationSuccessCard", () => {
     expect(screen.getByText("socio@gym.com")).toBeInTheDocument();
     expect(screen.getByText(/Te llevaremos automaticamente a la home/i)).toBeInTheDocument();
 
-    vi.advanceTimersByTime(8000);
+    act(() => {
+      vi.advanceTimersByTime(8000);
+    });
 
     expect(replaceMock).toHaveBeenCalledWith("/");
   });

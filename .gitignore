@@ -38,6 +38,8 @@ output/
 kill_pg.js
 medusa_test.json
 apps/medusa/seed_error.log
+*.bak
+apps/medusa/test_output*.txt
 
 # env files (can opt-in for committing if needed)
 .env*

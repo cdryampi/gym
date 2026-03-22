@@ -8,11 +8,17 @@ function optionalString(schema: z.ZodString) {
   return z.preprocess(emptyStringToUndefined, schema.optional());
 }
 
+function optionalEnum<T extends [string, ...string[]]>(values: T) {
+  return z.preprocess(emptyStringToUndefined, z.enum(values).optional());
+}
+
 const publicEnvSchema = z.object({
   NEXT_PUBLIC_COMMERCE_CURRENCY_CODE: optionalString(z.string().length(3)),
   NEXT_PUBLIC_COMMERCE_LOCALE: optionalString(z.string().min(2)),
   NEXT_PUBLIC_MEDUSA_BACKEND_URL: optionalString(z.string().url()),
   NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: optionalString(z.string().min(1)),
+  NEXT_PUBLIC_MEDUSA_REGION_ID: optionalString(z.string().min(1)),
+  NEXT_PUBLIC_PAYPAL_CLIENT_ID: optionalString(z.string().min(1)),
   NEXT_PUBLIC_SUPABASE_URL: optionalString(z.string().url()),
   SUPABASE_URL: optionalString(z.string().url()),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalString(z.string().min(1)),
@@ -30,6 +36,13 @@ const serverEnvSchema = publicEnvSchema.extend({
   MEDUSA_ADMIN_API_KEY: optionalString(z.string().min(1)),
   MEDUSA_PUBLISHABLE_KEY: optionalString(z.string().min(1)),
   MEDUSA_REGION_ID: optionalString(z.string().min(1)),
+  PAYPAL_AUTO_CAPTURE: optionalEnum(["true", "false"]),
+  PAYPAL_CLIENT_ID: optionalString(z.string().min(1)),
+  PAYPAL_CLIENT_SECRET: optionalString(z.string().min(1)),
+  PAYPAL_ENVIRONMENT: optionalEnum(["sandbox", "live"]),
+  PAYPAL_WEBHOOK_ID: optionalString(z.string().min(1)),
+  RESEND_API_KEY: optionalString(z.string().min(1)),
+  RESEND_FROM_EMAIL: optionalString(z.string().min(1)),
   SUPABASE_SERVICE_ROLE_KEY: optionalString(z.string().min(1)),
 });
 
@@ -38,6 +51,8 @@ const publicEnv = publicEnvSchema.parse({
   NEXT_PUBLIC_COMMERCE_LOCALE: process.env.NEXT_PUBLIC_COMMERCE_LOCALE,
   NEXT_PUBLIC_MEDUSA_BACKEND_URL: process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL,
   NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY,
+  NEXT_PUBLIC_MEDUSA_REGION_ID: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID,
+  NEXT_PUBLIC_PAYPAL_CLIENT_ID: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_URL: process.env.SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
@@ -47,6 +62,7 @@ const serverEnv = serverEnvSchema.parse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_URL: process.env.SUPABASE_URL,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  NEXT_PUBLIC_MEDUSA_REGION_ID: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID,
   ADMIN_ALLOWED_EMAILS: process.env.ADMIN_ALLOWED_EMAILS,
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
   ADMIN_USER: process.env.ADMIN_USER,
@@ -58,6 +74,13 @@ const serverEnv = serverEnvSchema.parse({
   MEDUSA_ADMIN_API_KEY: process.env.MEDUSA_ADMIN_API_KEY,
   MEDUSA_PUBLISHABLE_KEY: process.env.MEDUSA_PUBLISHABLE_KEY,
   MEDUSA_REGION_ID: process.env.MEDUSA_REGION_ID,
+  PAYPAL_AUTO_CAPTURE: process.env.PAYPAL_AUTO_CAPTURE,
+  PAYPAL_CLIENT_ID: process.env.PAYPAL_CLIENT_ID,
+  PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET,
+  PAYPAL_ENVIRONMENT: process.env.PAYPAL_ENVIRONMENT,
+  PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
+  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 });
 
@@ -75,6 +98,10 @@ function resolveMedusaBackendUrl() {
 
 function resolveMedusaPublishableKey() {
   return publicEnv.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? serverEnv.MEDUSA_PUBLISHABLE_KEY;
+}
+
+function resolveMedusaAdminBackendUrl() {
+  return serverEnv.MEDUSA_BACKEND_URL ?? publicEnv.NEXT_PUBLIC_MEDUSA_BACKEND_URL;
 }
 
 function normalizeCurrencyCode(value: string | undefined) {
@@ -122,7 +149,7 @@ export function getMedusaEnv() {
   return {
     backendUrl,
     publishableKey,
-    regionId: serverEnv.MEDUSA_REGION_ID,
+    regionId: publicEnv.NEXT_PUBLIC_MEDUSA_REGION_ID ?? serverEnv.MEDUSA_REGION_ID,
   };
 }
 
@@ -163,19 +190,73 @@ export function getServerSupabaseEnv() {
 }
 
 export function hasMedusaAdminEnv() {
-  return Boolean(serverEnv.MEDUSA_BACKEND_URL && serverEnv.MEDUSA_ADMIN_API_KEY);
+  return Boolean(resolveMedusaAdminBackendUrl() && serverEnv.MEDUSA_ADMIN_API_KEY);
 }
 
 export function getMedusaAdminEnv() {
-  if (!serverEnv.MEDUSA_BACKEND_URL || !serverEnv.MEDUSA_ADMIN_API_KEY) {
+  const backendUrl = resolveMedusaAdminBackendUrl();
+
+  if (!backendUrl || !serverEnv.MEDUSA_ADMIN_API_KEY) {
     throw new Error(
-      "Missing Medusa admin credentials. Set MEDUSA_BACKEND_URL and MEDUSA_ADMIN_API_KEY.",
+      "Missing Medusa admin credentials. Set MEDUSA_ADMIN_API_KEY and MEDUSA_BACKEND_URL (or NEXT_PUBLIC_MEDUSA_BACKEND_URL).",
     );
   }
 
   return {
-    backendUrl: serverEnv.MEDUSA_BACKEND_URL,
+    backendUrl,
     adminApiKey: serverEnv.MEDUSA_ADMIN_API_KEY,
+  };
+}
+
+export function hasResendEnv() {
+  return Boolean(serverEnv.RESEND_API_KEY);
+}
+
+export function getResendEnv() {
+  if (!serverEnv.RESEND_API_KEY) {
+    throw new Error("Missing RESEND_API_KEY. Configuralo para enviar los emails pickup.");
+  }
+
+  return {
+    apiKey: serverEnv.RESEND_API_KEY,
+    fromEmail: serverEnv.RESEND_FROM_EMAIL ?? "Nova Forza <onboarding@resend.dev>",
+  };
+}
+
+export function hasPayPalEnv() {
+  return Boolean(serverEnv.PAYPAL_CLIENT_ID && serverEnv.PAYPAL_CLIENT_SECRET);
+}
+
+export function hasPayPalClientEnv() {
+  return Boolean(publicEnv.NEXT_PUBLIC_PAYPAL_CLIENT_ID);
+}
+
+export function getPayPalEnv() {
+  if (!serverEnv.PAYPAL_CLIENT_ID || !serverEnv.PAYPAL_CLIENT_SECRET) {
+    throw new Error(
+      "Missing PayPal sandbox credentials. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.",
+    );
+  }
+
+  return {
+    clientId: serverEnv.PAYPAL_CLIENT_ID,
+    clientSecret: serverEnv.PAYPAL_CLIENT_SECRET,
+    environment: serverEnv.PAYPAL_ENVIRONMENT ?? "sandbox",
+    autoCapture: serverEnv.PAYPAL_AUTO_CAPTURE === "true",
+    webhookId: serverEnv.PAYPAL_WEBHOOK_ID ?? null,
+    publicClientId: publicEnv.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? null,
+  };
+}
+
+export function getPayPalClientEnv() {
+  if (!publicEnv.NEXT_PUBLIC_PAYPAL_CLIENT_ID) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_PAYPAL_CLIENT_ID. Configuralo para preparar el SDK cliente de PayPal.",
+    );
+  }
+
+  return {
+    clientId: publicEnv.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
   };
 }
 

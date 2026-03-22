@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 
+import CartEntry from "@/components/cart/CartEntry";
 import { Button } from "@/components/ui/button";
 import { novaForzaHomeContent } from "@/lib/data/nova-forza-content";
 import type { SiteSettings } from "@/lib/supabase/database.types";
@@ -51,6 +52,7 @@ export default function SiteHeader({ settings, currentUser = null }: Readonly<Si
         </nav>
 
         <div className="flex items-center gap-2 sm:gap-3">
+          <CartEntry />
           <Button
             asChild
             variant="outline"
@@ -94,6 +96,14 @@ export default function SiteHeader({ settings, currentUser = null }: Readonly<Si
                   <Button asChild size="sm" className="btn-athletic btn-primary w-full">
                     <Link href={primaryAction.href}>{primaryAction.label}</Link>
                   </Button>
+                </div>
+                <div className="mt-2 border-t border-black/8 pt-4">
+                  <Link
+                    href="/carrito"
+                    className="block border border-black/12 px-4 py-3 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#111111] transition hover:border-[#d71920]/35 hover:bg-[#fff7f7]"
+                  >
+                    Ver carrito
+                  </Link>
                 </div>
               </nav>
             </div>
