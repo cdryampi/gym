@@ -1,11 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
-
-import { __syncPickupRequestFromOrderTestables } from "../../../../apps/medusa/src/workflows/steps/sync-pickup-request-from-order";
+import { __syncPickupRequestFromOrderTestables } from "../sync-pickup-request-from-order"
 
 describe("sync pickup_request from order helpers", () => {
   it("hydrates an order snapshot from order_summary/order_item/order_line_item rows", async () => {
     const pgConnection = {
-      raw: vi.fn().mockResolvedValue({
+      raw: jest.fn().mockResolvedValue({
         rows: [
           {
             id: "order_01",
@@ -35,12 +33,12 @@ describe("sync pickup_request from order helpers", () => {
           },
         ],
       }),
-    };
+    }
 
     const order = await __syncPickupRequestFromOrderTestables.retrieveOrderSnapshot(
       pgConnection,
-      "order_01",
-    );
+      "order_01"
+    )
 
     expect(order).toEqual({
       id: "order_01",
@@ -61,8 +59,8 @@ describe("sync pickup_request from order helpers", () => {
           product_handle: "straps-de-levantamiento-pro",
         }),
       ],
-    });
-  });
+    })
+  })
 
   it("maps line items and selected options from the order snapshot plus cart metadata", () => {
     const lineItems = __syncPickupRequestFromOrderTestables.mapLineItems(
@@ -93,8 +91,8 @@ describe("sync pickup_request from order helpers", () => {
             Talla: "M",
           },
         },
-      ],
-    );
+      ]
+    )
 
     expect(lineItems).toEqual([
       {
@@ -121,12 +119,12 @@ describe("sync pickup_request from order helpers", () => {
           },
         ],
       },
-    ]);
-  });
+    ])
+  })
 
   it("resolves PayPal payment snapshot from cart_payment_collection/payment_session rows", async () => {
     const pgConnection = {
-      raw: vi.fn().mockResolvedValue({
+      raw: jest.fn().mockResolvedValue({
         rows: [
           {
             payment_collection_id: "pay_col_01",
@@ -155,13 +153,13 @@ describe("sync pickup_request from order helpers", () => {
           },
         ],
       }),
-    };
+    }
 
     const paymentSnapshot =
       await __syncPickupRequestFromOrderTestables.resolvePaymentSnapshotByCart(
         pgConnection,
-        "cart_01",
-      );
+        "cart_01"
+      )
 
     expect(paymentSnapshot).toEqual({
       payment_collection_id: "pay_col_01",
@@ -176,6 +174,6 @@ describe("sync pickup_request from order helpers", () => {
       exchange_rate: null,
       exchange_rate_source: null,
       exchange_rate_reference: null,
-    });
-  });
-});
+    })
+  })
+})
