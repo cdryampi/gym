@@ -1,10 +1,66 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const originalEnv = { ...process.env };
+const envKeysUnderTest = [
+  "NEXT_PUBLIC_COMMERCE_CURRENCY_CODE",
+  "NEXT_PUBLIC_COMMERCE_LOCALE",
+  "NEXT_PUBLIC_MEDUSA_BACKEND_URL",
+  "NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY",
+  "NEXT_PUBLIC_MEDUSA_REGION_ID",
+  "NEXT_PUBLIC_PAYPAL_CLIENT_ID",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "ADMIN_ALLOWED_EMAILS",
+  "ADMIN_PASSWORD",
+  "ADMIN_USER",
+  "COMMERCE_CURRENCY_CODE",
+  "COMMERCE_LOCALE",
+  "COMMERCE_PROVIDER",
+  "STORE_ADMIN_PROVIDER",
+  "MEDUSA_BACKEND_URL",
+  "MEDUSA_ADMIN_API_KEY",
+  "MEDUSA_PUBLISHABLE_KEY",
+  "MEDUSA_REGION_ID",
+  "PAYPAL_AUTO_CAPTURE",
+  "PAYPAL_CLIENT_ID",
+  "PAYPAL_CLIENT_SECRET",
+  "PAYPAL_ENVIRONMENT",
+  "PAYPAL_WEBHOOK_ID",
+  "PAYMENT_TEST_ADDRESS_1",
+  "PAYMENT_TEST_ADDRESS_2",
+  "PAYMENT_TEST_CARD_BRAND",
+  "PAYMENT_TEST_CARD_CVV",
+  "PAYMENT_TEST_CARD_EXPIRY",
+  "PAYMENT_TEST_CARD_NUMBER",
+  "PAYMENT_TEST_CITY",
+  "PAYMENT_TEST_COUNTRY_CODE",
+  "PAYMENT_TEST_DOCUMENT_NUMBER",
+  "PAYMENT_TEST_DOCUMENT_TYPE",
+  "PAYMENT_TEST_EMAIL",
+  "PAYMENT_TEST_FIRST_NAME",
+  "PAYMENT_TEST_LAST_NAME",
+  "PAYMENT_TEST_PHONE",
+  "PAYMENT_TEST_POSTAL_CODE",
+  "PAYMENT_TEST_STATE",
+  "RESEND_API_KEY",
+  "RESEND_FROM_EMAIL",
+  "SUPABASE_SERVICE_ROLE_KEY",
+] as const;
+
+function buildCleanEnv() {
+  const nextEnv = { ...originalEnv } as NodeJS.ProcessEnv;
+
+  for (const key of envKeysUnderTest) {
+    delete nextEnv[key];
+  }
+
+  return nextEnv;
+}
 
 async function importEnvModule(env: Record<string, string | undefined>) {
   vi.resetModules();
-  process.env = { ...originalEnv, ...env } as NodeJS.ProcessEnv;
+  process.env = { ...buildCleanEnv(), ...env } as NodeJS.ProcessEnv;
   return import("@/lib/env");
 }
 
