@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Building, Globe, Settings2, ShoppingBag, Users } from "lucide-react";
+import { BarChart3, Building, FileText, Globe, Settings2, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,6 +14,7 @@ const links = [
   { href: "/dashboard/leads", label: "Contactos", icon: Users },
   { href: "/dashboard/tienda", label: "Tienda", icon: ShoppingBag },
   { href: "/dashboard/web", label: "Diseno Web", icon: Globe },
+  { href: "/dashboard/cms", label: "Legales y Errores", icon: FileText },
   { href: "/dashboard/info", label: "Datos del Gym", icon: Building },
   { href: "/dashboard/advanced", label: "Ajustes Internos", icon: Settings2 },
 ];

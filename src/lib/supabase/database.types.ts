@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      cms_documents: {
+        Row: {
+          body_markdown: string;
+          cta_href: string | null;
+          cta_label: string | null;
+          is_published: boolean;
+          key: string;
+          kind: string;
+          seo_description: string;
+          seo_title: string;
+          slug: string;
+          summary: string;
+          title: string;
+          updated_at: string;
+        };
+        Insert: {
+          body_markdown?: string;
+          cta_href?: string | null;
+          cta_label?: string | null;
+          is_published?: boolean;
+          key: string;
+          kind: string;
+          seo_description?: string;
+          seo_title?: string;
+          slug: string;
+          summary?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          body_markdown?: string;
+          cta_href?: string | null;
+          cta_label?: string | null;
+          is_published?: boolean;
+          key?: string;
+          kind?: string;
+          seo_description?: string;
+          seo_title?: string;
+          slug?: string;
+          summary?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       leads: {
         Row: {
           created_at: string;
@@ -326,6 +371,7 @@ export type Database = {
 
 export type Lead = Database["public"]["Tables"]["leads"]["Row"];
 export type LeadStatus = Database["public"]["Enums"]["lead_status"];
+export type DBCmsDocument = Database["public"]["Tables"]["cms_documents"]["Row"];
 export type DBMemberCommerceCustomer = Database["public"]["Tables"]["member_commerce_customers"]["Row"];
 export type SiteSettings = Database["public"]["Tables"]["site_settings"]["Row"];
 export type DBProduct = Database["public"]["Tables"]["products"]["Row"];

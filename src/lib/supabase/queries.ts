@@ -2,11 +2,18 @@ import { cache } from "react";
 
 import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 
+import {
+  cmsDocumentKeys,
+  getDefaultCmsDocument,
+  defaultCmsDocumentList,
+  type CmsDocumentKey,
+} from "@/lib/data/default-cms";
 import { defaultSiteSettings } from "@/lib/data/default-content";
 import { hasSupabasePublicEnv, hasSupabaseServiceRole } from "@/lib/env";
 import { parseSeoKeywordsInput } from "@/lib/seo";
 import { resolveTopbarVariant, toIsoDateTimeOrNull } from "@/lib/topbar";
 import type { ContactFormValues } from "@/lib/validators/contact";
+import type { CmsDocumentValues } from "@/lib/validators/cms-document";
 import type { SiteSettingsValues } from "@/lib/validators/settings";
 import { trimToNull } from "@/lib/utils";
 import {
@@ -17,7 +24,14 @@ import {
 } from "@/lib/data/store";
 import type { StoreCategoryValues, StoreProductValues } from "@/lib/validators/store";
 
-import type { Database, DBProduct, Lead, LeadStatus, SiteSettings } from "./database.types";
+import type {
+  Database,
+  DBCmsDocument,
+  DBProduct,
+  Lead,
+  LeadStatus,
+  SiteSettings,
+} from "./database.types";
 import {
   createSupabaseAdminClient,
   createSupabasePublicClient,
@@ -38,6 +52,17 @@ export interface DashboardSnapshot extends MarketingSnapshot {
   leads: Lead[];
 }
 
+export interface CmsSnapshot {
+  documents: DBCmsDocument[];
+  byKey: Record<CmsDocumentKey, DBCmsDocument>;
+  isFallback: boolean;
+  warning: string | null;
+}
+
+function isCmsDocumentKey(value: string | null | undefined): value is CmsDocumentKey {
+  return cmsDocumentKeys.includes(value as CmsDocumentKey);
+}
+
 function safeString(value: string | null | undefined, fallback: string) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : fallback;
@@ -49,6 +74,49 @@ function safeStringArray(value: string[] | null | undefined) {
   }
 
   return value.map((item) => item.trim()).filter(Boolean);
+}
+
+export function normalizeCmsDocument(
+  row: Partial<DBCmsDocument> | null | undefined,
+  fallbackKey: CmsDocumentKey = "system-error-generic",
+): DBCmsDocument {
+  const key = isCmsDocumentKey(row?.key) ? row.key : fallbackKey;
+  const fallback = getDefaultCmsDocument(key);
+
+  return {
+    ...fallback,
+    ...row,
+    key,
+    kind: row?.kind === "system" || row?.kind === "legal" ? row.kind : fallback.kind,
+    slug: safeString(row?.slug, fallback.slug),
+    title: safeString(row?.title, fallback.title),
+    summary: trimToNull(row?.summary) ?? fallback.summary,
+    body_markdown: trimToNull(row?.body_markdown) ?? fallback.body_markdown,
+    cta_label: trimToNull(row?.cta_label) ?? fallback.cta_label,
+    cta_href: trimToNull(row?.cta_href) ?? fallback.cta_href,
+    seo_title: safeString(row?.seo_title, fallback.seo_title),
+    seo_description: safeString(row?.seo_description, fallback.seo_description),
+    is_published: row?.is_published ?? fallback.is_published,
+    updated_at: row?.updated_at ?? fallback.updated_at,
+  };
+}
+
+export function normalizeCmsDocuments(rows: Partial<DBCmsDocument>[] | null | undefined) {
+  const byKey = {} as Record<CmsDocumentKey, DBCmsDocument>;
+
+  for (const key of cmsDocumentKeys) {
+    byKey[key] = getDefaultCmsDocument(key);
+  }
+
+  for (const row of rows ?? []) {
+    if (!isCmsDocumentKey(row.key)) {
+      continue;
+    }
+
+    byKey[row.key] = normalizeCmsDocument(row, row.key);
+  }
+
+  return cmsDocumentKeys.map((key) => byKey[key]);
 }
 
 export function normalizeSiteSettings(row: Partial<SiteSettings> | null | undefined): SiteSettings {
@@ -173,6 +241,25 @@ export function buildSiteSettingsPayload(
   };
 }
 
+export function buildCmsDocumentPayload(
+  values: CmsDocumentValues,
+): Database["public"]["Tables"]["cms_documents"]["Insert"] {
+  return {
+    key: values.key,
+    kind: values.kind,
+    slug: values.slug.trim(),
+    title: values.title.trim(),
+    summary: values.summary.trim(),
+    body_markdown: values.body_markdown.trim(),
+    cta_label: trimToNull(values.cta_label),
+    cta_href: trimToNull(values.cta_href),
+    seo_title: values.seo_title.trim(),
+    seo_description: values.seo_description.trim(),
+    is_published: values.is_published,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 function mapSupabaseError(error: PostgrestError | Error | null | undefined, entityName: string) {
   const errorRecord = error as { message?: string } | null | undefined;
   const message = error instanceof Error ? error.message : errorRecord?.message;
@@ -267,6 +354,97 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   };
 }
 
+function toCmsSnapshot(
+  documents: DBCmsDocument[],
+  options?: { isFallback?: boolean; warning?: string | null },
+): CmsSnapshot {
+  const byKey = {} as Record<CmsDocumentKey, DBCmsDocument>;
+
+  for (const document of documents) {
+    byKey[document.key as CmsDocumentKey] = document;
+  }
+
+  return {
+    documents,
+    byKey,
+    isFallback: options?.isFallback ?? false,
+    warning: options?.warning ?? null,
+  };
+}
+
+export const getPublicCmsSnapshot = cache(async (): Promise<CmsSnapshot> => {
+  const fallbackDocuments = defaultCmsDocumentList.map((document) => ({ ...document }));
+
+  if (!hasSupabasePublicEnv()) {
+    return toCmsSnapshot(fallbackDocuments, {
+      isFallback: true,
+      warning: "Supabase no esta configurado. Se muestra contenido legal fallback.",
+    });
+  }
+
+  try {
+    const supabase = createSupabasePublicClient();
+    const { data } = await supabase
+      .from("cms_documents")
+      .select("*")
+      .eq("is_published", true)
+      .order("key", { ascending: true });
+
+    return toCmsSnapshot(normalizeCmsDocuments(data), {
+      isFallback: false,
+      warning: null,
+    });
+  } catch {
+    return toCmsSnapshot(fallbackDocuments, {
+      isFallback: true,
+      warning: "No se pudo cargar el CMS legal. Se muestran textos fallback.",
+    });
+  }
+});
+
+export async function getDashboardCmsSnapshot(): Promise<CmsSnapshot> {
+  const fallbackDocuments = defaultCmsDocumentList.map((document) => ({ ...document }));
+
+  if (!hasSupabasePublicEnv()) {
+    return toCmsSnapshot(fallbackDocuments, {
+      isFallback: true,
+      warning: "Supabase no esta configurado. El CMS usa contenido fallback.",
+    });
+  }
+
+  if (!hasSupabaseServiceRole()) {
+    return toCmsSnapshot(fallbackDocuments, {
+      isFallback: true,
+      warning: "Configura SUPABASE_SERVICE_ROLE_KEY para editar contenido legal y de sistema.",
+    });
+  }
+
+  try {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("cms_documents")
+      .select("*")
+      .order("key", { ascending: true });
+
+    if (error) {
+      return toCmsSnapshot(fallbackDocuments, {
+        isFallback: true,
+        warning: "No se pudo cargar el CMS real. Se muestran textos fallback.",
+      });
+    }
+
+    return toCmsSnapshot(normalizeCmsDocuments(data), {
+      isFallback: false,
+      warning: null,
+    });
+  } catch {
+    return toCmsSnapshot(fallbackDocuments, {
+      isFallback: true,
+      warning: "No se pudo cargar el CMS real. Se muestran textos fallback.",
+    });
+  }
+}
+
 export async function createLeadRecord(supabase: GymSupabaseClient, values: ContactFormValues) {
   const payload = buildLeadInsertPayload(values);
   const { error } = await supabase.from("leads").insert(payload);
@@ -285,6 +463,99 @@ export async function saveSiteSettingsRecord(
 
   if (error) {
     throw new Error(mapSupabaseError(error, "los ajustes"));
+  }
+}
+
+export async function listCmsDocumentsRecord(
+  supabase: GymSupabaseClient,
+  options?: { publishedOnly?: boolean },
+) {
+  let query = supabase.from("cms_documents").select("*").order("key", { ascending: true });
+
+  if (options?.publishedOnly) {
+    query = query.eq("is_published", true);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "los documentos CMS"));
+  }
+
+  return normalizeCmsDocuments(data);
+}
+
+export async function getCmsDocumentByKeyRecord(
+  supabase: GymSupabaseClient,
+  key: CmsDocumentKey,
+  options?: { publishedOnly?: boolean },
+) {
+  let query = supabase.from("cms_documents").select("*").eq("key", key);
+
+  if (options?.publishedOnly) {
+    query = query.eq("is_published", true);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "el documento CMS"));
+  }
+
+  return data ? normalizeCmsDocument(data, key) : null;
+}
+
+export async function getCmsDocumentBySlugRecord(
+  supabase: GymSupabaseClient,
+  slug: string,
+  options?: { publishedOnly?: boolean },
+) {
+  let query = supabase.from("cms_documents").select("*").eq("slug", slug);
+
+  if (options?.publishedOnly) {
+    query = query.eq("is_published", true);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "el documento CMS"));
+  }
+
+  return data && isCmsDocumentKey(data.key) ? normalizeCmsDocument(data, data.key) : null;
+}
+
+async function assertUniqueCmsSlug(
+  supabase: GymSupabaseClient,
+  slug: string,
+  currentKey: CmsDocumentKey,
+) {
+  const { data, error } = await supabase
+    .from("cms_documents")
+    .select("key")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error("No se pudo validar el slug del documento.");
+  }
+
+  if (data && data.key !== currentKey) {
+    throw new Error("Ya existe otro documento con ese slug.");
+  }
+}
+
+export async function saveCmsDocumentRecord(
+  supabase: GymSupabaseClient,
+  values: CmsDocumentValues,
+) {
+  const payload = buildCmsDocumentPayload(values);
+  await assertUniqueCmsSlug(supabase, payload.slug, values.key);
+
+  const { error } = await supabase.from("cms_documents").upsert(payload);
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "el documento CMS"));
   }
 }
 

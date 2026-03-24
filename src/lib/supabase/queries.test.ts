@@ -1,6 +1,8 @@
 import {
+  buildCmsDocumentPayload,
   buildLeadInsertPayload,
   buildSiteSettingsPayload,
+  normalizeCmsDocuments,
   normalizeSiteSettings,
 } from "@/lib/supabase/queries";
 
@@ -87,5 +89,44 @@ describe("supabase queries helpers", () => {
     expect(payload.id).toBe(1);
     expect(payload.hero_video_url).toBe("/video/video.mp4");
     expect(payload.topbar_expires_at).toBe(new Date("2026-04-15T18:30").toISOString());
+  });
+
+  it("normalizes CMS documents and fills missing defaults", () => {
+    const documents = normalizeCmsDocuments([
+      {
+        key: "legal-privacy",
+        title: "Privacidad custom",
+        slug: "privacidad",
+      },
+    ]);
+
+    expect(documents).toHaveLength(10);
+    expect(documents.find((document) => document.key === "legal-privacy")?.title).toBe(
+      "Privacidad custom",
+    );
+    expect(documents.find((document) => document.key === "system-error-access")?.slug).toBe(
+      "error-acceso",
+    );
+  });
+
+  it("builds a CMS payload trimming optional fields", () => {
+    const payload = buildCmsDocumentPayload({
+      key: "system-cookie-banner",
+      kind: "system",
+      slug: "banner-cookies",
+      title: " Banner ",
+      summary: " Resumen operativo ",
+      body_markdown: " Texto del banner ",
+      cta_label: " ",
+      cta_href: "",
+      seo_title: " SEO title ",
+      seo_description: " SEO description ",
+      is_published: true,
+    });
+
+    expect(payload.title).toBe("Banner");
+    expect(payload.cta_label).toBeNull();
+    expect(payload.cta_href).toBeNull();
+    expect(payload.seo_title).toBe("SEO title");
   });
 });

@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { requireAdminUser } from "@/lib/auth";
 import { hasSupabaseServiceRole } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
-import { saveSiteSettingsRecord, updateLeadStatusRecord } from "@/lib/supabase/queries";
+import {
+  saveCmsDocumentRecord,
+  saveSiteSettingsRecord,
+  updateLeadStatusRecord,
+} from "@/lib/supabase/queries";
+import { cmsDocumentSchema, type CmsDocumentValues } from "@/lib/validators/cms-document";
 import { leadStatusSchema } from "@/lib/validators/lead";
 import { siteSettingsSchema, type SiteSettingsValues } from "@/lib/validators/settings";
 
@@ -24,9 +29,19 @@ async function getAuthenticatedSupabase() {
 function revalidateApp() {
   revalidatePath("/");
   revalidatePath("/dashboard");
-  revalidatePath("/dashboard/content");
+  revalidatePath("/dashboard/cms");
   revalidatePath("/dashboard/leads");
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/web");
+  revalidatePath("/dashboard/info");
+  revalidatePath("/dashboard/advanced");
+  revalidatePath("/privacidad");
+  revalidatePath("/cookies");
+  revalidatePath("/terminos");
+  revalidatePath("/desistimiento");
+  revalidatePath("/aviso-legal");
+  revalidatePath("/acceso-restringido");
+  revalidatePath("/tienda");
+  revalidatePath("/carrito");
 }
 
 export async function saveSiteSettings(values: SiteSettingsValues) {
@@ -42,4 +57,11 @@ export async function updateLeadStatus(id: string, status: "new" | "contacted" |
   await updateLeadStatusRecord(supabase, id, parsed.status);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/leads");
+}
+
+export async function saveCmsDocument(values: CmsDocumentValues) {
+  const parsed = cmsDocumentSchema.parse(values);
+  const supabase = await getAuthenticatedSupabase();
+  await saveCmsDocumentRecord(supabase, parsed);
+  revalidateApp();
 }
