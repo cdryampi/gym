@@ -201,6 +201,10 @@ export const novaForzaHomeContent = {
   },
   footerQuickLinks: [
     "Nuestra historia",
+    "Metodología",
+    "Entrenamientos",
+    "Membresías",
+    "Tienda Online",
     "Preguntas frecuentes",
     "Politicas de privacidad",
     "Libro de reclamaciones",

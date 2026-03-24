@@ -107,6 +107,7 @@ describe("medusa store admin repository mappers", () => {
           specifications: [{ label: "Material", value: "Algodon" }],
           cta_label: "Reservar",
           order: 3,
+          paypal_price_usd: 4.75,
           compare_price: 19.99,
           eyebrow: "Top",
         },
@@ -117,6 +118,7 @@ describe("medusa store admin repository mappers", () => {
     expect(mapped).not.toBeNull();
     expect(mapped?.id).toBe("prod_1");
     expect(mapped?.price).toBe(15.99);
+    expect(mapped?.paypal_price_usd).toBe(4.75);
     expect(mapped?.currency).toBe("PEN");
     expect(mapped?.category).toBe("accesorios");
     expect(mapped?.category_id).toBe("pcat_child");
@@ -150,6 +152,7 @@ describe("medusa store admin repository mappers", () => {
         short_description: "Descripcion corta",
         description: "Descripcion larga",
         price: 15.99,
+        paypal_price_usd: 4.75,
         compare_price: "",
         discount_label: "",
         currency: "PEN",
@@ -189,6 +192,7 @@ describe("medusa store admin repository mappers", () => {
       "/images/products/straps.png",
       "/images/products/nova-guantes.png",
     ]);
+    expect(payload.metadata.paypal_price_usd).toBe(4.75);
   });
 
   it("includes the storefront sales channel in create and update payloads", () => {
@@ -200,6 +204,7 @@ describe("medusa store admin repository mappers", () => {
       short_description: "Descripcion corta",
       description: "Descripcion larga",
       price: 15.99,
+      paypal_price_usd: 4.75,
       compare_price: "",
       discount_label: "",
       currency: "PEN",

@@ -21,7 +21,7 @@ export default function SiteHeader({ settings, currentUser = null }: Readonly<Si
     : { href: "/acceso", label: "Acceso" };
 
   return (
-    <header className="border-b border-black/5 bg-[#f5f5f0] py-4 lg:py-6">
+    <header className="border-b border-black/5 bg-[#f5f5f0] py-5 lg:py-7">
       <div className="section-shell flex items-center justify-between gap-8">
         <Link
           href="/"
@@ -59,14 +59,14 @@ export default function SiteHeader({ settings, currentUser = null }: Readonly<Si
             size="sm"
             className="hidden sm:size-default lg:inline-flex"
           >
-            <Link href={secondaryAction.href}>{secondaryAction.label}</Link>
+            <Link href={secondaryAction.href} className="px-6">{secondaryAction.label}</Link>
           </Button>
           <Button
             asChild
             size="sm"
             className="btn-athletic btn-primary hidden sm:size-default lg:inline-flex"
           >
-            <Link href={primaryAction.href}>{primaryAction.label}</Link>
+            <Link href={primaryAction.href} className="px-6">{primaryAction.label}</Link>
           </Button>
 
           <details className="relative lg:hidden">

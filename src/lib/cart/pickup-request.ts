@@ -1,7 +1,9 @@
 import type {
+  CartPaymentSessionStatus,
   PickupRequestDetail,
   PickupRequestEmailStatus,
   PickupRequestLineItem,
+  PickupRequestPaymentStatus,
   PickupRequestStatus,
   SelectedVariant,
 } from "@/lib/cart/types";
@@ -38,8 +40,21 @@ export type MedusaPickupRequest = {
   item_count?: number | null;
   subtotal?: number | null;
   total?: number | null;
+  charged_currency_code?: string | null;
+  charged_total?: number | null;
+  exchange_rate?: number | null;
+  exchange_rate_source?: string | null;
+  exchange_rate_reference?: string | null;
   line_items_snapshot?: MedusaPickupRequestLineItem[] | null;
   source?: string | null;
+  order_id?: string | null;
+  payment_collection_id?: string | null;
+  payment_provider?: string | null;
+  payment_status?: string | null;
+  paypal_order_id?: string | null;
+  paypal_capture_id?: string | null;
+  payment_authorized_at?: string | null;
+  payment_captured_at?: string | null;
   email_status?: string | null;
   email_sent_at?: string | null;
   email_error?: string | null;
@@ -59,6 +74,15 @@ export const pickupRequestEmailStatusLabels: Record<PickupRequestEmailStatus, st
   pending: "Pendiente",
   sent: "Enviado",
   failed: "Fallido",
+};
+
+export const pickupRequestPaymentStatusLabels: Record<PickupRequestPaymentStatus, string> = {
+  pending: "Pendiente",
+  authorized: "Autorizado",
+  captured: "Cobrado",
+  requires_more: "Requiere accion",
+  error: "Error",
+  canceled: "Cancelado",
 };
 
 export function getPickupRequestStatusTone(status: PickupRequestStatus) {
@@ -89,12 +113,43 @@ export function getPickupRequestEmailTone(status: PickupRequestEmailStatus) {
   }
 }
 
+export function getPickupRequestPaymentTone(
+  status: PickupRequestPaymentStatus | CartPaymentSessionStatus,
+) {
+  switch (status) {
+    case "captured":
+      return "success" as const;
+    case "authorized":
+      return "default" as const;
+    case "requires_more":
+      return "warning" as const;
+    case "error":
+    case "canceled":
+      return "warning" as const;
+    case "pending":
+    default:
+      return "muted" as const;
+  }
+}
+
 function asString(value: unknown) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }
 
 function asNumber(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+
+  return 0;
 }
 
 export function normalizePickupRequestStatus(value: unknown): PickupRequestStatus {
@@ -114,6 +169,20 @@ export function normalizePickupRequestEmailStatus(value: unknown): PickupRequest
   switch (value) {
     case "sent":
     case "failed":
+      return value;
+    case "pending":
+    default:
+      return "pending";
+  }
+}
+
+export function normalizePickupRequestPaymentStatus(value: unknown): PickupRequestPaymentStatus {
+  switch (value) {
+    case "authorized":
+    case "captured":
+    case "requires_more":
+    case "error":
+    case "canceled":
       return value;
     case "pending":
     default:
@@ -177,10 +246,29 @@ export function mapPickupRequest(pickupRequest: MedusaPickupRequest): PickupRequ
     itemCount: asNumber(pickupRequest.item_count),
     subtotal: asNumber(pickupRequest.subtotal),
     total: asNumber(pickupRequest.total),
+    chargedCurrencyCode: asString(pickupRequest.charged_currency_code)?.toUpperCase() ?? null,
+    chargedTotal:
+      pickupRequest.charged_total === null || pickupRequest.charged_total === undefined
+        ? null
+        : asNumber(pickupRequest.charged_total),
+    exchangeRate:
+      pickupRequest.exchange_rate === null || pickupRequest.exchange_rate === undefined
+        ? null
+        : asNumber(pickupRequest.exchange_rate),
+    exchangeRateSource: asString(pickupRequest.exchange_rate_source),
+    exchangeRateReference: asString(pickupRequest.exchange_rate_reference),
     lineItems: Array.isArray(pickupRequest.line_items_snapshot)
       ? pickupRequest.line_items_snapshot.map((lineItem) => mapLineItem(lineItem))
       : [],
     source: asString(pickupRequest.source) ?? "gym-storefront",
+    orderId: asString(pickupRequest.order_id),
+    paymentCollectionId: asString(pickupRequest.payment_collection_id),
+    paymentProvider: asString(pickupRequest.payment_provider),
+    paymentStatus: normalizePickupRequestPaymentStatus(pickupRequest.payment_status),
+    paypalOrderId: asString(pickupRequest.paypal_order_id),
+    paypalCaptureId: asString(pickupRequest.paypal_capture_id),
+    paymentAuthorizedAt: asString(pickupRequest.payment_authorized_at),
+    paymentCapturedAt: asString(pickupRequest.payment_captured_at),
     emailStatus: normalizePickupRequestEmailStatus(pickupRequest.email_status),
     emailSentAt: asString(pickupRequest.email_sent_at),
     emailError: asString(pickupRequest.email_error),

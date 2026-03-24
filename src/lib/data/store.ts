@@ -220,6 +220,7 @@ export function toStoreProductFormValues(product?: StoreDashboardProduct | null)
     short_description: product?.short_description ?? "",
     description: product?.description ?? "",
     price: product?.price ?? 0,
+    paypal_price_usd: product?.paypal_price_usd ?? "",
     compare_price: product?.compare_price ?? "",
     discount_label: product?.discount_label ?? "",
     currency: product?.currency ?? getDefaultCommerceCurrencyCode(),
@@ -261,6 +262,10 @@ export function normalizeStoreProductPayload(values: StoreProductValues) {
     short_description: values.short_description.trim(),
     description: values.description.trim(),
     price: values.price,
+    paypal_price_usd:
+      typeof values.paypal_price_usd === "number" && Number.isFinite(values.paypal_price_usd)
+        ? values.paypal_price_usd
+        : null,
     compare_price:
       typeof values.compare_price === "number" && Number.isFinite(values.compare_price)
         ? values.compare_price

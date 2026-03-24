@@ -186,6 +186,7 @@ function buildStoreProduct(overrides: Partial<MedusaStoreProduct> = {}) {
       specifications: [{ label: "Peso neto", value: "2 kg / 4.4 lbs" }],
       cta_label: "Reservar para recogida",
       discount_label: "Ahorra 15%",
+      paypal_price_usd: 13.95,
       order: 2,
     },
     ...overrides,
@@ -200,6 +201,7 @@ describe("medusa commerce", () => {
     expect(product?.slug).toBe("whey-nova-forza");
     expect(product?.category).toBe("suplementos");
     expect(product?.price).toBe(49.99);
+    expect(product?.paypal_price_usd).toBe(13.95);
     expect(product?.compare_price).toBe(58.99);
     expect(product?.discount_label).toBe("Ahorra 15%");
     expect(product?.pickup_summary).toBe("Recogida en Nova Forza Gym");

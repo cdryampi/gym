@@ -79,6 +79,7 @@ export interface Product {
   short_description: string;
   description: string;
   price: number;
+  paypal_price_usd: number | null;
   compare_price?: number | null;
   discount_label?: string;
   currency: string;

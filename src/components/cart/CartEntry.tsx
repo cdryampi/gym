@@ -44,7 +44,7 @@ export default function CartEntry() {
           <DialogHeader>
             <DialogTitle>Tu carrito</DialogTitle>
             <DialogDescription>
-              Gestiona tus productos y termina la solicitud de recogida desde la pagina completa del
+              Gestiona tus productos y termina la solicitud de recogida desde la página completa del
               carrito.
             </DialogDescription>
           </DialogHeader>
@@ -57,7 +57,7 @@ export default function CartEntry() {
 
           {!cart || cart.items.length === 0 ? (
             <div className="mt-6 border border-dashed border-black/12 px-6 py-10 text-center">
-              <p className="text-sm text-[#5f6368]">Todavia no has anadido productos al carrito.</p>
+              <p className="text-sm text-[#5f6368]">Todavía no has añadido productos al carrito.</p>
               <div className="mt-6">
                 <Button asChild>
                   <Link href="/tienda" onClick={() => setDrawerOpen(false)}>

@@ -8,8 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { formatCartAmount } from "@/lib/cart/format";
 import {
   getPickupRequestEmailTone,
+  getPickupRequestPaymentTone,
   getPickupRequestStatusTone,
   pickupRequestEmailStatusLabels,
+  pickupRequestPaymentStatusLabels,
   pickupRequestStatusLabels,
 } from "@/lib/cart/pickup-request";
 import { getPickupRequestsSnapshot } from "@/lib/data/pickup-requests";
@@ -32,7 +34,7 @@ export default async function DashboardStorePickupRequestsPage() {
     <div className="space-y-6">
       <DashboardPageHeader
         title="Pedidos pickup"
-        description="Solicitudes enviadas desde la tienda para recogida local, con control de estado y seguimiento del email."
+        description="Solicitudes enviadas desde la tienda para recogida local, con control de estado, pago y seguimiento del email."
       />
 
       {snapshot.warning ? <DashboardNotice message={snapshot.warning} /> : null}
@@ -47,8 +49,8 @@ export default async function DashboardStorePickupRequestsPage() {
               Todavia no hay pedidos pickup enviados.
             </p>
             <p className="mt-2 text-sm leading-6 text-[#5f6368]">
-              Cuando alguien cierre el carrito desde la tienda, veras aqui su referencia, estado y
-              entrega del email.
+              Cuando alguien cierre el carrito desde la tienda, veras aqui su referencia, estado,
+              pago y entrega del email.
             </p>
           </AdminSurface>
         ) : (
@@ -57,7 +59,7 @@ export default async function DashboardStorePickupRequestsPage() {
               <AdminSurface
                 key={pickupRequest.id}
                 inset
-                className="grid gap-4 p-4 md:grid-cols-[minmax(0,1.2fr)_150px_160px_auto]"
+                className="grid gap-4 p-4 md:grid-cols-[minmax(0,1.2fr)_150px_220px_auto]"
               >
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -70,31 +72,50 @@ export default async function DashboardStorePickupRequestsPage() {
                     <Badge variant={getPickupRequestEmailTone(pickupRequest.emailStatus)}>
                       {pickupRequestEmailStatusLabels[pickupRequest.emailStatus]}
                     </Badge>
+                    <Badge variant={getPickupRequestPaymentTone(pickupRequest.paymentStatus)}>
+                      {pickupRequestPaymentStatusLabels[pickupRequest.paymentStatus]}
+                    </Badge>
                   </div>
                   <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#7a7f87]">
                     {formatDate(pickupRequest.createdAt)}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#5f6368]">{pickupRequest.email}</p>
                   <p className="mt-1 text-sm leading-6 text-[#5f6368]">
-                    {pickupRequest.customerId ? "Socio vinculado" : "Invitado"} ·{" "}
+                    {pickupRequest.customerId ? "Socio vinculado" : "Invitado"} |{" "}
                     {pickupRequest.itemCount} articulo(s)
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-[#5f6368]">
+                    Order: {pickupRequest.orderId ?? "Pendiente"} | Proveedor:{" "}
+                    {pickupRequest.paymentProvider ?? "paypal"}
                   </p>
                 </div>
 
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
-                    Total
+                    Pedido / cobro
                   </p>
                   <p className="mt-2 text-sm font-semibold text-[#111111]">
                     {formatCartAmount(pickupRequest.total, pickupRequest.currencyCode)}
                   </p>
+                  {pickupRequest.chargedCurrencyCode && pickupRequest.chargedTotal !== null ? (
+                    <p className="mt-1 text-sm leading-6 text-[#5f6368]">
+                      PayPal:{" "}
+                      {formatCartAmount(
+                        pickupRequest.chargedTotal,
+                        pickupRequest.chargedCurrencyCode,
+                      )}
+                    </p>
+                  ) : null}
                 </div>
 
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
-                    Email
+                    Pago y email
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#5f6368]">
+                    {pickupRequest.paymentCapturedAt
+                      ? `Cobrado: ${formatDate(pickupRequest.paymentCapturedAt)}. `
+                      : ""}
                     {pickupRequest.emailStatus === "failed" && pickupRequest.emailError
                       ? pickupRequest.emailError
                       : pickupRequest.emailSentAt

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { getCommerceCatalog } from "@/lib/commerce/catalog";
 import {
   formatProductPrice,
+  formatUsdPrice,
   getFeaturedProducts,
   productCategoryLabels,
 } from "@/lib/data/products";
@@ -85,9 +86,16 @@ export default async function ProductsSection() {
                     {product.short_description}
                   </p>
                   <div className="mt-6 flex items-center justify-between gap-4">
-                    <p className="text-lg font-semibold text-[#111111]">
-                      {formatProductPrice(product)}
-                    </p>
+                    <div>
+                      <p className="text-lg font-semibold text-[#111111]">
+                        {formatProductPrice(product)}
+                      </p>
+                      {product.paypal_price_usd !== null ? (
+                        <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5f6368]">
+                          PayPal: {formatUsdPrice(product.paypal_price_usd)}
+                        </p>
+                      ) : null}
+                    </div>
                     <Button asChild className="btn-athletic btn-primary !h-12 !px-6 !text-xs">
                       <Link href={`/tienda/${product.slug}`}>Ver ficha</Link>
                     </Button>

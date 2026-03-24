@@ -46,6 +46,7 @@ describe("store data helpers", () => {
       short_description: "Descripcion corta valida",
       description: "Descripcion completa suficientemente larga para el validador.",
       price: 49.99,
+      paypal_price_usd: 13.95,
       compare_price: "",
       discount_label: " Oferta ",
       currency: "pen",
@@ -69,6 +70,7 @@ describe("store data helpers", () => {
     expect(categoryPayload.slug).toBe("proteinas");
     expect(productPayload.slug).toBe("whey-nova");
     expect(productPayload.currency).toBe("PEN");
+    expect(productPayload.paypal_price_usd).toBe(13.95);
     expect(productPayload.images).toEqual(["/img/a.png", "/img/b.png"]);
     expect(productPayload.specifications?.[0]).toEqual({ label: "Peso", value: "2 kg" });
   });

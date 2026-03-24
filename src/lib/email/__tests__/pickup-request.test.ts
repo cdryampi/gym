@@ -25,6 +25,11 @@ function buildPickupRequest(overrides: Partial<PickupRequestDetail> = {}): Picku
     itemCount: 2,
     subtotal: 99.98,
     total: 99.98,
+    chargedCurrencyCode: "USD",
+    chargedTotal: 29.6,
+    exchangeRate: 3.377,
+    exchangeRateSource: "BCRP PD04640PD",
+    exchangeRateReference: "19.Mar.26",
     lineItems: [
       {
         id: "line_01",
@@ -43,6 +48,14 @@ function buildPickupRequest(overrides: Partial<PickupRequestDetail> = {}): Picku
       },
     ],
     source: "gym-storefront",
+    orderId: null,
+    paymentCollectionId: null,
+    paymentProvider: null,
+    paymentStatus: "pending",
+    paypalOrderId: null,
+    paypalCaptureId: null,
+    paymentAuthorizedAt: null,
+    paymentCapturedAt: null,
     emailStatus: "pending",
     emailSentAt: null,
     emailError: null,
@@ -71,16 +84,17 @@ describe("pickup request emails", () => {
     expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "socio@gym.com",
-        subject: "Nova Forza | Pedido pickup NF-20260322-ABC123",
-        html: expect.stringContaining("Resumen de tu pedido pickup"),
-        text: expect.stringContaining("Recogida local, sin pago online."),
+        subject: "Nova Forza | Pedido pagado NF-20260322-ABC123",
+        html: expect.stringMatching(/Tu pedido pagado para recogida[\s\S]*Cargo PayPal/),
+        text: expect.stringContaining("Recogida local, pago online confirmado."),
       }),
     );
     expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: "club@novaforza.pe",
-        subject: "Nova Forza | Nuevo pedido pickup NF-20260322-ABC123",
+        subject: "Nova Forza | Nuevo pedido pagado NF-20260322-ABC123",
         html: expect.stringContaining("Pasare despues de las 19:00 &lt;gracias&gt;"),
+        text: expect.stringContaining("Cargo PayPal:"),
       }),
     );
   });
@@ -97,7 +111,7 @@ describe("pickup request emails", () => {
     expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledTimes(1);
   });
 
-  it("aggregates resend failures without losing the successful attempts", async () => {
+  it("does not fail the whole flow when only the internal email fails", async () => {
     pickupEmailMocks.sendResendEmail
       .mockResolvedValueOnce({ id: "re_customer" })
       .mockRejectedValueOnce(new Error("Resend timeout"));
@@ -108,9 +122,23 @@ describe("pickup request emails", () => {
         siteName: "Nova Forza",
         internalRecipient: "club@novaforza.pe",
       }),
-    ).rejects.toThrow("Resend timeout");
+    ).resolves.toBeUndefined();
 
     expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails when the customer email cannot be delivered", async () => {
+    pickupEmailMocks.sendResendEmail
+      .mockRejectedValueOnce(new Error("Resend timeout"))
+      .mockResolvedValueOnce({ id: "re_internal" });
+
+    await expect(
+      sendPickupRequestEmails({
+        pickupRequest: buildPickupRequest(),
+        siteName: "Nova Forza",
+        internalRecipient: "club@novaforza.pe",
+      }),
+    ).rejects.toThrow("Resend timeout");
   });
 
   it("fails early when the pickup request has no customer email", async () => {

@@ -58,8 +58,9 @@ describe("StoreProductForm", () => {
       screen.getByLabelText("Descripcion completa"),
       "Descripcion completa suficientemente larga para pasar validacion.",
     );
-    await user.clear(screen.getByLabelText("Precio"));
-    await user.type(screen.getByLabelText("Precio"), "49.99");
+    await user.clear(screen.getByLabelText("Precio real"));
+    await user.type(screen.getByLabelText("Precio real"), "49.99");
+    await user.type(screen.getByLabelText("Precio estimado PayPal (USD)"), "13.95");
     await user.type(screen.getByLabelText("Imagenes (una por linea)"), "/img/whey.png");
     await user.clear(screen.getByLabelText("CTA"));
     await user.type(screen.getByLabelText("CTA"), "Reservar");
@@ -70,6 +71,7 @@ describe("StoreProductForm", () => {
         expect.objectContaining({
           name: "Whey Nova",
           category_id: "child-1",
+          paypal_price_usd: 13.95,
           cta_label: "Reservar",
         }),
         undefined,

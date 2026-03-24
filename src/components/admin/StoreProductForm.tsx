@@ -161,13 +161,13 @@ export default function StoreProductForm({
           )}
         />
 
-        <div className="grid gap-5 md:grid-cols-4">
+        <div className="grid gap-5 md:grid-cols-5">
           <FormField
             control={form.control}
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Precio</FormLabel>
+                <FormLabel>Precio real</FormLabel>
                 <FormControl>
                   <Input
                     type="number"
@@ -176,6 +176,29 @@ export default function StoreProductForm({
                     {...field}
                     value={typeof field.value === "number" ? field.value : 0}
                     onChange={(event) => field.onChange(event.target.valueAsNumber || 0)}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="paypal_price_usd"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Precio estimado PayPal (USD)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={
+                      typeof field.value === "number" || typeof field.value === "string"
+                        ? field.value
+                        : ""
+                    }
+                    onChange={(event) => field.onChange(event.target.value)}
                   />
                 </FormControl>
                 <FormMessage />

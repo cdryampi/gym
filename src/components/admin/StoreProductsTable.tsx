@@ -3,7 +3,7 @@
 import Link from "next/link";
 
 import type { StoreDashboardProduct } from "@/lib/data/store";
-import { formatProductPrice, productStockStatusLabels } from "@/lib/data/products";
+import { formatProductPrice, formatUsdPrice, productStockStatusLabels } from "@/lib/data/products";
 import { Badge } from "@/components/ui/badge";
 import { deleteStoreProduct } from "@/app/(admin)/dashboard/tienda/actions";
 
@@ -45,7 +45,7 @@ export default function StoreProductsTable({ products }: Readonly<StoreProductsT
         <AdminSurface
           key={product.id}
           inset
-          className="grid gap-4 p-4 md:grid-cols-[minmax(0,1.2fr)_180px_130px_auto]"
+          className="grid gap-4 p-4 md:grid-cols-[minmax(0,1.2fr)_180px_170px_130px_auto]"
         >
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -75,6 +75,20 @@ export default function StoreProductsTable({ products }: Readonly<StoreProductsT
                   currency: product.currency,
                 })}
               </p>
+            ) : null}
+          </div>
+
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
+              PayPal USD
+            </p>
+            <p className="mt-2 text-sm font-semibold text-[#111111]">
+              {product.paypal_price_usd !== null
+                ? formatUsdPrice(product.paypal_price_usd)
+                : "Pendiente"}
+            </p>
+            {product.paypal_price_usd === null ? (
+              <p className="mt-1 text-xs text-amber-700">Completa este dato para habilitar PayPal.</p>
             ) : null}
           </div>
 

@@ -31,6 +31,7 @@
     "@medusajs/file-s3": "^2.13.4",
     "@medusajs/framework": "2.13.1",
     "@medusajs/medusa": "2.13.1",
+    "@paypal/paypal-server-sdk": "^2.2.0",
     "pg": "^8.20.0",
     "ulid": "^3.0.2"
   },

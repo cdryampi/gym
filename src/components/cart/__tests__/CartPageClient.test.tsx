@@ -6,10 +6,14 @@ import type { ComponentProps } from "react";
 import { vi } from "vitest";
 
 import CartPageClient from "@/components/cart/CartPageClient";
-import type { Cart, PickupRequestDetail } from "@/lib/cart/types";
+import type { Cart } from "@/lib/cart/types";
 
 const cartProviderMocks = vi.hoisted(() => ({
   useCart: vi.fn(),
+}));
+
+const navigationMocks = vi.hoisted(() => ({
+  push: vi.fn(),
 }));
 
 vi.mock("next/link", () => ({
@@ -20,8 +24,29 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+vi.mock("next/navigation", () => ({
+  useRouter: () => navigationMocks,
+}));
+
 vi.mock("@/components/cart/CartProvider", () => ({
   useCart: cartProviderMocks.useCart,
+}));
+
+vi.mock("@/components/cart/PayPalCheckoutButton", () => ({
+  default: ({
+    onApproveCheckout,
+  }: {
+    onApproveCheckout: () => Promise<void>;
+  }) => (
+    <button
+      type="button"
+      onClick={() => {
+        void onApproveCheckout();
+      }}
+    >
+      Mock PayPal
+    </button>
+  ),
 }));
 
 function buildCart(overrides: Partial<Cart> = {}): Cart {
@@ -32,6 +57,7 @@ function buildCart(overrides: Partial<Cart> = {}): Cart {
     regionId: "reg_test",
     completedAt: null,
     metadata: null,
+    paymentSession: null,
     items: [
       {
         id: "line_01",
@@ -70,32 +96,17 @@ function buildCart(overrides: Partial<Cart> = {}): Cart {
   };
 }
 
-function buildPickupRequest(): PickupRequestDetail {
-  return {
-    id: "pick_01",
-    requestNumber: "NF-20260322-ABC123",
-    cartId: "cart_01",
-    customerId: null,
-    supabaseUserId: null,
-    email: "guest@gym.com",
-    notes: "Pasare por la tarde.",
-    status: "requested",
-    currencyCode: "PEN",
-    itemCount: 2,
-    subtotal: 99.98,
-    total: 99.98,
-    lineItems: [],
-    source: "gym-storefront",
-    emailStatus: "failed",
-    emailSentAt: null,
-    emailError: "Resend timeout",
-    createdAt: "2026-03-22T10:00:00.000Z",
-    updatedAt: "2026-03-22T10:00:00.000Z",
-  };
-}
-
 describe("CartPageClient", () => {
-  it("renders the cart quantities and subtotals on the full cart page", () => {
+  beforeEach(() => {
+    navigationMocks.push.mockReset();
+    vi.stubEnv("NEXT_PUBLIC_PAYPAL_CLIENT_ID", "paypal_client_test");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("renders the cart quantities and totals with the PayPal preparation CTA", () => {
     cartProviderMocks.useCart.mockReturnValue({
       cart: buildCart(),
       lastSubmittedPickupRequest: null,
@@ -108,21 +119,48 @@ describe("CartPageClient", () => {
       updateItemQuantity: vi.fn(),
       removeItem: vi.fn(),
       saveEmail: vi.fn(),
-      requestPickup: vi.fn(),
+      preparePayPalCheckout: vi.fn(),
+      completePayPalCheckout: vi.fn(),
     });
 
     render(<CartPageClient />);
 
-    expect(screen.getByRole("heading", { name: /Tu seleccion para recoger en el club/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /Tu seleccion para recoger en el club/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Nova Whey")).toBeInTheDocument();
     expect(screen.getAllByText(/99\.98/)).toHaveLength(3);
-    expect(screen.getByText("Productos")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("tu@email.com")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Preparar pago con PayPal" })).toBeInTheDocument();
   });
 
-  it("saves the guest email before requesting pickup", async () => {
+  it("explains the PEN display and USD PayPal charge before preparing checkout", () => {
+    cartProviderMocks.useCart.mockReturnValue({
+      cart: buildCart(),
+      lastSubmittedPickupRequest: null,
+      pickupEmailWarning: null,
+      error: null,
+      isReady: true,
+      isBusy: false,
+      memberEmail: null,
+      clearSubmittedPickupRequest: vi.fn(),
+      updateItemQuantity: vi.fn(),
+      removeItem: vi.fn(),
+      saveEmail: vi.fn(),
+      preparePayPalCheckout: vi.fn(),
+      completePayPalCheckout: vi.fn(),
+    });
+
+    render(<CartPageClient />);
+
+    expect(
+      screen.getByText(/Los precios de tienda se mantienen en PEN/i),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Preparar pago con PayPal" })).toBeInTheDocument();
+  });
+
+  it("saves the guest email before preparing the PayPal checkout", async () => {
     const saveEmailMock = vi.fn().mockResolvedValue(undefined);
-    const requestPickupMock = vi.fn().mockResolvedValue(undefined);
+    const preparePayPalCheckoutMock = vi.fn().mockResolvedValue(buildCart());
     const user = userEvent.setup();
 
     cartProviderMocks.useCart.mockReturnValue({
@@ -137,29 +175,57 @@ describe("CartPageClient", () => {
       updateItemQuantity: vi.fn(),
       removeItem: vi.fn(),
       saveEmail: saveEmailMock,
-      requestPickup: requestPickupMock,
+      preparePayPalCheckout: preparePayPalCheckoutMock,
+      completePayPalCheckout: vi.fn(),
     });
 
     render(<CartPageClient />);
 
     await user.type(screen.getByPlaceholderText("tu@email.com"), "Socio@Gym.com");
     await user.type(
-      screen.getByPlaceholderText(/pasare por recepcion/i),
-      "Pasare por la tarde.",
+      screen.getByPlaceholderText(/pasaré por recepción/i),
+      "Pasaré por la tarde.",
     );
-    await user.click(screen.getByRole("button", { name: "Solicitar recogida" }));
+    await user.click(screen.getByRole("button", { name: "Preparar pago con PayPal" }));
 
     await waitFor(() => {
       expect(saveEmailMock).toHaveBeenCalledWith("socio@gym.com");
-      expect(requestPickupMock).toHaveBeenCalledWith("Pasare por la tarde.");
+      expect(preparePayPalCheckoutMock).toHaveBeenCalledWith({
+        email: "socio@gym.com",
+        notes: "Pasaré por la tarde.",
+      });
     });
   });
 
-  it("shows the success state after submitting a pickup request", () => {
+  it("shows the PayPal button when the session is ready and redirects after approval", async () => {
+    const completePayPalCheckoutMock = vi.fn().mockResolvedValue({
+      id: "pick_01",
+    });
+    const user = userEvent.setup();
+
     cartProviderMocks.useCart.mockReturnValue({
-      cart: null,
-      lastSubmittedPickupRequest: buildPickupRequest(),
-      pickupEmailWarning: "Resend timeout",
+      cart: buildCart({
+        paymentSession: {
+          id: "pay_sess_01",
+          providerId: "pp_paypal_paypal",
+          status: "pending",
+          amount: 29.6,
+          currencyCode: "USD",
+          displayAmount: 99.98,
+          displayCurrencyCode: "PEN",
+          exchangeRate: null,
+          exchangeRateSource: null,
+          exchangeRateReference: null,
+          orderId: "paypal_order_01",
+          authorizationId: null,
+          captureId: null,
+          data: {
+            order_id: "paypal_order_01",
+          },
+        },
+      }),
+      lastSubmittedPickupRequest: null,
+      pickupEmailWarning: null,
       error: null,
       isReady: true,
       isBusy: false,
@@ -168,16 +234,55 @@ describe("CartPageClient", () => {
       updateItemQuantity: vi.fn(),
       removeItem: vi.fn(),
       saveEmail: vi.fn(),
-      requestPickup: vi.fn(),
+      preparePayPalCheckout: vi.fn(),
+      completePayPalCheckout: completePayPalCheckoutMock,
     });
 
     render(<CartPageClient />);
 
-    expect(screen.getByText(/NF-20260322-ABC123/)).toBeInTheDocument();
-    expect(screen.getByText(/La solicitud se guardo correctamente/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Crear un pedido nuevo" })).toHaveAttribute(
-      "href",
-      "/tienda",
-    );
+    expect(screen.getByText(/Importe a Pagar \(USD\)/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/PayPal procesará el cobro en USD siguiendo el importe estimado por producto/i),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Mock PayPal" }));
+
+    await waitFor(() => {
+      expect(completePayPalCheckoutMock).toHaveBeenCalledWith({
+        email: undefined,
+        notes: undefined,
+      });
+      expect(navigationMocks.push).toHaveBeenCalledWith("/carrito/confirmacion/pick_01");
+    });
+  });
+
+  it("keeps the generic PayPal preparation flow even if the display currency changes", () => {
+    cartProviderMocks.useCart.mockReturnValue({
+      cart: buildCart({
+        summary: {
+          ...buildCart().summary,
+          currencyCode: "ARS",
+        },
+        items: buildCart().items.map((item) => ({
+          ...item,
+          currencyCode: "ARS",
+        })),
+      }),
+      lastSubmittedPickupRequest: null,
+      pickupEmailWarning: null,
+      error: null,
+      isReady: true,
+      isBusy: false,
+      memberEmail: null,
+      clearSubmittedPickupRequest: vi.fn(),
+      updateItemQuantity: vi.fn(),
+      removeItem: vi.fn(),
+      saveEmail: vi.fn(),
+      preparePayPalCheckout: vi.fn(),
+      completePayPalCheckout: vi.fn(),
+    });
+
+    render(<CartPageClient />);
+
+    expect(screen.getByRole("button", { name: "Preparar pago con PayPal" })).toBeInTheDocument();
   });
 });

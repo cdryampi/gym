@@ -96,7 +96,7 @@ describe("env provider constraints", () => {
       PAYPAL_CLIENT_ID: "paypal-client-id",
       PAYPAL_CLIENT_SECRET: "paypal-client-secret",
       PAYPAL_ENVIRONMENT: "sandbox",
-      PAYPAL_AUTO_CAPTURE: "false",
+      PAYPAL_AUTO_CAPTURE: "true",
       NEXT_PUBLIC_PAYPAL_CLIENT_ID: "paypal-client-id",
     });
 
@@ -106,7 +106,7 @@ describe("env provider constraints", () => {
       clientId: "paypal-client-id",
       clientSecret: "paypal-client-secret",
       environment: "sandbox",
-      autoCapture: false,
+      autoCapture: true,
       webhookId: null,
       publicClientId: "paypal-client-id",
     });
@@ -124,6 +124,27 @@ describe("env provider constraints", () => {
     ).rejects.toThrow();
   });
 
+  it("accepts production as a valid PayPal environment", async () => {
+    const env = await importEnvModule({
+      NODE_ENV: "test",
+      PAYPAL_CLIENT_ID: "paypal-client-id",
+      PAYPAL_CLIENT_SECRET: "paypal-client-secret",
+      PAYPAL_ENVIRONMENT: "production",
+    });
+
+    expect(env.getPayPalEnv().environment).toBe("production");
+  });
+
+  it("defaults PayPal auto capture to true when omitted", async () => {
+    const env = await importEnvModule({
+      NODE_ENV: "test",
+      PAYPAL_CLIENT_ID: "paypal-client-id",
+      PAYPAL_CLIENT_SECRET: "paypal-client-secret",
+    });
+
+    expect(env.getPayPalEnv().autoCapture).toBe(true);
+  });
+
   it("throws when PayPal secret is missing", async () => {
     const env = await importEnvModule({
       NODE_ENV: "test",
@@ -133,5 +154,74 @@ describe("env provider constraints", () => {
 
     expect(env.hasPayPalEnv()).toBe(false);
     expect(() => env.getPayPalEnv()).toThrow("PAYPAL_CLIENT_SECRET");
+  });
+
+  it("provides a default Peru sandbox payment profile", async () => {
+    const env = await importEnvModule({
+      NODE_ENV: "test",
+      PAYMENT_TEST_EMAIL: undefined,
+      PAYMENT_TEST_COUNTRY_CODE: undefined,
+      PAYMENT_TEST_DOCUMENT_TYPE: undefined,
+    });
+
+    expect(env.getPaymentTestProfileEnv()).toEqual({
+      email: "sandbox-buyer.pe@novaforza.test",
+      firstName: "Carlos",
+      lastName: "Prueba",
+      phone: "+51987654321",
+      countryCode: "PE",
+      state: "Lima",
+      city: "Lima",
+      address1: "Av. Javier Prado Este 560",
+      address2: "San Isidro",
+      postalCode: "15036",
+      documentType: "DNI",
+      documentNumber: "12345678",
+      cardBrand: "visa",
+      cardNumber: "4111111111111111",
+      cardExpiry: "12/2030",
+      cardCvv: "123",
+    });
+  });
+
+  it("allows overriding the sandbox payment profile through env vars", async () => {
+    const env = await importEnvModule({
+      NODE_ENV: "test",
+      PAYMENT_TEST_EMAIL: "comprador.pe@test.dev",
+      PAYMENT_TEST_FIRST_NAME: "Lucia",
+      PAYMENT_TEST_LAST_NAME: "Sandbox",
+      PAYMENT_TEST_PHONE: "+51999111222",
+      PAYMENT_TEST_COUNTRY_CODE: "pe",
+      PAYMENT_TEST_STATE: "Cusco",
+      PAYMENT_TEST_CITY: "Cusco",
+      PAYMENT_TEST_ADDRESS_1: "Av. El Sol 123",
+      PAYMENT_TEST_ADDRESS_2: "Wanchaq",
+      PAYMENT_TEST_POSTAL_CODE: "08002",
+      PAYMENT_TEST_DOCUMENT_TYPE: "CE",
+      PAYMENT_TEST_DOCUMENT_NUMBER: "ABC12345",
+      PAYMENT_TEST_CARD_BRAND: "mastercard",
+      PAYMENT_TEST_CARD_NUMBER: "5555555555554444",
+      PAYMENT_TEST_CARD_EXPIRY: "11/2031",
+      PAYMENT_TEST_CARD_CVV: "456",
+    });
+
+    expect(env.getPaymentTestProfileEnv()).toEqual({
+      email: "comprador.pe@test.dev",
+      firstName: "Lucia",
+      lastName: "Sandbox",
+      phone: "+51999111222",
+      countryCode: "PE",
+      state: "Cusco",
+      city: "Cusco",
+      address1: "Av. El Sol 123",
+      address2: "Wanchaq",
+      postalCode: "08002",
+      documentType: "CE",
+      documentNumber: "ABC12345",
+      cardBrand: "mastercard",
+      cardNumber: "5555555555554444",
+      cardExpiry: "11/2031",
+      cardCvv: "456",
+    });
   });
 });

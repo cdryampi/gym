@@ -12,6 +12,28 @@ const reservedPayPalSandboxConfig = {
 }
 void reservedPayPalSandboxConfig
 
+const paypalProviderOptions =
+  process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET
+    ? [
+        {
+          resolve: "./src/modules/paypal",
+          id: "paypal",
+          options: {
+            client_id: process.env.PAYPAL_CLIENT_ID,
+            client_secret: process.env.PAYPAL_CLIENT_SECRET,
+            environment: process.env.PAYPAL_ENVIRONMENT || "sandbox",
+            autoCapture:
+              process.env.PAYPAL_AUTO_CAPTURE === undefined
+                ? true
+                : process.env.PAYPAL_AUTO_CAPTURE === "true",
+            webhook_id: process.env.PAYPAL_WEBHOOK_ID,
+            region_id: process.env.MEDUSA_REGION_ID,
+            region_name: process.env.MEDUSA_REGION_NAME || "Peru",
+          },
+        },
+      ]
+    : []
+
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -33,6 +55,24 @@ module.exports = defineConfig({
     }
   },
   modules: {
+    payment: {
+      resolve: "@medusajs/payment",
+      options: {
+        providers: [
+          {
+            resolve: "./src/modules/paypal",
+            id: "paypal",
+            options: {
+              client_id: process.env.PAYPAL_CLIENT_ID,
+              client_secret: process.env.PAYPAL_CLIENT_SECRET,
+              environment: process.env.PAYPAL_ENVIRONMENT,
+              webhook_id: process.env.PAYPAL_WEBHOOK_ID,
+              region_id: process.env.MEDUSA_REGION_ID,
+            },
+          },
+        ],
+      },
+    },
     file: {
       resolve: "@medusajs/file",
       options: {

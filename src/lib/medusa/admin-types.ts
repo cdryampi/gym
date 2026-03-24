@@ -58,6 +58,7 @@ export interface MedusaAdminProductMetadata {
   featured?: boolean | null;
   highlights?: string[] | null;
   order?: number | null;
+  paypal_price_usd?: number | null;
   pickup_eta?: string | null;
   pickup_note?: string | null;
   pickup_only?: boolean | null;

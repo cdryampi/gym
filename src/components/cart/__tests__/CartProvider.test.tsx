@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
 import { CartProvider, useCart } from "@/components/cart/CartProvider";
+import { STALE_CART_MESSAGE } from "@/lib/cart/runtime";
 import type { Cart, PickupRequestDetail } from "@/lib/cart/types";
 
 const cartMedusaMocks = vi.hoisted(() => ({
@@ -33,6 +34,7 @@ function buildCart(overrides: Partial<Cart> = {}): Cart {
     regionId: "reg_test",
     completedAt: null,
     metadata: null,
+    paymentSession: null,
     items: [
       {
         id: "line_01",
@@ -72,7 +74,7 @@ function buildCart(overrides: Partial<Cart> = {}): Cart {
 }
 
 function CartProbe() {
-  const { cart, isReady } = useCart();
+  const { cart, isReady, error } = useCart();
 
   return (
     <div>
@@ -80,6 +82,7 @@ function CartProbe() {
       <span>{cart?.id ?? "no-cart"}</span>
       <span>{cart?.summary.itemCount ?? 0}</span>
       <span>{cart?.customerId ?? "guest"}</span>
+      <span>{error ?? "no-error"}</span>
     </div>
   );
 }
@@ -92,14 +95,27 @@ function buildPickupRequest(): PickupRequestDetail {
     customerId: null,
     supabaseUserId: null,
     email: "guest@gym.com",
-    notes: "Pasare por la tarde.",
+    notes: "Pasaré por la tarde.",
     status: "requested",
     currencyCode: "PEN",
     itemCount: 1,
     subtotal: 49.99,
     total: 49.99,
+    chargedCurrencyCode: "USD",
+    chargedTotal: 14.8,
+    exchangeRate: 3.377,
+    exchangeRateSource: "BCRP PD04640PD",
+    exchangeRateReference: "19.Mar.26",
     lineItems: [],
     source: "gym-storefront",
+    orderId: null,
+    paymentCollectionId: null,
+    paymentProvider: null,
+    paymentStatus: "pending",
+    paypalOrderId: null,
+    paypalCaptureId: null,
+    paymentAuthorizedAt: null,
+    paymentCapturedAt: null,
     emailStatus: "sent",
     emailSentAt: "2026-03-22T12:00:00.000Z",
     emailError: null,
@@ -109,17 +125,17 @@ function buildPickupRequest(): PickupRequestDetail {
 }
 
 function CartPickupProbe() {
-  const { cart, lastSubmittedPickupRequest, requestPickup } = useCart();
+  const { cart, lastSubmittedPickupRequest, completePayPalCheckout } = useCart();
 
   return (
     <div>
       <button
         type="button"
         onClick={() => {
-          void requestPickup("Pasare por la tarde.");
+          void completePayPalCheckout({ notes: "Pasaré por la tarde." });
         }}
       >
-        Enviar pickup
+        Completar checkout
       </button>
       <span>{cart?.id ?? "no-cart"}</span>
       <span>{lastSubmittedPickupRequest?.requestNumber ?? "no-request"}</span>
@@ -162,6 +178,27 @@ describe("CartProvider", () => {
     expect(cartMedusaMocks.retrieveCart).toHaveBeenCalledWith("cart_cookie");
   });
 
+  it("clears the broken cart cookie when the active cart can no longer be recovered", async () => {
+    document.cookie = "gym_cart_id=cart_cookie; path=/";
+    cartMedusaMocks.retrieveCart.mockRejectedValue(
+      new Error("Cart with id cart_cookie does not exist"),
+    );
+
+    render(
+      <CartProvider>
+        <CartProbe />
+      </CartProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("ready")).toBeInTheDocument();
+      expect(screen.getByText("no-cart")).toBeInTheDocument();
+      expect(screen.getByText(STALE_CART_MESSAGE)).toBeInTheDocument();
+    });
+
+    expect(document.cookie).not.toContain("gym_cart_id=");
+  });
+
   it("keeps the guest cart and associates it to the signed-in member", async () => {
     document.cookie = "gym_cart_id=cart_cookie; path=/";
     cartMedusaMocks.retrieveCart.mockResolvedValue(buildCart());
@@ -195,6 +232,33 @@ describe("CartProvider", () => {
     expect(screen.getByText("1")).toBeInTheDocument();
   });
 
+  it("clears the cart when member sync hits a cart that is already completed", async () => {
+    document.cookie = "gym_cart_id=cart_cookie; path=/";
+    cartMedusaMocks.retrieveCart.mockResolvedValue(buildCart());
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error:
+            "No se pudo vincular el carrito a la cuenta del miembro: Cart cart_cookie is already completed.",
+        }),
+        { status: 500 },
+      ),
+    );
+
+    render(
+      <CartProvider memberEmail="socio@gym.com">
+        <CartProbe />
+      </CartProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("no-cart")).toBeInTheDocument();
+      expect(screen.getByText(STALE_CART_MESSAGE)).toBeInTheDocument();
+    });
+
+    expect(document.cookie).not.toContain("gym_cart_id=");
+  });
+
   it("clears the active cart and stores the submitted pickup request after checkout", async () => {
     const user = userEvent.setup();
     document.cookie = "gym_cart_id=cart_cookie; path=/";
@@ -219,20 +283,20 @@ describe("CartProvider", () => {
       expect(screen.getByText("cart_cookie")).toBeInTheDocument();
     });
 
-    await user.click(screen.getByRole("button", { name: "Enviar pickup" }));
+    await user.click(screen.getByRole("button", { name: "Completar checkout" }));
 
     await waitFor(() => {
       expect(screen.getByText("no-cart")).toBeInTheDocument();
       expect(screen.getByText("NF-20260322-ABC123")).toBeInTheDocument();
     });
-    expect(fetch).toHaveBeenCalledWith("/api/cart/pickup-request", {
+    expect(fetch).toHaveBeenCalledWith("/api/cart/checkout/paypal/complete", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
         cartId: "cart_cookie",
-        notes: "Pasare por la tarde.",
+        notes: "Pasaré por la tarde.",
       }),
     });
   });

@@ -5,9 +5,6 @@ import HeroSection from "@/components/marketing/HeroSection";
 import PlansSection from "@/components/marketing/PlansSection";
 import ProductsSection from "@/components/marketing/ProductsSection";
 import ScheduleSection from "@/components/marketing/ScheduleSection";
-import SiteFooter from "@/components/marketing/SiteFooter";
-import SiteHeader from "@/components/marketing/SiteHeader";
-import SiteTopbar from "@/components/marketing/SiteTopbar";
 import TeamSection from "@/components/marketing/TeamSection";
 import TestimonialsSection from "@/components/marketing/TestimonialsSection";
 import TrainingZonesSection from "@/components/marketing/TrainingZonesSection";
@@ -26,25 +23,16 @@ export default async function PublicHomePage() {
   const { settings } = await getMarketingData();
 
   return (
-    <div className="min-h-screen bg-[#151518]">
-      <div className="lg:sticky lg:top-0 lg:z-50">
-        <SiteTopbar settings={settings} />
-      </div>
-      <div className="sticky top-0 z-40 lg:top-[var(--topbar-height,0px)]">
-        <SiteHeader settings={settings} />
-      </div>
-      <main>
-        <HeroSection settings={settings} />
-        <ValueSection />
-        <PlansSection settings={settings} />
-        <ScheduleSection />
-        <TeamSection />
-        <ProductsSection />
-        <TestimonialsSection />
-        <TrainingZonesSection />
-        <ContactSection settings={settings} />
-      </main>
-      <SiteFooter settings={settings} />
+    <div className="bg-[#151518]">
+      <HeroSection settings={settings} />
+      <ValueSection />
+      <PlansSection settings={settings} />
+      <ScheduleSection />
+      <TeamSection />
+      <ProductsSection />
+      <TestimonialsSection />
+      <TrainingZonesSection />
+      <ContactSection settings={settings} />
     </div>
   );
 }

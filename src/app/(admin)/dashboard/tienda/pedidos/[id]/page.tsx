@@ -5,12 +5,15 @@ import AdminSurface from "@/components/admin/AdminSurface";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
 import PickupRequestStatusControl from "@/components/admin/PickupRequestStatusControl";
 import ResendPickupRequestEmailButton from "@/components/admin/ResendPickupRequestEmailButton";
+import SyncPickupRequestFromOrderButton from "@/components/admin/SyncPickupRequestFromOrderButton";
 import { Badge } from "@/components/ui/badge";
 import { formatCartAmount } from "@/lib/cart/format";
 import {
   getPickupRequestEmailTone,
+  getPickupRequestPaymentTone,
   getPickupRequestStatusTone,
   pickupRequestEmailStatusLabels,
+  pickupRequestPaymentStatusLabels,
   pickupRequestStatusLabels,
 } from "@/lib/cart/pickup-request";
 import { getPickupRequestById } from "@/lib/data/pickup-requests";
@@ -46,13 +49,13 @@ export default async function DashboardStorePickupRequestDetailPage({
     <div className="space-y-6">
       <DashboardPageHeader
         title={pickupRequest.requestNumber}
-        description="Detalle congelado del pedido pickup, con lineas, totales, estado operativo y control del email."
+        description="Detalle congelado del pedido pickup, con lineas, totales, estado operativo, pago y control del email."
         eyebrow="Pedidos pickup"
       />
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <div className="space-y-4">
-          <AdminSection title="Lineas" description="Snapshot del cart enviado al cerrar la solicitud.">
+          <AdminSection title="Lineas" description="Snapshot del pedido pagado para recogida.">
             <div className="space-y-3">
               {pickupRequest.lineItems.map((lineItem) => (
                 <AdminSurface key={lineItem.id} inset className="p-4">
@@ -67,7 +70,7 @@ export default async function DashboardStorePickupRequestDetailPage({
                                 ? `${option.optionTitle}: ${option.value}`
                                 : option.value,
                             )
-                            .join(" · ")}
+                            .join(" | ")}
                         </p>
                       ) : null}
                       {lineItem.variantSku ? (
@@ -102,16 +105,24 @@ export default async function DashboardStorePickupRequestDetailPage({
                 <Badge variant={getPickupRequestEmailTone(pickupRequest.emailStatus)}>
                   {pickupRequestEmailStatusLabels[pickupRequest.emailStatus]}
                 </Badge>
+                <Badge variant={getPickupRequestPaymentTone(pickupRequest.paymentStatus)}>
+                  {pickupRequestPaymentStatusLabels[pickupRequest.paymentStatus]}
+                </Badge>
               </div>
               <PickupRequestStatusControl
                 pickupRequestId={pickupRequest.id}
                 status={pickupRequest.status}
               />
               <ResendPickupRequestEmailButton pickupRequestId={pickupRequest.id} />
+              <SyncPickupRequestFromOrderButton
+                pickupRequestId={pickupRequest.id}
+                cartId={pickupRequest.cartId}
+                orderId={pickupRequest.orderId}
+              />
             </AdminSurface>
           </AdminSection>
 
-          <AdminSection title="Resumen" description="Totales, notas y trazabilidad del pedido.">
+          <AdminSection title="Resumen" description="Totales, pago, notas y trazabilidad del pedido.">
             <AdminSurface inset className="space-y-4 p-5">
               <div className="flex items-center justify-between text-sm text-[#5f6368]">
                 <span>Articulos</span>
@@ -125,6 +136,28 @@ export default async function DashboardStorePickupRequestDetailPage({
                 <span>Total</span>
                 <span>{formatCartAmount(pickupRequest.total, pickupRequest.currencyCode)}</span>
               </div>
+              {pickupRequest.chargedCurrencyCode && pickupRequest.chargedTotal !== null ? (
+                <div className="flex items-center justify-between text-sm text-[#5f6368]">
+                  <span>Cargo PayPal</span>
+                  <span>
+                    {formatCartAmount(
+                      pickupRequest.chargedTotal,
+                      pickupRequest.chargedCurrencyCode,
+                    )}
+                  </span>
+                </div>
+              ) : null}
+              {pickupRequest.exchangeRate ? (
+                <div className="text-sm leading-6 text-[#5f6368]">
+                  Tipo de cambio: <strong className="text-[#111111]">S/ {pickupRequest.exchangeRate.toFixed(3)} por USD</strong>.
+                  {pickupRequest.exchangeRateSource
+                    ? ` Fuente: ${pickupRequest.exchangeRateSource}.`
+                    : ""}
+                  {pickupRequest.exchangeRateReference
+                    ? ` Referencia: ${pickupRequest.exchangeRateReference}.`
+                    : ""}
+                </div>
+              ) : null}
 
               <div className="border-t border-black/8 pt-4 text-sm leading-6 text-[#5f6368]">
                 <p>
@@ -132,6 +165,22 @@ export default async function DashboardStorePickupRequestDetailPage({
                 </p>
                 <p>
                   <strong className="text-[#111111]">Origen:</strong> {pickupRequest.source}
+                </p>
+                <p>
+                  <strong className="text-[#111111]">Order:</strong>{" "}
+                  {pickupRequest.orderId ?? "Pendiente de completar"}
+                </p>
+                <p>
+                  <strong className="text-[#111111]">Proveedor de pago:</strong>{" "}
+                  {pickupRequest.paymentProvider ?? "paypal"}
+                </p>
+                <p>
+                  <strong className="text-[#111111]">PayPal order:</strong>{" "}
+                  {pickupRequest.paypalOrderId ?? "Sin registro"}
+                </p>
+                <p>
+                  <strong className="text-[#111111]">PayPal capture:</strong>{" "}
+                  {pickupRequest.paypalCaptureId ?? "Sin registro"}
                 </p>
                 <p>
                   <strong className="text-[#111111]">Cart:</strong> {pickupRequest.cartId}
@@ -147,6 +196,14 @@ export default async function DashboardStorePickupRequestDetailPage({
                 <p>
                   <strong className="text-[#111111]">Creado:</strong>{" "}
                   {formatDate(pickupRequest.createdAt)}
+                </p>
+                <p>
+                  <strong className="text-[#111111]">Pago autorizado:</strong>{" "}
+                  {formatDate(pickupRequest.paymentAuthorizedAt)}
+                </p>
+                <p>
+                  <strong className="text-[#111111]">Pago capturado:</strong>{" "}
+                  {formatDate(pickupRequest.paymentCapturedAt)}
                 </p>
                 <p>
                   <strong className="text-[#111111]">Ultima actualizacion:</strong>{" "}

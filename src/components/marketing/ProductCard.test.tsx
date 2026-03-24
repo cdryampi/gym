@@ -30,6 +30,7 @@ const product: Product = {
   short_description: "Soporte diario para fuerza y potencia.",
   description: "Descripcion larga de creatina.",
   price: 24.9,
+  paypal_price_usd: 6.9,
   currency: "PEN",
   stock_status: "in_stock",
   pickup_only: true,
@@ -51,6 +52,7 @@ describe("ProductCard", () => {
       "/tienda/creatina-monohidratada",
     );
     expect(screen.getByText(/24(?:[.,])90/)).toBeInTheDocument();
+    expect(screen.getByText(/PayPal cobra aprox\./i)).toBeInTheDocument();
     expect(screen.getAllByText("Premium").length).toBeGreaterThan(0);
     expect(screen.getByText("Ver mas")).toBeInTheDocument();
   });

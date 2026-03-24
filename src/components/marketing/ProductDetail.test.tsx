@@ -34,6 +34,7 @@ const product: Product = {
   short_description: "Proteina limpia para el dia a dia.",
   description: "Descripcion larga orientada a socios que entrenan fuerza.",
   price: 49.99,
+  paypal_price_usd: 13.95,
   compare_price: 58.99,
   discount_label: "Ahorra 15%",
   currency: "PEN",
@@ -86,6 +87,7 @@ describe("ProductDetail", () => {
       screen.getByRole("heading", { name: "Nova Forza Isolate Whey Protein" }),
     ).toBeInTheDocument();
     expect(screen.getByText("Ahorra 15%")).toBeInTheDocument();
+    expect(screen.getByText(/PayPal cobra aprox\./i)).toBeInTheDocument();
     expect(screen.getByText("Recogida en Nova Forza Gym")).toBeInTheDocument();
     expect(screen.getByText("Beneficios")).toBeInTheDocument();
     expect(screen.getByText("Como usar")).toBeInTheDocument();

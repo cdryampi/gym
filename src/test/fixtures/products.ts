@@ -12,6 +12,7 @@ export const products: Product[] = [
     description:
       "Creatina monohidratada micronizada, fácil de disolver y pensada para quien entrena con constancia. Una opción simple y efectiva para acompañar fases de fuerza, hipertrofia o rendimiento general sin formulas innecesarias.",
     price: 24.9,
+    paypal_price_usd: 6.9,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,
@@ -55,6 +56,7 @@ export const products: Product[] = [
     description:
       "Maximiza tu recuperación con nuestra fórmula de rápida absorción. Diseñada para atletas que buscan pureza absoluta: 25 g de proteína, 0 g de azúcar y un perfil completo de aminoácidos para alimentar tu fuerza.",
     price: 49.99,
+    paypal_price_usd: 13.95,
     compare_price: 58.99,
     discount_label: "Ahorra 15%",
     currency: "PEN",
@@ -107,6 +109,7 @@ export const products: Product[] = [
     description:
       "Un basico bien resuelto para llevar proteína, creatina o bebida isotonica sin fugas ni piezas incomodas. Tiene cuerpo solido, tapa firme y una presencia alineada con la estetica de Nova Forza.",
     price: 14.9,
+    paypal_price_usd: 4.2,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,
@@ -133,6 +136,7 @@ export const products: Product[] = [
     description:
       "Straps disenados para entrenamientos serios donde el agarre limita antes que la espalda o la cadena posterior. Construccion resistente, ajuste comodo y una sensacion firme para cargas altas.",
     price: 16.9,
+    paypal_price_usd: 4.75,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,
@@ -159,6 +163,7 @@ export const products: Product[] = [
     description:
       "Guantes tecnicos para sesiones de alto volumen. Protegen la mano sin sacrificar la movilidad ni el tacto con la barra. Ajuste ergonomico y durabilidad industrial.",
     price: 19.9,
+    paypal_price_usd: 5.55,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,
@@ -185,6 +190,7 @@ export const products: Product[] = [
     description:
       "Polo tecnico desarrollado para entrenar, moverse por el club o llevar fuera del gimnasio sin caer en una estetica de merch generica. Patronaje comodo, tejido ligero y grafica sobria.",
     price: 32,
+    paypal_price_usd: 8.95,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,
@@ -212,6 +218,7 @@ export const products: Product[] = [
     description:
       "Botella de acero inoxidable con doble pared. Resistente, sobria y diseñada para durar años. El complemento perfecto para mantenerte hidratado con estilo.",
     price: 22.5,
+    paypal_price_usd: 6.3,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,
@@ -238,6 +245,7 @@ export const products: Product[] = [
     description:
       "Banda de resistencia fabricada en tela técnica de alta durabilidad. A diferencia del látex, no se enrolla ni pellizca. Nivel de resistencia medio-alto.",
     price: 12.9,
+    paypal_price_usd: 3.6,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,

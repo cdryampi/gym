@@ -24,6 +24,7 @@ function buildProduct(overrides: Partial<Product> = {}): Product {
     short_description: "Proteina premium",
     description: "Descripcion larga del producto",
     price: 49.99,
+    paypal_price_usd: 13.95,
     currency: "PEN",
     stock_status: "in_stock",
     pickup_only: true,
@@ -73,7 +74,7 @@ describe("ProductPurchasePanel", () => {
 
     render(<ProductPurchasePanel product={buildProduct()} />);
 
-    expect(screen.getByRole("button", { name: "Anadir al carrito" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Añadir al carrito" })).toBeDisabled();
   });
 
   it("adds the selected variant and quantity to the cart", async () => {
@@ -90,11 +91,23 @@ describe("ProductPurchasePanel", () => {
 
     await user.click(screen.getByRole("button", { name: "Vanilla" }));
     await user.click(screen.getByRole("button", { name: "Aumentar cantidad" }));
-    await user.click(screen.getByRole("button", { name: "Anadir al carrito" }));
+    await user.click(screen.getByRole("button", { name: "Añadir al carrito" }));
 
     expect(addItemMock).toHaveBeenCalledWith({
       variantId: "variant_vanilla",
       quantity: 2,
     });
+  });
+
+  it("shows the PayPal estimated amount per unit", () => {
+    cartProviderMocks.useCart.mockReturnValue({
+      addItem: vi.fn(),
+      isBusy: false,
+      error: null,
+    });
+
+    render(<ProductPurchasePanel product={buildProduct()} />);
+
+    expect(screen.getByText(/PayPal cobrará aprox\./i)).toBeInTheDocument();
   });
 });

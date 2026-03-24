@@ -6,6 +6,7 @@ import { useMemo, useState } from "react";
 import { useCart } from "@/components/cart/CartProvider";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/data/types";
+import { formatUsdPrice } from "@/lib/data/products";
 
 interface ProductPurchasePanelProps {
   product: Product;
@@ -55,7 +56,7 @@ export default function ProductPurchasePanel({ product }: Readonly<ProductPurcha
 
   async function handleAddToCart() {
     if (!selectedVariant?.id) {
-      setSelectionError("Selecciona una variante valida antes de anadir al carrito.");
+      setSelectionError("Selecciona una variante válida antes de añadir al carrito.");
       return;
     }
 
@@ -136,10 +137,17 @@ export default function ProductPurchasePanel({ product }: Readonly<ProductPurcha
               void handleAddToCart();
             }}
           >
-            {isUnavailable ? "No disponible" : isBusy ? "Anadiendo..." : "Anadir al carrito"}
+            {isUnavailable ? "No disponible" : isBusy ? "Añadiendo..." : "Añadir al carrito"}
           </Button>
         </div>
       </div>
+
+      {product.paypal_price_usd !== null ? (
+        <p className="text-sm leading-6 text-[#5f6368]">
+          PayPal cobrará aprox. <strong>{formatUsdPrice(product.paypal_price_usd)}</strong> por
+          unidad. Si tu cuenta opera en otra moneda, la conversión final la hará PayPal.
+        </p>
+      ) : null}
 
       {selectionError ? <p className="text-sm text-red-700">{selectionError}</p> : null}
       {error ? <p className="text-sm text-red-700">{error}</p> : null}

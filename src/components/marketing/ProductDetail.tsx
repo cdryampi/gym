@@ -11,6 +11,7 @@ import ProductGallery from "@/components/marketing/ProductGallery";
 import type { Product } from "@/data/types";
 import {
   formatProductPrice,
+  formatUsdPrice,
   getProductStockMeta,
   productCategoryLabels,
 } from "@/lib/data/products";
@@ -115,6 +116,12 @@ export default function ProductDetail({ product }: Readonly<ProductDetailProps>)
                   </span>
                 ) : null}
               </div>
+              {product.paypal_price_usd !== null ? (
+                <p className="text-sm font-medium leading-6 text-[#5b6472]">
+                  PayPal cobra aprox. <strong>{formatUsdPrice(product.paypal_price_usd)}</strong>.
+                  Si tu cuenta usa otra moneda, la conversion final la resuelve PayPal.
+                </p>
+              ) : null}
 
               <p className="max-w-2xl text-[15px] leading-7 text-[#4b5563]">
                 {product.description}

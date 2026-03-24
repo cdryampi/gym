@@ -11,6 +11,12 @@ import {
   type ReactNode,
 } from "react";
 
+import { postJson } from "@/lib/cart/browser-api";
+import {
+  clearCartIdCookie,
+  getCartIdFromDocumentCookie,
+  persistCartIdInCookie,
+} from "@/lib/cart/cookie";
 import {
   addCartLineItem,
   createCart,
@@ -19,12 +25,8 @@ import {
   updateCartEmail,
   updateCartLineItem,
 } from "@/lib/cart/medusa";
+import { getErrorMessage, isMissingCartMessage, STALE_CART_MESSAGE } from "@/lib/cart/runtime";
 import type { Cart, PickupRequestDetail } from "@/lib/cart/types";
-import {
-  clearCartIdCookie,
-  getCartIdFromDocumentCookie,
-  persistCartIdInCookie,
-} from "@/lib/cart/cookie";
 
 export interface CartContextValue {
   cart: Cart | null;
@@ -42,14 +44,24 @@ export interface CartContextValue {
   updateItemQuantity: (lineItemId: string, quantity: number) => Promise<void>;
   removeItem: (lineItemId: string) => Promise<void>;
   saveEmail: (email: string) => Promise<void>;
-  requestPickup: (notes?: string) => Promise<void>;
+  preparePayPalCheckout: (input?: {
+    email?: string;
+    notes?: string;
+  }) => Promise<Cart | null>;
+  completePayPalCheckout: (input?: {
+    email?: string;
+    notes?: string;
+  }) => Promise<PickupRequestDetail | null>;
 }
 
 export const CartContext = createContext<CartContextValue | null>(null);
 
-function getErrorMessage(error: unknown, fallback: string) {
-  return error instanceof Error ? error.message : fallback;
-}
+type CartApiPayload = { cart?: Cart | null; error?: string };
+type PickupCheckoutPayload = {
+  pickupRequest?: PickupRequestDetail;
+  emailWarning?: string | null;
+  error?: string;
+};
 
 export function CartProvider({
   children,
@@ -67,6 +79,7 @@ export function CartProvider({
   const [isBusy, setIsBusy] = useState(false);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const lastSyncedSignature = useRef<string | null>(null);
+  const completeCheckoutInFlightRef = useRef(false);
 
   function commitCart(nextCart: Cart | null) {
     setCart(nextCart);
@@ -77,6 +90,17 @@ export function CartProvider({
     }
 
     clearCartIdCookie();
+  }
+
+  function invalidateBrokenCart(message?: string | null) {
+    commitCart(null);
+    setLastSubmittedPickupRequest(null);
+    setPickupEmailWarning(null);
+    lastSyncedSignature.current = null;
+
+    if (message) {
+      setError(message);
+    }
   }
 
   async function refreshCart() {
@@ -91,7 +115,7 @@ export function CartProvider({
     try {
       const nextCart = await retrieveCart(cartId);
 
-      if (nextCart.summary.pickupRequestStatus === "submitted") {
+      if (nextCart.summary.pickupRequestStatus === "submitted" || nextCart.completedAt) {
         commitCart(null);
         setError(null);
         return;
@@ -100,27 +124,25 @@ export function CartProvider({
       commitCart(nextCart);
       setError(null);
     } catch (refreshError) {
-      commitCart(null);
-      setError(getErrorMessage(refreshError, "No se pudo cargar el carrito."));
+      invalidateBrokenCart(
+        isMissingCartMessage(getErrorMessage(refreshError, ""))
+          ? STALE_CART_MESSAGE
+          : getErrorMessage(refreshError, "No se pudo cargar el carrito."),
+      );
     } finally {
       setIsReady(true);
     }
   }
 
   async function syncCartWithMember(targetCartId: string) {
-    const response = await fetch("/api/cart/member", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ cartId: targetCartId }),
+    const { response, payload } = await postJson<CartApiPayload>("/api/cart/member", {
+      cartId: targetCartId,
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | { cart?: Cart | null; error?: string }
-      | null;
-
     if (!response.ok) {
+      if (isMissingCartMessage(payload?.error ?? null)) {
+        invalidateBrokenCart(STALE_CART_MESSAGE);
+      }
       throw new Error(payload?.error ?? "No se pudo vincular el carrito a la cuenta.");
     }
 
@@ -150,9 +172,16 @@ export function CartProvider({
 
   const syncMemberCart = useEffectEvent((cartId: string) => {
     void syncCartWithMember(cartId).catch((syncError) => {
-      setError(
-        getErrorMessage(syncError, "No se pudo vincular el carrito a tu cuenta de socio."),
+      const message = getErrorMessage(
+        syncError,
+        "No se pudo vincular el carrito a tu cuenta de socio.",
       );
+
+      if (isMissingCartMessage(message)) {
+        return;
+      }
+
+      setError(message);
     });
   });
 
@@ -188,7 +217,14 @@ export function CartProvider({
     try {
       await action();
     } catch (actionError) {
-      setError(getErrorMessage(actionError, "La operacion del carrito no se pudo completar."));
+      const message = getErrorMessage(actionError, "La operación del carrito no se pudo completar.");
+
+      if (isMissingCartMessage(message)) {
+        invalidateBrokenCart(STALE_CART_MESSAGE);
+        return;
+      }
+
+      setError(message);
     } finally {
       setIsBusy(false);
     }
@@ -248,30 +284,78 @@ export function CartProvider({
     });
   }
 
-  async function requestPickup(notes?: string) {
+  async function preparePayPalCheckout(input?: {
+    email?: string;
+    notes?: string;
+  }) {
     if (!cart?.id) {
-      setError("No hay un carrito activo para solicitar la recogida.");
-      return;
+      setError("No hay un carrito activo para preparar el pago.");
+      return null;
     }
 
-    await runBusyAction(async () => {
-      const response = await fetch("/api/cart/pickup-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          cartId: cart.id,
-          notes,
-        }),
-      });
+    setIsBusy(true);
+    setError(null);
 
-      const payload = (await response.json().catch(() => null)) as
-        | { pickupRequest?: PickupRequestDetail; emailWarning?: string | null; error?: string }
-        | null;
+    try {
+      const { response, payload } = await postJson<CartApiPayload>(
+        "/api/cart/checkout/paypal/init",
+        {
+          cartId: cart.id,
+          email: input?.email,
+          notes: input?.notes,
+        },
+      );
+
+      if (!response.ok || !payload?.cart) {
+        throw new Error(payload?.error ?? "No se pudo preparar PayPal.");
+      }
+
+      commitCart(payload.cart);
+      return payload.cart;
+    } catch (actionError) {
+      const message = getErrorMessage(actionError, "No se pudo preparar PayPal.");
+
+      if (isMissingCartMessage(message)) {
+        invalidateBrokenCart(STALE_CART_MESSAGE);
+        return null;
+      }
+
+      setError(message);
+      return null;
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function completePayPalCheckout(input?: {
+    email?: string;
+    notes?: string;
+  }) {
+    if (!cart?.id) {
+      setError("No hay un carrito activo para completar el pago.");
+      return null;
+    }
+
+    if (completeCheckoutInFlightRef.current) {
+      return null;
+    }
+
+    completeCheckoutInFlightRef.current = true;
+    setIsBusy(true);
+    setError(null);
+
+    try {
+      const { response, payload } = await postJson<PickupCheckoutPayload>(
+        "/api/cart/checkout/paypal/complete",
+        {
+          cartId: cart.id,
+          email: input?.email,
+          notes: input?.notes,
+        },
+      );
 
       if (!response.ok || !payload?.pickupRequest) {
-        throw new Error(payload?.error ?? "No se pudo registrar la recogida.");
+        throw new Error(payload?.error ?? "No se pudo completar el pago con PayPal.");
       }
 
       commitCart(null);
@@ -280,7 +364,22 @@ export function CartProvider({
       startTransition(() => {
         setDrawerOpen(false);
       });
-    });
+
+      return payload.pickupRequest;
+    } catch (actionError) {
+      const message = getErrorMessage(actionError, "No se pudo completar el pago con PayPal.");
+
+      if (isMissingCartMessage(message)) {
+        invalidateBrokenCart(STALE_CART_MESSAGE);
+        return null;
+      }
+
+      setError(message);
+      return null;
+    } finally {
+      completeCheckoutInFlightRef.current = false;
+      setIsBusy(false);
+    }
   }
 
   return (
@@ -304,7 +403,8 @@ export function CartProvider({
         updateItemQuantity,
         removeItem,
         saveEmail,
-        requestPickup,
+        preparePayPalCheckout,
+        completePayPalCheckout,
       }}
     >
       {children}

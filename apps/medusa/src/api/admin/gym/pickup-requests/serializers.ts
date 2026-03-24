@@ -35,8 +35,21 @@ export type AdminPickupRequestRecord = {
   item_count: number
   subtotal: number
   total: number
+  charged_currency_code: string | null
+  charged_total: number | null
+  exchange_rate: number | null
+  exchange_rate_source: string | null
+  exchange_rate_reference: string | null
   line_items_snapshot: AdminPickupRequestLineItem[]
   source: string
+  order_id: string | null
+  payment_collection_id: string | null
+  payment_provider: string | null
+  payment_status: string
+  paypal_order_id: string | null
+  paypal_capture_id: string | null
+  payment_authorized_at: string | null
+  payment_captured_at: string | null
   email_status: PickupRequestEmailStatus
   email_sent_at: string | null
   email_error: string | null
@@ -55,7 +68,19 @@ function asString(value: unknown) {
 }
 
 function asNumber(value: unknown) {
-  return typeof value === "number" && Number.isFinite(value) ? value : 0
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value)
+
+    if (Number.isFinite(parsed)) {
+      return parsed
+    }
+  }
+
+  return 0
 }
 
 function asIsoString(value: unknown) {
@@ -132,12 +157,31 @@ export function serializePickupRequest(value: unknown): AdminPickupRequestRecord
     item_count: asNumber(record.item_count),
     subtotal: asNumber(record.subtotal),
     total: asNumber(record.total),
+    charged_currency_code: asString(record.charged_currency_code),
+    charged_total:
+      record.charged_total === null || record.charged_total === undefined
+        ? null
+        : asNumber(record.charged_total),
+    exchange_rate:
+      record.exchange_rate === null || record.exchange_rate === undefined
+        ? null
+        : asNumber(record.exchange_rate),
+    exchange_rate_source: asString(record.exchange_rate_source),
+    exchange_rate_reference: asString(record.exchange_rate_reference),
     line_items_snapshot: Array.isArray(record.line_items_snapshot)
       ? record.line_items_snapshot
           .map((lineItem) => mapLineItemSnapshot(lineItem))
           .filter((lineItem): lineItem is AdminPickupRequestLineItem => Boolean(lineItem))
       : [],
     source: asString(record.source) ?? "gym-storefront",
+    order_id: asString(record.order_id),
+    payment_collection_id: asString(record.payment_collection_id),
+    payment_provider: asString(record.payment_provider),
+    payment_status: asString(record.payment_status) ?? "pending",
+    paypal_order_id: asString(record.paypal_order_id),
+    paypal_capture_id: asString(record.paypal_capture_id),
+    payment_authorized_at: asIsoString(record.payment_authorized_at),
+    payment_captured_at: asIsoString(record.payment_captured_at),
     email_status:
       (asString(record.email_status) as PickupRequestEmailStatus | null) ?? "pending",
     email_sent_at: asIsoString(record.email_sent_at),

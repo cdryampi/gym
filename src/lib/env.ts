@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { defaultPeruPaymentTestProfile } from "@/lib/paypal/test-profile";
+
 function emptyStringToUndefined(value: unknown) {
   return typeof value === "string" && value.trim() === "" ? undefined : value;
 }
@@ -39,8 +41,24 @@ const serverEnvSchema = publicEnvSchema.extend({
   PAYPAL_AUTO_CAPTURE: optionalEnum(["true", "false"]),
   PAYPAL_CLIENT_ID: optionalString(z.string().min(1)),
   PAYPAL_CLIENT_SECRET: optionalString(z.string().min(1)),
-  PAYPAL_ENVIRONMENT: optionalEnum(["sandbox", "live"]),
+  PAYPAL_ENVIRONMENT: optionalEnum(["sandbox", "production"]),
   PAYPAL_WEBHOOK_ID: optionalString(z.string().min(1)),
+  PAYMENT_TEST_ADDRESS_1: optionalString(z.string().min(1)),
+  PAYMENT_TEST_ADDRESS_2: optionalString(z.string().min(1)),
+  PAYMENT_TEST_CARD_BRAND: optionalString(z.string().min(1)),
+  PAYMENT_TEST_CARD_CVV: optionalString(z.string().min(1)),
+  PAYMENT_TEST_CARD_EXPIRY: optionalString(z.string().min(1)),
+  PAYMENT_TEST_CARD_NUMBER: optionalString(z.string().min(1)),
+  PAYMENT_TEST_CITY: optionalString(z.string().min(1)),
+  PAYMENT_TEST_COUNTRY_CODE: optionalString(z.string().length(2)),
+  PAYMENT_TEST_DOCUMENT_NUMBER: optionalString(z.string().min(1)),
+  PAYMENT_TEST_DOCUMENT_TYPE: optionalString(z.string().min(1)),
+  PAYMENT_TEST_EMAIL: optionalString(z.string().email()),
+  PAYMENT_TEST_FIRST_NAME: optionalString(z.string().min(1)),
+  PAYMENT_TEST_LAST_NAME: optionalString(z.string().min(1)),
+  PAYMENT_TEST_PHONE: optionalString(z.string().min(1)),
+  PAYMENT_TEST_POSTAL_CODE: optionalString(z.string().min(1)),
+  PAYMENT_TEST_STATE: optionalString(z.string().min(1)),
   RESEND_API_KEY: optionalString(z.string().min(1)),
   RESEND_FROM_EMAIL: optionalString(z.string().min(1)),
   SUPABASE_SERVICE_ROLE_KEY: optionalString(z.string().min(1)),
@@ -79,6 +97,22 @@ const serverEnv = serverEnvSchema.parse({
   PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET,
   PAYPAL_ENVIRONMENT: process.env.PAYPAL_ENVIRONMENT,
   PAYPAL_WEBHOOK_ID: process.env.PAYPAL_WEBHOOK_ID,
+  PAYMENT_TEST_ADDRESS_1: process.env.PAYMENT_TEST_ADDRESS_1,
+  PAYMENT_TEST_ADDRESS_2: process.env.PAYMENT_TEST_ADDRESS_2,
+  PAYMENT_TEST_CARD_BRAND: process.env.PAYMENT_TEST_CARD_BRAND,
+  PAYMENT_TEST_CARD_CVV: process.env.PAYMENT_TEST_CARD_CVV,
+  PAYMENT_TEST_CARD_EXPIRY: process.env.PAYMENT_TEST_CARD_EXPIRY,
+  PAYMENT_TEST_CARD_NUMBER: process.env.PAYMENT_TEST_CARD_NUMBER,
+  PAYMENT_TEST_CITY: process.env.PAYMENT_TEST_CITY,
+  PAYMENT_TEST_COUNTRY_CODE: process.env.PAYMENT_TEST_COUNTRY_CODE,
+  PAYMENT_TEST_DOCUMENT_NUMBER: process.env.PAYMENT_TEST_DOCUMENT_NUMBER,
+  PAYMENT_TEST_DOCUMENT_TYPE: process.env.PAYMENT_TEST_DOCUMENT_TYPE,
+  PAYMENT_TEST_EMAIL: process.env.PAYMENT_TEST_EMAIL,
+  PAYMENT_TEST_FIRST_NAME: process.env.PAYMENT_TEST_FIRST_NAME,
+  PAYMENT_TEST_LAST_NAME: process.env.PAYMENT_TEST_LAST_NAME,
+  PAYMENT_TEST_PHONE: process.env.PAYMENT_TEST_PHONE,
+  PAYMENT_TEST_POSTAL_CODE: process.env.PAYMENT_TEST_POSTAL_CODE,
+  PAYMENT_TEST_STATE: process.env.PAYMENT_TEST_STATE,
   RESEND_API_KEY: process.env.RESEND_API_KEY,
   RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -234,7 +268,7 @@ export function hasPayPalClientEnv() {
 export function getPayPalEnv() {
   if (!serverEnv.PAYPAL_CLIENT_ID || !serverEnv.PAYPAL_CLIENT_SECRET) {
     throw new Error(
-      "Missing PayPal sandbox credentials. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.",
+      "Missing PayPal credentials. Set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET.",
     );
   }
 
@@ -242,7 +276,10 @@ export function getPayPalEnv() {
     clientId: serverEnv.PAYPAL_CLIENT_ID,
     clientSecret: serverEnv.PAYPAL_CLIENT_SECRET,
     environment: serverEnv.PAYPAL_ENVIRONMENT ?? "sandbox",
-    autoCapture: serverEnv.PAYPAL_AUTO_CAPTURE === "true",
+    autoCapture:
+      serverEnv.PAYPAL_AUTO_CAPTURE === undefined
+        ? true
+        : serverEnv.PAYPAL_AUTO_CAPTURE === "true",
     webhookId: serverEnv.PAYPAL_WEBHOOK_ID ?? null,
     publicClientId: publicEnv.NEXT_PUBLIC_PAYPAL_CLIENT_ID ?? null,
   };
@@ -257,6 +294,41 @@ export function getPayPalClientEnv() {
 
   return {
     clientId: publicEnv.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
+  };
+}
+
+export function getPaymentTestProfileEnv() {
+  return {
+    email: serverEnv.PAYMENT_TEST_EMAIL ?? defaultPeruPaymentTestProfile.email,
+    firstName:
+      serverEnv.PAYMENT_TEST_FIRST_NAME ?? defaultPeruPaymentTestProfile.firstName,
+    lastName:
+      serverEnv.PAYMENT_TEST_LAST_NAME ?? defaultPeruPaymentTestProfile.lastName,
+    phone: serverEnv.PAYMENT_TEST_PHONE ?? defaultPeruPaymentTestProfile.phone,
+    countryCode:
+      serverEnv.PAYMENT_TEST_COUNTRY_CODE?.toUpperCase() ??
+      defaultPeruPaymentTestProfile.countryCode,
+    state: serverEnv.PAYMENT_TEST_STATE ?? defaultPeruPaymentTestProfile.state,
+    city: serverEnv.PAYMENT_TEST_CITY ?? defaultPeruPaymentTestProfile.city,
+    address1:
+      serverEnv.PAYMENT_TEST_ADDRESS_1 ?? defaultPeruPaymentTestProfile.address1,
+    address2:
+      serverEnv.PAYMENT_TEST_ADDRESS_2 ?? defaultPeruPaymentTestProfile.address2,
+    postalCode:
+      serverEnv.PAYMENT_TEST_POSTAL_CODE ?? defaultPeruPaymentTestProfile.postalCode,
+    documentType:
+      serverEnv.PAYMENT_TEST_DOCUMENT_TYPE ??
+      defaultPeruPaymentTestProfile.documentType,
+    documentNumber:
+      serverEnv.PAYMENT_TEST_DOCUMENT_NUMBER ??
+      defaultPeruPaymentTestProfile.documentNumber,
+    cardBrand:
+      serverEnv.PAYMENT_TEST_CARD_BRAND ?? defaultPeruPaymentTestProfile.cardBrand,
+    cardNumber:
+      serverEnv.PAYMENT_TEST_CARD_NUMBER ?? defaultPeruPaymentTestProfile.cardNumber,
+    cardExpiry:
+      serverEnv.PAYMENT_TEST_CARD_EXPIRY ?? defaultPeruPaymentTestProfile.cardExpiry,
+    cardCvv: serverEnv.PAYMENT_TEST_CARD_CVV ?? defaultPeruPaymentTestProfile.cardCvv,
   };
 }
 

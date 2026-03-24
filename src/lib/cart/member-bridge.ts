@@ -43,6 +43,15 @@ interface MedusaAdminPickupRequestsListResponse {
   offset: number;
 }
 
+interface MedusaAdminOrderLookupResponse {
+  order: {
+    id?: string | null;
+    display_id?: number | null;
+    cart_id?: string | null;
+    created_at?: string | null;
+  } | null;
+}
+
 export async function resolveOrCreateMemberCommerceCustomer(user: User) {
   if (!user.email) {
     throw new Error("La cuenta del miembro no tiene email y no se puede sincronizar con Medusa.");
@@ -119,6 +128,31 @@ export async function createPickupRequest(
   }
 }
 
+export async function syncPickupRequestFromOrder(
+  cartId: string,
+  payload: {
+    orderId: string;
+    supabaseUserId?: string | null;
+    notes?: string | null;
+  },
+) {
+  try {
+    return await requestMedusaAdmin<MedusaAdminPickupRequestResponse>(
+      "/admin/gym/pickup-requests/sync-order",
+      {
+        cart_id: cartId,
+        order_id: payload.orderId,
+        supabase_user_id: payload.supabaseUserId ?? undefined,
+        notes: payload.notes ?? undefined,
+      },
+    );
+  } catch (error) {
+    throw new Error(
+      `No se pudo proyectar el pedido pagado a pickup_request: ${toBridgeError(error, "fallo desconocido")}`,
+    );
+  }
+}
+
 export async function listPickupRequests(filters?: {
   limit?: number;
   offset?: number;
@@ -183,6 +217,27 @@ export async function retrievePickupRequest(pickupRequestId: string) {
   } catch (error) {
     throw new Error(
       `No se pudo cargar la solicitud pickup: ${toBridgeError(error, "fallo desconocido")}`,
+    );
+  }
+}
+
+export async function retrieveOrderByCartId(cartId: string) {
+  const query = new URLSearchParams({
+    cart_id: cartId,
+  });
+
+  try {
+    const response = await getMedusaAdminSdk().client.fetch<MedusaAdminOrderLookupResponse>(
+      `/admin/gym/orders/by-cart?${query.toString()}`,
+      {
+        method: "GET",
+      },
+    );
+
+    return response.order;
+  } catch (error) {
+    throw new Error(
+      `No se pudo consultar la orden del carrito: ${toBridgeError(error, "fallo desconocido")}`,
     );
   }
 }

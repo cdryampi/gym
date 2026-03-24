@@ -31,6 +31,9 @@ export const storeProductSchema = z.object({
     .min(20, "La descripcion completa necesita algo mas de contexto.")
     .max(2400, "Maximo 2400 caracteres."),
   price: positiveMoney,
+  paypal_price_usd: z
+    .union([z.literal(""), z.coerce.number().min(0, "Introduce un precio PayPal valido.")])
+    .refine((value) => value !== "", "El precio estimado PayPal es obligatorio."),
   compare_price: z.union([z.literal(""), z.coerce.number().min(0)]).optional(),
   discount_label: optionalText,
   currency: z.string().trim().min(3, "La moneda es obligatoria.").max(3, "Usa un codigo ISO."),

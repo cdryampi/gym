@@ -30,6 +30,7 @@ import {
   createPickupRequest,
   listPickupRequests,
   markPickupRequestEmailResult,
+  syncPickupRequestFromOrder,
   updatePickupRequestStatus,
 } from "@/lib/cart/member-bridge";
 
@@ -157,5 +158,36 @@ describe("member commerce bridge", () => {
         },
       },
     );
+  });
+
+  it("syncs a paid Medusa order into the pickup request projection", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      pickup_request: {
+        id: "pick_paid_01",
+      },
+    });
+
+    memberBridgeMocks.getMedusaAdminSdk.mockReturnValue({
+      client: {
+        fetch: fetchMock,
+      },
+    });
+
+    const response = await syncPickupRequestFromOrder("cart_01", {
+      orderId: "order_01",
+      supabaseUserId: "user_01",
+      notes: "Pago aprobado con PayPal.",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith("/admin/gym/pickup-requests/sync-order", {
+      method: "POST",
+      body: {
+        cart_id: "cart_01",
+        order_id: "order_01",
+        supabase_user_id: "user_01",
+        notes: "Pago aprobado con PayPal.",
+      },
+    });
+    expect(response.pickup_request.id).toBe("pick_paid_01");
   });
 });

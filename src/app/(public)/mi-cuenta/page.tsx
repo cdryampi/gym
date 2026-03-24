@@ -1,14 +1,19 @@
 import AuthFeedbackDialog from "@/components/auth/AuthFeedbackDialog";
 import MemberSignOutButton from "@/components/auth/MemberSignOutButton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatCartAmount } from "@/lib/cart/format";
-import { getCurrentCartSnapshot } from "@/lib/cart/server";
-import { requireMemberUser } from "@/lib/auth";
-import { getMarketingData } from "@/lib/data/site";
-import { getLatestPickupRequestByEmail } from "@/lib/data/pickup-requests";
 import SiteFooter from "@/components/marketing/SiteFooter";
 import SiteHeader from "@/components/marketing/SiteHeader";
 import SiteTopbar from "@/components/marketing/SiteTopbar";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { requireMemberUser } from "@/lib/auth";
+import { formatCartAmount } from "@/lib/cart/format";
+import {
+  getPickupRequestPaymentTone,
+  pickupRequestPaymentStatusLabels,
+} from "@/lib/cart/pickup-request";
+import { getCurrentCartSnapshot } from "@/lib/cart/server";
+import { getLatestPickupRequestByEmail } from "@/lib/data/pickup-requests";
+import { getMarketingData } from "@/lib/data/site";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +50,7 @@ export default async function MemberAccountPage() {
                 del gimnasio desde aqui.
               </p>
             </div>
+
             <div className="rounded-none border border-black/8 bg-[#fbfbf8] p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a7f87]">
                 Commerce
@@ -57,7 +63,7 @@ export default async function MemberAccountPage() {
                   <p className="mt-2 text-sm leading-6 text-[#5f6368]">
                     Total estimado:{" "}
                     {formatCartAmount(activeCart.summary.total, activeCart.summary.currencyCode)}.
-                    Puedes retomarlo desde la tienda y cerrarlo como pedido pickup cuando quieras.
+                    Puedes retomarlo desde la tienda y continuar el pago cuando quieras.
                   </p>
                 </>
               ) : (
@@ -67,6 +73,7 @@ export default async function MemberAccountPage() {
                 </p>
               )}
             </div>
+
             <div className="rounded-none border border-black/8 bg-[#fbfbf8] p-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a7f87]">
                 Ultimo pedido pickup
@@ -77,27 +84,52 @@ export default async function MemberAccountPage() {
                     {latestPickupRequest.requestNumber}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#5f6368]">
-                    Estado actual: <strong>{latestPickupRequest.status}</strong>. Total estimado:{" "}
+                    Estado actual: <strong>{latestPickupRequest.status}</strong>. Total del pedido:{" "}
                     {formatCartAmount(
                       latestPickupRequest.total,
                       latestPickupRequest.currencyCode,
                     )}
+                    {latestPickupRequest.chargedCurrencyCode &&
+                    latestPickupRequest.chargedTotal !== null
+                      ? ` | Cargo PayPal: ${formatCartAmount(
+                          latestPickupRequest.chargedTotal,
+                          latestPickupRequest.chargedCurrencyCode,
+                        )}`
+                      : ""}
                     . Email: {latestPickupRequest.email}.
+                  </p>
+                  {latestPickupRequest.exchangeRate ? (
+                    <p className="mt-2 text-sm leading-6 text-[#5f6368]">
+                      Tipo de cambio aplicado: S/ {latestPickupRequest.exchangeRate.toFixed(3)} por USD.
+                      {latestPickupRequest.exchangeRateReference
+                        ? ` Referencia: ${latestPickupRequest.exchangeRateReference}.`
+                        : ""}
+                    </p>
+                  ) : null}
+                  <div className="mt-3">
+                    <Badge variant={getPickupRequestPaymentTone(latestPickupRequest.paymentStatus)}>
+                      {pickupRequestPaymentStatusLabels[latestPickupRequest.paymentStatus]}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[#5f6368]">
+                    Pedido Medusa: <strong>{latestPickupRequest.orderId ?? "pendiente"}</strong>.
+                    {" "}Proveedor: <strong>{latestPickupRequest.paymentProvider ?? "paypal"}</strong>.
                   </p>
                   <p className="mt-2 text-sm leading-6 text-[#5f6368]">
                     Estado del correo: <strong>{latestPickupRequest.emailStatus}</strong>.
                     {latestPickupRequest.emailError
                       ? ` Ultimo error registrado: ${latestPickupRequest.emailError}`
-                      : " El resumen de recogida ya se ha procesado correctamente."}
+                      : " El resumen del pedido ya se ha procesado correctamente."}
                   </p>
                 </>
               ) : (
                 <p className="mt-2 text-sm leading-6 text-[#5f6368]">
-                  Cuando envies tu primer pedido pickup desde la tienda, aqui veras su referencia y
-                  el estado operativo.
+                  Cuando completes tu primer pedido pickup desde la tienda, aqui veras su
+                  referencia, pago y estado operativo.
                 </p>
               )}
             </div>
+
             <MemberSignOutButton />
           </CardContent>
         </Card>

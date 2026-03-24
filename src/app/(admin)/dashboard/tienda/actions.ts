@@ -10,6 +10,7 @@ import { getStoreAdminWriteDisabledReason } from "@/lib/data/store-admin";
 import {
   markPickupRequestEmailResult,
   retrievePickupRequest,
+  syncPickupRequestFromOrder,
   updatePickupRequestStatus,
 } from "@/lib/cart/member-bridge";
 import { getMarketingData } from "@/lib/data/site";
@@ -138,7 +139,30 @@ export async function resendDashboardPickupRequestEmail(pickupRequestId: string)
     throw new Error(message);
   }
 
-  revalidateStore();
   revalidatePath(`/dashboard/tienda/pedidos/${pickupRequestId}`);
   revalidatePath("/mi-cuenta");
+}
+
+export async function syncPickupRequestFromMedusaOrderAction(
+  pickupRequestId: string,
+  cartId: string,
+  orderId: string,
+) {
+  await assertPickupRequestsAdminReady();
+
+  try {
+    await syncPickupRequestFromOrder(cartId, {
+      orderId,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudo sincronizar el pedido pickup manualmente.";
+
+    throw new Error(message);
+  }
+
+  revalidateStore();
+  revalidatePath(`/dashboard/tienda/pedidos/${pickupRequestId}`);
 }

@@ -100,12 +100,12 @@ body {
 /* Component Utilities (Sharp Edges) */
 .section-card {
   @apply bg-white border-0 transition-all duration-300;
-  border-radius: 0px !important;
+  border-radius: 0px;
 }
 
 .dark-panel {
   @apply bg-[#111111] text-white p-12;
-  border-radius: 0px !important;
+  border-radius: 0px;
 }
 
 .athletic-grid {
@@ -118,7 +118,7 @@ body {
 /* Custom Button (Sharp) */
 .btn-athletic {
   @apply font-display font-bold uppercase tracking-[0.2em] transition-all duration-300 h-14 px-10 inline-flex items-center justify-center;
-  border-radius: 0px !important;
+  border-radius: 0px;
 }
 
 .btn-primary {
@@ -129,14 +129,14 @@ body {
   @apply border-2 border-foreground bg-transparent text-foreground hover:bg-foreground hover:text-white;
 }
 
+.athletic-outline {
+  -webkit-text-stroke: 1px rgba(255, 255, 255, 0.05);
+  color: transparent;
+}
+
 /* Layout Utilities */
 .full-width {
-  width: 100vw;
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  @apply relative left-1/2 right-1/2 ml-[-50vw] mr-[-50vw] w-screen;
 }
 
 /* Animation Utilities */

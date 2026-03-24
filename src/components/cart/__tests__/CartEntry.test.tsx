@@ -31,6 +31,7 @@ function buildCart(): Cart {
     regionId: "reg_test",
     completedAt: null,
     metadata: null,
+    paymentSession: null,
     items: [
       {
         id: "line_01",

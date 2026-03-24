@@ -4,7 +4,7 @@ import Link from "next/link";
 import ProductBadges from "@/components/marketing/ProductBadges";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@/data/types";
-import { formatProductPrice, productCategoryLabels } from "@/lib/data/products";
+import { formatProductPrice, formatUsdPrice, productCategoryLabels } from "@/lib/data/products";
 
 interface ProductCardProps {
   product: Product;
@@ -43,9 +43,16 @@ export default function ProductCard({ product }: Readonly<ProductCardProps>) {
             <h3 className="font-display text-[28px] uppercase leading-[1.02] tracking-[0.01em] text-[#111111] transition-colors group-hover:text-[#0f2341]">
               <Link href={`/tienda/${product.slug}`}>{product.name}</Link>
             </h3>
-            <p className="font-display text-lg font-bold tracking-tight text-[#d71920]">
-              {formatProductPrice(product)}
-            </p>
+            <div className="space-y-1">
+              <p className="font-display text-lg font-bold tracking-tight text-[#d71920]">
+                {formatProductPrice(product)}
+              </p>
+              {product.paypal_price_usd !== null ? (
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5f6368]">
+                  PayPal cobra aprox. {formatUsdPrice(product.paypal_price_usd)}
+                </p>
+              ) : null}
+            </div>
           </div>
         </div>
 

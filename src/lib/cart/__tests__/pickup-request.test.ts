@@ -25,9 +25,14 @@ describe("pickup request mapper", () => {
       notes: "Pasare por la tarde.",
       status: "ready_for_pickup",
       currency_code: "pen",
-      item_count: 2,
-      subtotal: 99.98,
-      total: 99.98,
+      item_count: "2",
+      subtotal: "99.98",
+      total: "99.98",
+      charged_currency_code: "usd",
+      charged_total: "29.6",
+      exchange_rate: "3.377",
+      exchange_rate_source: "BCRP PD04640PD",
+      exchange_rate_reference: "19.Mar.26",
       source: "gym-storefront",
       email_status: "failed",
       email_sent_at: "2026-03-22T12:00:00.000Z",
@@ -38,17 +43,20 @@ describe("pickup request mapper", () => {
         {
           id: "line_01",
           title: "Nova Whey",
-          quantity: 2,
-          unit_price: 49.99,
-          total: 99.98,
+          quantity: "2",
+          unit_price: "49.99",
+          total: "99.98",
           selected_options: [{ option_title: "Sabor", value: "Chocolate" }],
         },
       ],
-    });
+    } as unknown as Parameters<typeof mapPickupRequest>[0]);
 
     expect(pickupRequest.requestNumber).toBe("NF-20260322-ABC123");
     expect(pickupRequest.status).toBe("ready_for_pickup");
     expect(pickupRequest.currencyCode).toBe("PEN");
+    expect(pickupRequest.chargedCurrencyCode).toBe("USD");
+    expect(pickupRequest.chargedTotal).toBe(29.6);
+    expect(pickupRequest.exchangeRate).toBe(3.377);
     expect(pickupRequest.emailStatus).toBe("failed");
     expect(pickupRequest.emailError).toBe("Resend timeout");
     expect(pickupRequest.lineItems).toEqual([

@@ -170,6 +170,11 @@ function resolveComparePrice(product: MedusaStoreProduct) {
   return null;
 }
 
+function resolvePayPalPriceUsd(product: MedusaStoreProduct) {
+  const paypalPriceUsd = asNumber(product.metadata?.paypal_price_usd);
+  return paypalPriceUsd !== null ? paypalPriceUsd : null;
+}
+
 function resolveStockStatus(product: MedusaStoreProduct): ProductStockStatus {
   const metadataStockStatus = asString(product.metadata?.stock_status);
 
@@ -359,6 +364,7 @@ export function mapMedusaProduct(product: MedusaStoreProduct): Product | null {
       description.slice(0, 160),
     description,
     price: price.amount,
+    paypal_price_usd: resolvePayPalPriceUsd(product),
     compare_price: comparePrice,
     discount_label: asString(product.metadata?.discount_label) ?? undefined,
     currency: price.currency,

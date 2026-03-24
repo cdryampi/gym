@@ -38,6 +38,31 @@ export interface CartSummary {
   pickupRequestNumber: string | null;
 }
 
+export type CartPaymentSessionStatus =
+  | "authorized"
+  | "captured"
+  | "pending"
+  | "requires_more"
+  | "error"
+  | "canceled";
+
+export interface CartPaymentSession {
+  id: string;
+  providerId: string;
+  status: CartPaymentSessionStatus;
+  amount: number;
+  currencyCode: string;
+  displayAmount: number | null;
+  displayCurrencyCode: string | null;
+  exchangeRate: number | null;
+  exchangeRateSource: string | null;
+  exchangeRateReference: string | null;
+  orderId: string | null;
+  authorizationId: string | null;
+  captureId: string | null;
+  data: Record<string, unknown>;
+}
+
 export interface Cart {
   id: string;
   email: string | null;
@@ -46,6 +71,7 @@ export interface Cart {
   completedAt: string | null;
   metadata: Record<string, unknown> | null;
   items: CartLineItem[];
+  paymentSession: CartPaymentSession | null;
   summary: CartSummary;
 }
 
@@ -62,6 +88,14 @@ export type PickupRequestStatus =
   | "cancelled";
 
 export type PickupRequestEmailStatus = "pending" | "sent" | "failed";
+
+export type PickupRequestPaymentStatus =
+  | "authorized"
+  | "captured"
+  | "pending"
+  | "requires_more"
+  | "error"
+  | "canceled";
 
 export interface PickupRequestLineItem {
   id: string;
@@ -92,7 +126,20 @@ export interface PickupRequestSummary {
   itemCount: number;
   subtotal: number;
   total: number;
+  chargedCurrencyCode: string | null;
+  chargedTotal: number | null;
+  exchangeRate: number | null;
+  exchangeRateSource: string | null;
+  exchangeRateReference: string | null;
   source: string;
+  orderId: string | null;
+  paymentCollectionId: string | null;
+  paymentProvider: string | null;
+  paymentStatus: PickupRequestPaymentStatus;
+  paypalOrderId: string | null;
+  paypalCaptureId: string | null;
+  paymentAuthorizedAt: string | null;
+  paymentCapturedAt: string | null;
   emailStatus: PickupRequestEmailStatus;
   emailSentAt: string | null;
   emailError: string | null;

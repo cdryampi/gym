@@ -211,6 +211,13 @@ export function formatProductPrice(product: Pick<Product, "price" | "currency">)
   }).format(product.price);
 }
 
+export function formatUsdPrice(amount: number) {
+  return new Intl.NumberFormat(getDefaultCommerceLocale(), {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
+}
+
 export function getProductStockMeta(stockStatus: ProductStockStatus) {
   switch (stockStatus) {
     case "in_stock":

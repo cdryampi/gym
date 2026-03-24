@@ -59,7 +59,7 @@ export default function SiteTopbar({ settings }: { settings: SiteSettings }) {
           {topbar.ctaLabel && topbar.ctaUrl ? (
             <Link
               href={topbar.ctaUrl}
-              className="inline-flex items-center justify-center border border-current/20 px-3 py-1.5 text-[9px] font-bold uppercase tracking-[0.2em] transition hover:border-current/50 hover:bg-black/10 sm:px-4 sm:py-2 sm:text-[10px]"
+              className="inline-flex items-center justify-center border border-current/20 px-4 py-2 text-[9px] font-bold uppercase tracking-[0.2em] transition hover:border-current/50 hover:bg-black/10 sm:px-6 sm:py-2.5 sm:text-[10px]"
             >
               {topbar.ctaLabel}
             </Link>
