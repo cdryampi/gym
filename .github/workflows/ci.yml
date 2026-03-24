@@ -14,6 +14,35 @@ jobs:
   verify-web:
     name: Verify Web
     runs-on: ubuntu-latest
+    env:
+      COMMERCE_PROVIDER: ${{ vars.COMMERCE_PROVIDER }}
+      STORE_ADMIN_PROVIDER: ${{ vars.STORE_ADMIN_PROVIDER }}
+      COMMERCE_CURRENCY_CODE: ${{ vars.COMMERCE_CURRENCY_CODE }}
+      COMMERCE_LOCALE: ${{ vars.COMMERCE_LOCALE }}
+      NEXT_PUBLIC_COMMERCE_CURRENCY_CODE: ${{ vars.NEXT_PUBLIC_COMMERCE_CURRENCY_CODE }}
+      NEXT_PUBLIC_COMMERCE_LOCALE: ${{ vars.NEXT_PUBLIC_COMMERCE_LOCALE }}
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MEDUSA_BACKEND_URL: ${{ vars.MEDUSA_BACKEND_URL }}
+      NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${{ vars.NEXT_PUBLIC_MEDUSA_BACKEND_URL }}
+      MEDUSA_PUBLISHABLE_KEY: ${{ vars.MEDUSA_PUBLISHABLE_KEY }}
+      NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY }}
+      MEDUSA_REGION_ID: ${{ vars.MEDUSA_REGION_ID }}
+      NEXT_PUBLIC_MEDUSA_REGION_ID: ${{ vars.NEXT_PUBLIC_MEDUSA_REGION_ID }}
+      MEDUSA_REGION_NAME: ${{ vars.MEDUSA_REGION_NAME }}
+      MEDUSA_COUNTRY_CODE: ${{ vars.MEDUSA_COUNTRY_CODE }}
+      MEDUSA_ADMIN_API_KEY: ${{ secrets.MEDUSA_ADMIN_API_KEY }}
+      NEXT_PUBLIC_PAYPAL_CLIENT_ID: ${{ vars.NEXT_PUBLIC_PAYPAL_CLIENT_ID }}
+      PAYPAL_CLIENT_ID: ${{ vars.PAYPAL_CLIENT_ID }}
+      PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
+      PAYPAL_ENVIRONMENT: ${{ vars.PAYPAL_ENVIRONMENT }}
+      PAYPAL_WEBHOOK_ID: ${{ secrets.PAYPAL_WEBHOOK_ID }}
+      PAYPAL_AUTO_CAPTURE: ${{ vars.PAYPAL_AUTO_CAPTURE }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      RESEND_FROM_EMAIL: ${{ secrets.RESEND_FROM_EMAIL }}
+      ADMIN_ALLOWED_EMAILS: ${{ vars.ADMIN_ALLOWED_EMAILS }}
 
     steps:
       - name: Checkout
@@ -42,11 +71,42 @@ jobs:
         run: npm run build
 
       - name: Build Web Docker image
-        run: docker build -t gym-web-ci .
+        run: >
+          docker build
+          --build-arg NEXT_PUBLIC_SUPABASE_URL="${NEXT_PUBLIC_SUPABASE_URL}"
+          --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="${NEXT_PUBLIC_SUPABASE_ANON_KEY}"
+          --build-arg NEXT_PUBLIC_COMMERCE_CURRENCY_CODE="${NEXT_PUBLIC_COMMERCE_CURRENCY_CODE}"
+          --build-arg NEXT_PUBLIC_COMMERCE_LOCALE="${NEXT_PUBLIC_COMMERCE_LOCALE}"
+          --build-arg NEXT_PUBLIC_MEDUSA_BACKEND_URL="${NEXT_PUBLIC_MEDUSA_BACKEND_URL}"
+          --build-arg NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY="${NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY}"
+          --build-arg NEXT_PUBLIC_MEDUSA_REGION_ID="${NEXT_PUBLIC_MEDUSA_REGION_ID}"
+          --build-arg NEXT_PUBLIC_PAYPAL_CLIENT_ID="${NEXT_PUBLIC_PAYPAL_CLIENT_ID}"
+          -t gym-web-ci .
 
   verify-medusa:
     name: Verify Medusa
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      STORE_CORS: ${{ vars.STORE_CORS }}
+      ADMIN_CORS: ${{ vars.ADMIN_CORS }}
+      AUTH_CORS: ${{ vars.AUTH_CORS }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      COOKIE_SECRET: ${{ secrets.COOKIE_SECRET }}
+      MEDUSA_DB_INSECURE_SSL: ${{ vars.MEDUSA_DB_INSECURE_SSL }}
+      PAYPAL_CLIENT_ID: ${{ vars.PAYPAL_CLIENT_ID }}
+      PAYPAL_CLIENT_SECRET: ${{ secrets.PAYPAL_CLIENT_SECRET }}
+      PAYPAL_ENVIRONMENT: ${{ vars.PAYPAL_ENVIRONMENT }}
+      PAYPAL_AUTO_CAPTURE: ${{ vars.PAYPAL_AUTO_CAPTURE }}
+      PAYPAL_WEBHOOK_ID: ${{ secrets.PAYPAL_WEBHOOK_ID }}
+      MEDUSA_REGION_ID: ${{ vars.MEDUSA_REGION_ID }}
+      MEDUSA_REGION_NAME: ${{ vars.MEDUSA_REGION_NAME }}
+      S3_URL: ${{ vars.S3_URL }}
+      S3_BUCKET: ${{ vars.S3_BUCKET }}
+      S3_REGION: ${{ vars.S3_REGION }}
+      S3_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+      S3_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
 
     defaults:
       run:

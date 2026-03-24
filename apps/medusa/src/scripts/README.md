@@ -1,63 +1,30 @@
-# Custom CLI Script
+# Scripts operativos de Medusa
 
-A custom CLI script is a function to execute through Medusa's CLI tool. This is useful when creating custom Medusa tooling to run as a CLI tool.
+Este directorio ya no debe usarse como cajon de sastre para depuracion puntual.
+Solo deben vivir aqui scripts con un uso operativo claro, repetible y documentado.
 
-> Learn more about custom CLI scripts in [this documentation](https://docs.medusajs.com/learn/fundamentals/custom-cli-scripts).
+## Scripts que se conservan
 
-## How to Create a Custom CLI Script?
+- `seed.ts`
+- `seed-nova-forza.ts`
+- `verify-seed.ts`
+- `setup-bucket.ts`
+- `upload-images.ts`
+- `sync-supabase.ts`
+- `migrate-supabase.ts`
 
-To create a custom CLI script, create a TypeScript or JavaScript file under the `src/scripts` directory. The file must default export a function.
+## Regla de mantenimiento
 
-For example, create the file `src/scripts/my-script.ts` with the following content:
+Si necesitas investigar algo puntual:
 
-```ts title="src/scripts/my-script.ts"
-import { 
-  ExecArgs,
-} from "@medusajs/framework/types"
+- usa una rama de trabajo o un archivo temporal ignorado
+- no dejes dumps, fixes one-shot o probes SQL en el repo
+- si el script es realmente util a futuro, documentalo aqui y dale un nombre estable
 
-export default async function myScript ({
-  container
-}: ExecArgs) {
-  const productModuleService = container.resolve("product")
+## Ejecucion
 
-  const [, count] = await productModuleService.listAndCountProducts()
-
-  console.log(`You have ${count} product(s)`)
-}
-```
-
-The function receives as a parameter an object having a `container` property, which is an instance of the Medusa Container. Use it to resolve resources in your Medusa application.
-
----
-
-## How to Run Custom CLI Script?
-
-To run the custom CLI script, run the `exec` command:
+Los scripts se ejecutan con Medusa CLI:
 
 ```bash
-npx medusa exec ./src/scripts/my-script.ts
-```
-
----
-
-## Custom CLI Script Arguments
-
-Your script can accept arguments from the command line. Arguments are passed to the function's object parameter in the `args` property.
-
-For example:
-
-```ts
-import { ExecArgs } from "@medusajs/framework/types"
-
-export default async function myScript ({
-  args
-}: ExecArgs) {
-  console.log(`The arguments you passed: ${args}`)
-}
-```
-
-Then, pass the arguments in the `exec` command after the file path:
-
-```bash
-npx medusa exec ./src/scripts/my-script.ts arg1 arg2
+npx medusa exec ./src/scripts/<archivo>.ts
 ```

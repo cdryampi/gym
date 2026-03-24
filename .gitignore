@@ -40,6 +40,13 @@ medusa_test.json
 apps/medusa/seed_error.log
 *.bak
 apps/medusa/test_output*.txt
+/debug/
+/tmp/
+tmp/
+apps/medusa/apiKeyOutput.txt
+apps/medusa/fulfillment_dump.json
+apps/medusa/peru_region.json
+apps/medusa/src/scripts/temp/
 
 # env files (can opt-in for committing if needed)
 .env*

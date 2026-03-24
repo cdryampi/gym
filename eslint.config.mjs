@@ -10,9 +10,12 @@ const eslintConfig = defineConfig([
     // Default ignores of eslint-config-next:
     ".next/**",
     "apps/medusa/**",
+    "debug/**",
+    "apps/medusa/src/scripts/**",
     "out/**",
     "build/**",
     "output/**",
+    "tmp/**",
     "kill_pg.js",
     "next-env.d.ts",
   ]),

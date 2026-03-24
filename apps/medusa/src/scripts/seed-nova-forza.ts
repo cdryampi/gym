@@ -20,6 +20,12 @@ import {
 const DEFAULT_CURRENCY_CODE = (process.env.COMMERCE_CURRENCY_CODE ?? "PEN").toLowerCase();
 const DEFAULT_REGION_NAME = process.env.MEDUSA_REGION_NAME ?? "Peru";
 const DEFAULT_COUNTRY_CODE = (process.env.MEDUSA_COUNTRY_CODE ?? "PE").toLowerCase();
+const DEFAULT_PAYMENT_PROVIDERS = [
+  "pp_system_default",
+  ...(process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET
+    ? ["pp_paypal_paypal"]
+    : []),
+];
 
 type NovaForzaCategory = "suplementos" | "accesorios" | "merchandising";
 type NovaForzaStockStatus = "in_stock" | "low_stock" | "out_of_stock" | "coming_soon";
@@ -478,7 +484,7 @@ export default async function seedNovaForzaData({ container }: ExecArgs) {
             name: DEFAULT_REGION_NAME,
             currency_code: DEFAULT_CURRENCY_CODE,
             countries: [DEFAULT_COUNTRY_CODE],
-            payment_providers: ["pp_system_default"],
+            payment_providers: DEFAULT_PAYMENT_PROVIDERS,
           },
         ],
       },
