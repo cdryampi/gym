@@ -5,6 +5,8 @@ const { loadEnv, defineConfig } = require("@medusajs/framework/utils")
 loadEnv(process.env.NODE_ENV || "development", process.cwd())
 
 const enableInsecureDbSsl = process.env.MEDUSA_DB_INSECURE_SSL === "true"
+const hasPayPalCredentials =
+  Boolean(process.env.PAYPAL_CLIENT_ID) && Boolean(process.env.PAYPAL_CLIENT_SECRET)
 
 function resolveInternalModulePath(moduleName) {
   const compiledPath = path.join(process.cwd(), ".medusa", "server", "src", "modules", moduleName)
@@ -19,6 +21,7 @@ function resolveInternalModulePath(moduleName) {
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
+    redisUrl: process.env.REDIS_URL,
     databaseDriverOptions: enableInsecureDbSsl
       ? {
           connection: {
@@ -42,19 +45,21 @@ module.exports = defineConfig({
     payment: {
       resolve: "@medusajs/payment",
       options: {
-        providers: [
-          {
-            resolve: resolveInternalModulePath("paypal"),
-            id: "paypal",
-            options: {
-              client_id: process.env.PAYPAL_CLIENT_ID,
-              client_secret: process.env.PAYPAL_CLIENT_SECRET,
-              environment: process.env.PAYPAL_ENVIRONMENT,
-              webhook_id: process.env.PAYPAL_WEBHOOK_ID,
-              region_id: process.env.MEDUSA_REGION_ID,
-            },
-          },
-        ],
+        providers: hasPayPalCredentials
+          ? [
+              {
+                resolve: resolveInternalModulePath("paypal"),
+                id: "paypal",
+                options: {
+                  client_id: process.env.PAYPAL_CLIENT_ID,
+                  client_secret: process.env.PAYPAL_CLIENT_SECRET,
+                  environment: process.env.PAYPAL_ENVIRONMENT,
+                  webhook_id: process.env.PAYPAL_WEBHOOK_ID,
+                  region_id: process.env.MEDUSA_REGION_ID,
+                },
+              },
+            ]
+          : [],
       },
     },
     file: {
