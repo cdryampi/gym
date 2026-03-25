@@ -1,4 +1,4 @@
-import { defineMiddlewares } from "@medusajs/framework/http";
+import { authenticate, defineMiddlewares } from "@medusajs/framework/http";
 
 import { attachGymCartMiddlewares } from "./admin/gym/carts/attach/middlewares";
 import { resolveGymCustomerMiddlewares } from "./admin/gym/customers/resolve/middlewares";
@@ -9,6 +9,10 @@ import { pickupRequestSyncOrderMiddlewares } from "./admin/gym/pickup-requests/s
 
 export default defineMiddlewares({
   routes: [
+    {
+      matcher: "/admin/gym*",
+      middlewares: [authenticate("user", ["session", "bearer", "api-key"])],
+    },
     ...resolveGymCustomerMiddlewares,
     ...attachGymCartMiddlewares,
     ...pickupRequestMiddlewares,

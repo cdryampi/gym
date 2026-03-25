@@ -9,10 +9,8 @@ export function getMedusaAdminSdk() {
     const config = getMedusaAdminConfig();
 
     medusaAdminSdk = new Medusa({
+      apiKey: config.adminApiKey,
       baseUrl: config.backendUrl,
-      globalHeaders: {
-        Authorization: `Basic ${config.adminApiKey}:`,
-      },
       auth: {
         type: "jwt",
         jwtTokenStorageMethod: "memory",
