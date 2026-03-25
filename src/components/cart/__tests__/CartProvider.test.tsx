@@ -199,6 +199,28 @@ describe("CartProvider", () => {
     expect(document.cookie).not.toContain("gym_cart_id=");
   });
 
+  it("does not try to sync the member cart before the cookie cart is hydrated", async () => {
+    document.cookie = "gym_cart_id=cart_cookie; path=/";
+    cartMedusaMocks.retrieveCart.mockRejectedValue(
+      new Error("Cart with id cart_cookie does not exist"),
+    );
+
+    render(
+      <CartProvider memberEmail="socio@gym.com">
+        <CartProbe />
+      </CartProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("ready")).toBeInTheDocument();
+      expect(screen.getByText("no-cart")).toBeInTheDocument();
+      expect(screen.getByText(STALE_CART_MESSAGE)).toBeInTheDocument();
+    });
+
+    expect(fetch).not.toHaveBeenCalledWith("/api/cart/member", expect.anything());
+    expect(document.cookie).not.toContain("gym_cart_id=");
+  });
+
   it("keeps the guest cart and associates it to the signed-in member", async () => {
     document.cookie = "gym_cart_id=cart_cookie; path=/";
     cartMedusaMocks.retrieveCart.mockResolvedValue(buildCart());

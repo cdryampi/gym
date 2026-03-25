@@ -190,11 +190,15 @@ export function CartProvider({
   }, []);
 
   useEffect(() => {
+    if (!isReady) {
+      return;
+    }
+
     if (!memberEmail) {
       return;
     }
 
-    const cartId = cart?.id ?? getCartIdFromDocumentCookie();
+    const cartId = cart?.id;
 
     if (!cartId) {
       return;
@@ -208,7 +212,7 @@ export function CartProvider({
 
     lastSyncedSignature.current = signature;
     syncMemberCart(cartId);
-  }, [memberEmail, cart?.id]);
+  }, [isReady, memberEmail, cart?.id]);
 
   async function runBusyAction(action: () => Promise<void>) {
     setIsBusy(true);
