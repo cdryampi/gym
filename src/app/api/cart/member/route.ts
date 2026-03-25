@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { GYM_CART_COOKIE } from "@/lib/cart/cookie";
 import { mapMedusaCart } from "@/lib/cart/medusa";
 import {
   attachCartToMember,
@@ -11,6 +12,16 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "No se pudo sincronizar el carrito del miembro.";
+}
+
+function clearCartCookie(response: NextResponse) {
+  response.cookies.set(GYM_CART_COOKIE, "", {
+    maxAge: 0,
+    path: "/",
+    sameSite: "lax",
+  });
+
+  return response;
 }
 
 export async function POST(request: Request) {
@@ -43,7 +54,9 @@ export async function POST(request: Request) {
     const message = getErrorMessage(error);
 
     if (cartId && isMissingCartMessage(message)) {
-      return NextResponse.json({ error: STALE_CART_MESSAGE }, { status: 409 });
+      return clearCartCookie(
+        NextResponse.json({ error: STALE_CART_MESSAGE }, { status: 409 }),
+      );
     }
 
     return NextResponse.json({ error: message }, { status: 500 });

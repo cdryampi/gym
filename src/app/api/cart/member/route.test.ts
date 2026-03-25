@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { GYM_CART_COOKIE } from "@/lib/cart/cookie";
 import { STALE_CART_MESSAGE } from "@/lib/cart/runtime";
 
 const memberRouteMocks = vi.hoisted(() => ({
@@ -99,5 +100,7 @@ describe("POST /api/cart/member", () => {
 
     expect(response.status).toBe(409);
     expect(payload.error).toBe(STALE_CART_MESSAGE);
+    expect(response.headers.get("set-cookie")).toContain(`${GYM_CART_COOKIE}=`);
+    expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
   });
 });

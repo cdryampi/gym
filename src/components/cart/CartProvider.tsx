@@ -238,8 +238,24 @@ export function CartProvider({
     await runBusyAction(async () => {
       setLastSubmittedPickupRequest(null);
       setPickupEmailWarning(null);
-      const cartId = await ensureCart();
-      const nextCart = await addCartLineItem(cartId, input.variantId, input.quantity);
+      let cartId = await ensureCart();
+      let nextCart: Cart;
+
+      try {
+        nextCart = await addCartLineItem(cartId, input.variantId, input.quantity);
+      } catch (addError) {
+        const message = getErrorMessage(addError, "No se pudo anadir el producto.");
+
+        if (!isMissingCartMessage(message)) {
+          throw addError;
+        }
+
+        const replacementCart = await createCart(memberEmail);
+        commitCart(replacementCart);
+        cartId = replacementCart.id;
+        nextCart = await addCartLineItem(cartId, input.variantId, input.quantity);
+      }
+
       commitCart(nextCart);
 
       if (memberEmail && !nextCart.customerId) {

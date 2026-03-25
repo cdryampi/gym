@@ -143,6 +143,26 @@ function CartPickupProbe() {
   );
 }
 
+function CartAddProbe() {
+  const { cart, error, addItem } = useCart();
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => {
+          void addItem({ variantId: "variant_vanilla", quantity: 1 });
+        }}
+      >
+        Anadir
+      </button>
+      <span>{cart?.id ?? "no-cart"}</span>
+      <span>{cart?.summary.itemCount ?? 0}</span>
+      <span>{error ?? "no-error"}</span>
+    </div>
+  );
+}
+
 describe("CartProvider", () => {
   beforeEach(() => {
     document.cookie = "gym_cart_id=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
@@ -321,5 +341,89 @@ describe("CartProvider", () => {
         notes: "Pasaré por la tarde.",
       }),
     });
+  });
+
+  it("recreates the cart and retries addItem once when Medusa reports the current cart is missing", async () => {
+    const user = userEvent.setup();
+    document.cookie = "gym_cart_id=cart_cookie; path=/";
+    cartMedusaMocks.retrieveCart.mockResolvedValue(buildCart());
+    cartMedusaMocks.createCart.mockResolvedValue(
+      buildCart({
+        id: "cart_new",
+        items: [],
+        summary: {
+          currencyCode: "PEN",
+          itemCount: 0,
+          subtotal: 0,
+          total: 0,
+          taxTotal: 0,
+          shippingTotal: 0,
+          discountTotal: 0,
+          requiresShipping: false,
+          pickupRequestStatus: "draft",
+          pickupRequestedAt: null,
+          pickupRequestId: null,
+          pickupRequestNumber: null,
+        },
+      }),
+    );
+    cartMedusaMocks.addCartLineItem
+      .mockRejectedValueOnce(new Error("Cart with id cart_cookie does not exist"))
+      .mockResolvedValueOnce(
+        buildCart({
+          id: "cart_new",
+          items: [
+            {
+              id: "line_02",
+              title: "Nova Whey",
+              thumbnail: null,
+              quantity: 1,
+              productId: "prod_01",
+              productTitle: "Nova Whey",
+              productHandle: "nova-whey",
+              variantId: "variant_vanilla",
+              variantTitle: "Vanilla",
+              variantSku: null,
+              unitPrice: 49.99,
+              subtotal: 49.99,
+              total: 49.99,
+              currencyCode: "PEN",
+              requiresShipping: false,
+              selectedOptions: [],
+            },
+          ],
+        }),
+      );
+
+    render(
+      <CartProvider>
+        <CartAddProbe />
+      </CartProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("cart_cookie")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Anadir" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("cart_new")).toBeInTheDocument();
+      expect(screen.getByText("no-error")).toBeInTheDocument();
+    });
+
+    expect(cartMedusaMocks.createCart).toHaveBeenCalledWith(null);
+    expect(cartMedusaMocks.addCartLineItem).toHaveBeenNthCalledWith(
+      1,
+      "cart_cookie",
+      "variant_vanilla",
+      1,
+    );
+    expect(cartMedusaMocks.addCartLineItem).toHaveBeenNthCalledWith(
+      2,
+      "cart_new",
+      "variant_vanilla",
+      1,
+    );
   });
 });
