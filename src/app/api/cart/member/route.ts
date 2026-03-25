@@ -4,6 +4,7 @@ import { GYM_CART_COOKIE } from "@/lib/cart/cookie";
 import { mapMedusaCart } from "@/lib/cart/medusa";
 import {
   attachCartToMember,
+  revalidateMemberCommerceCustomer,
   resolveCartIdFromRequest,
   resolveOrCreateMemberCommerceCustomer,
 } from "@/lib/cart/member-bridge";
@@ -41,10 +42,21 @@ export async function POST(request: Request) {
   const cartId = await resolveCartIdFromRequest(body.cartId);
 
   try {
-    const customerBridge = await resolveOrCreateMemberCommerceCustomer(user);
-    const cartResponse = cartId
-      ? await attachCartToMember(cartId, customerBridge.medusa_customer_id, user.email)
-      : null;
+    let customerBridge = await resolveOrCreateMemberCommerceCustomer(user);
+    let cartResponse = null;
+
+    if (cartId) {
+      try {
+        cartResponse = await attachCartToMember(cartId, customerBridge.medusa_customer_id, user.email);
+      } catch (attachError) {
+        if (!isMissingCartMessage(getErrorMessage(attachError))) {
+          throw attachError;
+        }
+
+        customerBridge = await revalidateMemberCommerceCustomer(user);
+        cartResponse = await attachCartToMember(cartId, customerBridge.medusa_customer_id, user.email);
+      }
+    }
 
     return NextResponse.json({
       customer: customerBridge,

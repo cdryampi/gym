@@ -5,6 +5,7 @@ import { STALE_CART_MESSAGE } from "@/lib/cart/runtime";
 
 const memberRouteMocks = vi.hoisted(() => ({
   attachCartToMember: vi.fn(),
+  revalidateMemberCommerceCustomer: vi.fn(),
   resolveCartIdFromRequest: vi.fn(),
   resolveOrCreateMemberCommerceCustomer: vi.fn(),
   createSupabaseServerClient: vi.fn(),
@@ -13,6 +14,7 @@ const memberRouteMocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/cart/member-bridge", () => ({
   attachCartToMember: memberRouteMocks.attachCartToMember,
+  revalidateMemberCommerceCustomer: memberRouteMocks.revalidateMemberCommerceCustomer,
   resolveCartIdFromRequest: memberRouteMocks.resolveCartIdFromRequest,
   resolveOrCreateMemberCommerceCustomer: memberRouteMocks.resolveOrCreateMemberCommerceCustomer,
 }));
@@ -32,6 +34,10 @@ describe("POST /api/cart/member", () => {
     memberRouteMocks.resolveCartIdFromRequest.mockResolvedValue("cart_01");
     memberRouteMocks.resolveOrCreateMemberCommerceCustomer.mockResolvedValue({
       medusa_customer_id: "cus_01",
+      email: "socio@gym.com",
+    });
+    memberRouteMocks.revalidateMemberCommerceCustomer.mockResolvedValue({
+      medusa_customer_id: "cus_02",
       email: "socio@gym.com",
     });
     memberRouteMocks.createSupabaseServerClient.mockResolvedValue({
@@ -102,5 +108,49 @@ describe("POST /api/cart/member", () => {
     expect(payload.error).toBe(STALE_CART_MESSAGE);
     expect(response.headers.get("set-cookie")).toContain(`${GYM_CART_COOKIE}=`);
     expect(response.headers.get("set-cookie")).toContain("Max-Age=0");
+  });
+
+  it("re-resolves the Medusa customer and retries attach once when the stored bridge is stale", async () => {
+    memberRouteMocks.attachCartToMember
+      .mockRejectedValueOnce(
+        new Error("No se pudo vincular el carrito a la cuenta del miembro: Not Found"),
+      )
+      .mockResolvedValueOnce({
+        cart: {
+          id: "cart_01",
+        },
+      });
+    memberRouteMocks.mapMedusaCart.mockReturnValue({
+      id: "cart_01",
+      items: [],
+      summary: { itemCount: 0 },
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/cart/member", {
+        method: "POST",
+        body: JSON.stringify({
+          cartId: "cart_01",
+        }),
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(memberRouteMocks.revalidateMemberCommerceCustomer).toHaveBeenCalledTimes(1);
+    expect(memberRouteMocks.attachCartToMember).toHaveBeenNthCalledWith(
+      1,
+      "cart_01",
+      "cus_01",
+      "socio@gym.com",
+    );
+    expect(memberRouteMocks.attachCartToMember).toHaveBeenNthCalledWith(
+      2,
+      "cart_01",
+      "cus_02",
+      "socio@gym.com",
+    );
+    expect(payload.customer.medusa_customer_id).toBe("cus_02");
+    expect(payload.cart.id).toBe("cart_01");
   });
 });

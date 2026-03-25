@@ -58,6 +58,16 @@ interface MedusaAdminCartResponse {
   cart: MedusaCart;
 }
 
+interface MedusaAdminResolveCustomerResponse {
+  customer: {
+    id: string;
+    email?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
+  };
+  created?: boolean;
+}
+
 interface MedusaAdminPickupRequestResponse {
   pickup_request: MedusaPickupRequest;
 }
@@ -79,6 +89,10 @@ interface MedusaAdminOrderLookupResponse {
 }
 
 export async function resolveOrCreateMemberCommerceCustomer(user: User) {
+  return resolveOrCreateMemberCommerceCustomerInternal(user, false);
+}
+
+async function resolveOrCreateMemberCommerceCustomerInternal(user: User, forceRefresh: boolean) {
   if (!user.email) {
     throw new Error("La cuenta del miembro no tiene email y no se puede sincronizar con Medusa.");
   }
@@ -86,7 +100,7 @@ export async function resolveOrCreateMemberCommerceCustomer(user: User) {
   const supabase = createSupabaseAdminClient();
   const existingBridge = await getMemberCommerceCustomerByUserId(supabase, user.id);
 
-  if (existingBridge?.medusa_customer_id) {
+  if (existingBridge?.medusa_customer_id && !forceRefresh) {
     if (existingBridge.email !== user.email) {
       return upsertMemberCommerceCustomer(supabase, {
         supabase_user_id: user.id,
@@ -98,19 +112,22 @@ export async function resolveOrCreateMemberCommerceCustomer(user: User) {
     return existingBridge;
   }
 
-  const response = await requestMedusaAdmin<{
-    customer: {
-      id: string;
-    };
-  }>("/admin/gym/customers/resolve", {
+  const response = await requestMedusaAdmin<MedusaAdminResolveCustomerResponse>(
+    "/admin/gym/customers/resolve",
+    {
     email: user.email,
-  });
+    },
+  );
 
   return upsertMemberCommerceCustomer(supabase, {
     supabase_user_id: user.id,
     email: user.email,
     medusa_customer_id: response.customer.id,
   });
+}
+
+export async function revalidateMemberCommerceCustomer(user: User) {
+  return resolveOrCreateMemberCommerceCustomerInternal(user, true);
 }
 
 export async function attachCartToMember(cartId: string, customerId: string, email: string) {
