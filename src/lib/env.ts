@@ -6,8 +6,22 @@ function emptyStringToUndefined(value: unknown) {
   return typeof value === "string" && value.trim() === "" ? undefined : value;
 }
 
+function looksLikeTemplatePlaceholder(value: string) {
+  const normalized = value.trim().toUpperCase();
+
+  return /^(TU|GENERA)_[A-Z0-9_]+$/.test(normalized);
+}
+
 function optionalString(schema: z.ZodString) {
-  return z.preprocess(emptyStringToUndefined, schema.optional());
+  return z.preprocess((value) => {
+    const normalized = emptyStringToUndefined(value);
+
+    if (typeof normalized === "string" && looksLikeTemplatePlaceholder(normalized)) {
+      return undefined;
+    }
+
+    return normalized;
+  }, schema.optional());
 }
 
 function optionalEnum<T extends [string, ...string[]]>(values: T) {

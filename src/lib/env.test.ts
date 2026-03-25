@@ -146,6 +146,20 @@ describe("env provider constraints", () => {
     });
   });
 
+  it("treats documented placeholder env values as not configured", async () => {
+    const env = await importEnvModule({
+      NODE_ENV: "test",
+      NEXT_PUBLIC_SUPABASE_URL: "https://nbjkfyjeewprnxxibhwz.supabase.co",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "TU_SUPABASE_ANON_KEY_ROTADA",
+      SUPABASE_SERVICE_ROLE_KEY: "TU_SUPABASE_SERVICE_ROLE_KEY_ROTADA",
+      MEDUSA_ADMIN_API_KEY: "TU_MEDUSA_ADMIN_API_KEY_ROTADA",
+    });
+
+    expect(env.hasSupabasePublicEnv()).toBe(false);
+    expect(env.hasSupabaseServiceRole()).toBe(false);
+    expect(env.hasMedusaAdminEnv()).toBe(false);
+  });
+
   it("accepts a valid PayPal sandbox configuration", async () => {
     const env = await importEnvModule({
       NODE_ENV: "test",

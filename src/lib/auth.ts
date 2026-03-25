@@ -22,6 +22,19 @@ export interface LocalAdminUser {
   isLocalAdmin: true;
 }
 
+function isSupabaseAuthApiError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as {
+    __isAuthError?: boolean;
+    status?: number;
+  };
+
+  return candidate.__isAuthError === true || candidate.status === 401;
+}
+
 export function isAllowedAdminEmail(email: string | null | undefined) {
   return isAllowedAdminEmailInList(email, getAdminAllowedEmails());
 }
@@ -43,12 +56,21 @@ export async function getSupabaseUser() {
     return null;
   }
 
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-  return user;
+    return user;
+  } catch (error) {
+    if (!isSupabaseAuthApiError(error)) {
+      throw error;
+    }
+
+    console.error("Supabase auth is misconfigured while resolving the current user.", error);
+    return null;
+  }
 }
 
 export async function getCurrentMemberUser() {

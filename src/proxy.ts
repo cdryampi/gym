@@ -2,8 +2,23 @@ import { createServerClient } from "@supabase/ssr";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+import { getPublicSupabaseEnv, hasSupabasePublicEnv } from "@/lib/env";
+
 const ADMIN_ROUTES = ["/dashboard"];
 const LOGIN_PATH = "/login";
+
+function isSupabaseAuthApiError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as {
+    __isAuthError?: boolean;
+    status?: number;
+  };
+
+  return candidate.__isAuthError === true || candidate.status === 401;
+}
 
 function isAdminRoute(pathname: string) {
   return ADMIN_ROUTES.some(
@@ -14,12 +29,11 @@ function isAdminRoute(pathname: string) {
 export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request });
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
+  if (!hasSupabasePublicEnv()) {
     return response;
   }
+
+  const { url: supabaseUrl, anonKey: supabaseAnonKey } = getPublicSupabaseEnv();
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -35,9 +49,21 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+
+  try {
+    const {
+      data: { user: resolvedUser },
+    } = await supabase.auth.getUser();
+
+    user = resolvedUser;
+  } catch (error) {
+    if (!isSupabaseAuthApiError(error)) {
+      throw error;
+    }
+
+    console.error("Supabase auth is misconfigured in proxy.", error);
+  }
 
   if (isAdminRoute(request.nextUrl.pathname) && !user) {
     const localAdminCookie = request.cookies.get("gym_admin_session")?.value;
