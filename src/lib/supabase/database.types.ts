@@ -6613,3 +6613,15 @@ export const Constants = {
     },
   },
 } as const
+
+export type Lead = Database["public"]["Tables"]["leads"]["Row"]
+export type LeadStatus = Database["public"]["Enums"]["lead_status"]
+export type DBCmsDocument = Database["public"]["Tables"]["cms_documents"]["Row"]
+export type DBMemberCommerceCustomer =
+  Database["public"]["Tables"]["member_commerce_customers"]["Row"]
+export type SiteSettings = Database["public"]["Tables"]["site_settings"]["Row"]
+export type DBProduct = Database["public"]["Tables"]["products"]["Row"]
+export type DBStoreCategory = Database["public"]["Tables"]["store_categories"]["Row"]
+export type DBProductCategory = Database["public"]["Enums"]["store_category_type"]
+export type DBProductStockStatus =
+  Database["public"]["Enums"]["product_stock_status"]

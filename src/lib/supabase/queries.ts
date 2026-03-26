@@ -738,7 +738,7 @@ async function assertCategoryHierarchy(
 async function resolveRootCategoryEnum(
   supabase: GymSupabaseClient,
   categoryId: string,
-): Promise<Database["public"]["Enums"]["product_category"]> {
+): Promise<Database["public"]["Enums"]["store_category_type"]> {
   const categories = await getStoreCategories(supabase, { includeInactive: true });
   const byId = new Map(categories.map((category) => [category.id, category]));
   let current = byId.get(categoryId);
