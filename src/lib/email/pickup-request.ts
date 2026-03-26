@@ -1,7 +1,7 @@
 import { formatCartAmount } from "@/lib/cart/format";
 import type { PickupRequestDetail } from "@/lib/cart/types";
 
-import { sendMailjetEmail } from "./mailjet";
+import { sendResendEmail } from "./resend";
 
 interface PickupRequestEmailContext {
   pickupRequest: PickupRequestDetail;
@@ -265,20 +265,13 @@ export async function sendPickupRequestEmails({
   await Promise.all(
     deliveries.map(async (delivery) => {
       try {
-        await sendMailjetEmail({
+        await sendResendEmail({
           to: delivery.recipient,
           from: fromEmail ?? undefined,
           replyTo: replyTo ?? undefined,
           subject: delivery.subject,
           html: delivery.html,
           text,
-          customId: `pickup-request:${pickupRequest.id}:${delivery.kind}`,
-          eventPayload: JSON.stringify({
-            type: "pickup_request_email",
-            pickupRequestId: pickupRequest.id,
-            deliveryKind: delivery.kind,
-          }),
-          customCampaign: `pickup_request_${pickupRequest.id}_${delivery.kind}`,
         });
       } catch (error) {
         const message =

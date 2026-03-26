@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const pickupEmailMocks = vi.hoisted(() => ({
-  sendMailjetEmail: vi.fn(),
+  sendResendEmail: vi.fn(),
 }));
 
-vi.mock("@/lib/email/mailjet", () => ({
-  sendMailjetEmail: pickupEmailMocks.sendMailjetEmail,
+vi.mock("@/lib/email/resend", () => ({
+  sendResendEmail: pickupEmailMocks.sendResendEmail,
 }));
 
 import { sendPickupRequestEmails } from "@/lib/email/pickup-request";
@@ -67,40 +67,38 @@ function buildPickupRequest(overrides: Partial<PickupRequestDetail> = {}): Picku
 
 describe("pickup request emails", () => {
   beforeEach(() => {
-    pickupEmailMocks.sendMailjetEmail.mockReset();
+    pickupEmailMocks.sendResendEmail.mockReset();
   });
 
   it("sends both customer and internal emails with escaped invoice-style content", async () => {
-    pickupEmailMocks.sendMailjetEmail.mockResolvedValue({ Messages: [{ Status: "success" }] });
+    pickupEmailMocks.sendResendEmail.mockResolvedValue({ id: "re_01" });
     const pickupRequest = buildPickupRequest();
 
     await sendPickupRequestEmails({
       pickupRequest,
       siteName: "Nova Forza",
       internalRecipient: "club@novaforza.pe",
-      fromEmail: "Nova Forza <mailer@yampi.eu>",
+      fromEmail: "Nova Forza <onboarding@resend.dev>",
       replyTo: "pedidos@gmail.com",
     });
 
-    expect(pickupEmailMocks.sendMailjetEmail).toHaveBeenCalledTimes(2);
-    expect(pickupEmailMocks.sendMailjetEmail).toHaveBeenCalledWith(
+    expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledTimes(2);
+    expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: "Nova Forza <mailer@yampi.eu>",
+        from: "Nova Forza <onboarding@resend.dev>",
         replyTo: "pedidos@gmail.com",
         to: "socio@gym.com",
         subject: "Nova Forza | Pedido pagado NF-20260322-ABC123",
-        customId: "pickup-request:pick_01:customer",
         html: expect.stringMatching(/Tu pedido pagado para recogida[\s\S]*Cargo PayPal/),
         text: expect.stringContaining("Recogida local, pago online confirmado."),
       }),
     );
-    expect(pickupEmailMocks.sendMailjetEmail).toHaveBeenCalledWith(
+    expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledWith(
       expect.objectContaining({
-        from: "Nova Forza <mailer@yampi.eu>",
+        from: "Nova Forza <onboarding@resend.dev>",
         replyTo: "pedidos@gmail.com",
         to: "club@novaforza.pe",
         subject: "Nova Forza | Nuevo pedido pagado NF-20260322-ABC123",
-        customId: "pickup-request:pick_01:internal",
         html: expect.stringContaining("Pasare despues de las 19:00 &lt;gracias&gt;"),
         text: expect.stringContaining("Cargo PayPal:"),
       }),
@@ -108,62 +106,62 @@ describe("pickup request emails", () => {
   });
 
   it("deduplicates recipients when customer and gym email are the same", async () => {
-    pickupEmailMocks.sendMailjetEmail.mockResolvedValue({ Messages: [{ Status: "success" }] });
+    pickupEmailMocks.sendResendEmail.mockResolvedValue({ id: "re_same" });
 
     await sendPickupRequestEmails({
       pickupRequest: buildPickupRequest({ email: "club@novaforza.pe" }),
       siteName: "Nova Forza",
       internalRecipient: "club@novaforza.pe",
-      fromEmail: "Nova Forza <mailer@yampi.eu>",
+      fromEmail: "Nova Forza <onboarding@resend.dev>",
       replyTo: "pedidos@gmail.com",
     });
 
-    expect(pickupEmailMocks.sendMailjetEmail).toHaveBeenCalledTimes(1);
+    expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledTimes(1);
   });
 
   it("does not fail the whole flow when only the internal email fails", async () => {
-    pickupEmailMocks.sendMailjetEmail
-      .mockResolvedValueOnce({ Messages: [{ Status: "success" }] })
-      .mockRejectedValueOnce(new Error("Mailjet timeout"));
+    pickupEmailMocks.sendResendEmail
+      .mockResolvedValueOnce({ id: "re_customer" })
+      .mockRejectedValueOnce(new Error("Resend timeout"));
 
     await expect(
       sendPickupRequestEmails({
         pickupRequest: buildPickupRequest(),
         siteName: "Nova Forza",
         internalRecipient: "club@novaforza.pe",
-        fromEmail: "Nova Forza <mailer@yampi.eu>",
+        fromEmail: "Nova Forza <onboarding@resend.dev>",
         replyTo: "pedidos@gmail.com",
       }),
     ).resolves.toBeUndefined();
 
-    expect(pickupEmailMocks.sendMailjetEmail).toHaveBeenCalledTimes(2);
+    expect(pickupEmailMocks.sendResendEmail).toHaveBeenCalledTimes(2);
   });
 
   it("fails when the customer email cannot be delivered", async () => {
-    pickupEmailMocks.sendMailjetEmail
-      .mockRejectedValueOnce(new Error("Mailjet timeout"))
-      .mockResolvedValueOnce({ Messages: [{ Status: "success" }] });
+    pickupEmailMocks.sendResendEmail
+      .mockRejectedValueOnce(new Error("Resend timeout"))
+      .mockResolvedValueOnce({ id: "re_internal" });
 
     await expect(
       sendPickupRequestEmails({
         pickupRequest: buildPickupRequest(),
         siteName: "Nova Forza",
         internalRecipient: "club@novaforza.pe",
-        fromEmail: "Nova Forza <mailer@yampi.eu>",
+        fromEmail: "Nova Forza <onboarding@resend.dev>",
         replyTo: "pedidos@gmail.com",
       }),
-    ).rejects.toThrow("Mailjet timeout");
+    ).rejects.toThrow("Resend timeout");
   });
 
   it("fails early when the pickup request has no customer email", async () => {
-    pickupEmailMocks.sendMailjetEmail.mockResolvedValue({ Messages: [{ Status: "success" }] });
+    pickupEmailMocks.sendResendEmail.mockResolvedValue({ id: "re_internal" });
 
     await expect(
       sendPickupRequestEmails({
         pickupRequest: buildPickupRequest({ email: "" }),
         siteName: "Nova Forza",
         internalRecipient: "club@novaforza.pe",
-        fromEmail: "Nova Forza <mailer@yampi.eu>",
+        fromEmail: "Nova Forza <onboarding@resend.dev>",
         replyTo: "pedidos@gmail.com",
       }),
     ).rejects.toThrow("La solicitud pickup no tiene email de cliente.");

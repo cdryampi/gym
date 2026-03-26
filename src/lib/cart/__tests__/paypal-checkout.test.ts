@@ -32,8 +32,7 @@ vi.mock("@/lib/data/site", () => ({
 }));
 
 vi.mock("@/lib/env", () => ({
-  hasMailjetEnv: vi.fn(),
-  getMailjetEnv: vi.fn(),
+  hasResendEnv: vi.fn(),
 }));
 
 vi.mock("@/lib/email/pickup-request", () => ({

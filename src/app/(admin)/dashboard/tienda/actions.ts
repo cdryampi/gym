@@ -15,7 +15,7 @@ import {
 } from "@/lib/cart/member-bridge";
 import { getMarketingData } from "@/lib/data/site";
 import { defaultSiteSettings } from "@/lib/data/default-content";
-import { getMailjetEnv, hasMedusaAdminEnv } from "@/lib/env";
+import { getResendEnv, hasMedusaAdminEnv } from "@/lib/env";
 import { resolveTransactionalSender } from "@/lib/email/policy";
 import { sendPickupRequestEmails } from "@/lib/email/pickup-request";
 import {
@@ -115,11 +115,11 @@ export async function resendDashboardPickupRequestEmail(pickupRequestId: string)
   const siteName = settings.site_name ?? defaultSiteSettings.site_name;
   const internalRecipient =
     settings.notification_email ?? defaultSiteSettings.notification_email;
-  const mailjet = getMailjetEnv();
+  const resend = getResendEnv();
   const sender = resolveTransactionalSender(
     siteName,
     settings.transactional_from_email ?? defaultSiteSettings.transactional_from_email,
-    mailjet.fromEmail,
+    resend.fromEmail,
   );
 
   try {

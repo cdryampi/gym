@@ -4,7 +4,7 @@ import { mapPickupRequest } from "@/lib/cart/pickup-request";
 import type { Cart, PickupRequestDetail } from "@/lib/cart/types";
 import { defaultSiteSettings } from "@/lib/data/default-content";
 import { getMarketingData } from "@/lib/data/site";
-import { getMailjetEnv, hasMailjetEnv } from "@/lib/env";
+import { getResendEnv, hasResendEnv } from "@/lib/env";
 import { resolveTransactionalSender } from "@/lib/email/policy";
 import { sendPickupRequestEmails } from "@/lib/email/pickup-request";
 import { ensurePayPalProviderEnabledForRegion } from "@/lib/medusa/paypal-admin";
@@ -197,19 +197,17 @@ async function finalizePickupRequestEmail(
   const { settings } = await getMarketingData();
   const internalRecipient =
     settings.notification_email ?? defaultSiteSettings.notification_email;
-  const mailjet = getMailjetEnv();
+  const resend = getResendEnv();
   const sender = resolveTransactionalSender(
     settings.site_name ?? defaultSiteSettings.site_name,
     settings.transactional_from_email ?? defaultSiteSettings.transactional_from_email,
-    mailjet.fromEmail,
+    resend.fromEmail,
   );
 
   if (pickupRequest.emailStatus === "pending") {
     try {
-      if (!hasMailjetEnv()) {
-        throw new Error(
-          "Mailjet no está configurado. Define MAILJET_API_KEY, MAILJET_SECRET_KEY y MAILJET_FROM_EMAIL.",
-        );
+      if (!hasResendEnv()) {
+        throw new Error("RESEND_API_KEY no está configurada.");
       }
 
       if (trace) {

@@ -1,6 +1,6 @@
 import { defaultSiteSettings } from "@/lib/data/default-content";
 
-import { sendMailjetEmail } from "./mailjet";
+import { sendResendEmail } from "./resend";
 
 function escapeHtml(value: string) {
   return value
@@ -22,17 +22,11 @@ export async function sendMemberWelcomeEmail(
   const safeSiteName = escapeHtml(resolvedSiteName);
   const loginUrl = "/acceso";
 
-  await sendMailjetEmail({
+  await sendResendEmail({
     to: email,
     from: fromEmail ?? undefined,
     replyTo: replyTo ?? undefined,
     subject: `${resolvedSiteName} | Tu cuenta ya esta creada`,
-    customId: `member-welcome:${email.toLowerCase()}`,
-    eventPayload: JSON.stringify({
-      type: "member_welcome_email",
-      email: email.toLowerCase(),
-    }),
-    customCampaign: "member_welcome",
     html: `
       <div style="margin:0;padding:32px;background:#f5f5f0;font-family:Arial,sans-serif;color:#111111;">
         <div style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;">

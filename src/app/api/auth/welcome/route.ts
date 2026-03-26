@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { getMailjetEnv, hasMailjetEnv } from "@/lib/env";
+import { getResendEnv, hasResendEnv } from "@/lib/env";
 import { sendMemberWelcomeEmail } from "@/lib/email/welcome-member";
 import { resolveTransactionalSender } from "@/lib/email/policy";
 import { getMarketingData } from "@/lib/data/site";
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Email invalido." }, { status: 400 });
   }
 
-  if (!hasMailjetEnv()) {
+  if (!hasResendEnv()) {
     return NextResponse.json({ queued: false, skipped: true }, { status: 202 });
   }
 
@@ -46,11 +46,11 @@ export async function POST(request: Request) {
 
     const { settings } = await getMarketingData();
 
-    const mailjet = getMailjetEnv();
+    const resend = getResendEnv();
     const sender = resolveTransactionalSender(
       settings.site_name,
       settings.transactional_from_email,
-      mailjet.fromEmail,
+      resend.fromEmail,
     );
 
     await sendMemberWelcomeEmail(
