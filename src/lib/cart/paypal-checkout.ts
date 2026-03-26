@@ -259,6 +259,7 @@ export async function recoverCompletedPickupCheckout(
       try {
         const currentCart = await retrieveCart(cartId);
         nextPickupRequestId = currentCart.summary.pickupRequestId;
+        recoveredOrderId ||= currentCart.paymentSession?.orderId ?? null;
 
         if (nextPickupRequestId) {
           const existing = await retrievePickupRequest(nextPickupRequestId);
