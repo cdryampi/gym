@@ -36,7 +36,7 @@ describe("pickup request mapper", () => {
       source: "gym-storefront",
       email_status: "failed",
       email_sent_at: "2026-03-22T12:00:00.000Z",
-      email_error: "Resend timeout",
+      email_error: "Mailjet timeout",
       created_at: "2026-03-22T10:00:00.000Z",
       updated_at: "2026-03-22T12:00:00.000Z",
       line_items_snapshot: [
@@ -58,7 +58,7 @@ describe("pickup request mapper", () => {
     expect(pickupRequest.chargedTotal).toBe(29.6);
     expect(pickupRequest.exchangeRate).toBe(3.377);
     expect(pickupRequest.emailStatus).toBe("failed");
-    expect(pickupRequest.emailError).toBe("Resend timeout");
+    expect(pickupRequest.emailError).toBe("Mailjet timeout");
     expect(pickupRequest.lineItems).toEqual([
       expect.objectContaining({
         id: "line_01",

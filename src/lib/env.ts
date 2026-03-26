@@ -73,8 +73,10 @@ const serverEnvSchema = publicEnvSchema.extend({
   PAYMENT_TEST_PHONE: optionalString(z.string().min(1)),
   PAYMENT_TEST_POSTAL_CODE: optionalString(z.string().min(1)),
   PAYMENT_TEST_STATE: optionalString(z.string().min(1)),
-  RESEND_API_KEY: optionalString(z.string().min(1)),
-  RESEND_FROM_EMAIL: optionalString(z.string().min(1)),
+  MAILJET_API_KEY: optionalString(z.string().min(1)),
+  MAILJET_SECRET_KEY: optionalString(z.string().min(1)),
+  MAILJET_FROM_EMAIL: optionalString(z.string().min(1)),
+  MAILJET_EVENT_TOKEN: optionalString(z.string().min(1)),
   SUPABASE_SERVICE_ROLE_KEY: optionalString(z.string().min(1)),
 });
 
@@ -127,8 +129,10 @@ const serverEnv = serverEnvSchema.parse({
   PAYMENT_TEST_PHONE: process.env.PAYMENT_TEST_PHONE,
   PAYMENT_TEST_POSTAL_CODE: process.env.PAYMENT_TEST_POSTAL_CODE,
   PAYMENT_TEST_STATE: process.env.PAYMENT_TEST_STATE,
-  RESEND_API_KEY: process.env.RESEND_API_KEY,
-  RESEND_FROM_EMAIL: process.env.RESEND_FROM_EMAIL,
+  MAILJET_API_KEY: process.env.MAILJET_API_KEY,
+  MAILJET_SECRET_KEY: process.env.MAILJET_SECRET_KEY,
+  MAILJET_FROM_EMAIL: process.env.MAILJET_FROM_EMAIL,
+  MAILJET_EVENT_TOKEN: process.env.MAILJET_EVENT_TOKEN,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
 });
 
@@ -256,19 +260,35 @@ export function getMedusaAdminEnv() {
   };
 }
 
-export function hasResendEnv() {
-  return Boolean(serverEnv.RESEND_API_KEY);
+export function hasMailjetEnv() {
+  return Boolean(
+    serverEnv.MAILJET_API_KEY &&
+      serverEnv.MAILJET_SECRET_KEY &&
+      serverEnv.MAILJET_FROM_EMAIL,
+  );
 }
 
-export function getResendEnv() {
-  if (!serverEnv.RESEND_API_KEY) {
-    throw new Error("Missing RESEND_API_KEY. Configuralo para enviar los emails pickup.");
+export function getMailjetEnv() {
+  if (
+    !serverEnv.MAILJET_API_KEY ||
+    !serverEnv.MAILJET_SECRET_KEY ||
+    !serverEnv.MAILJET_FROM_EMAIL
+  ) {
+    throw new Error(
+      "Missing Mailjet credentials. Configura MAILJET_API_KEY, MAILJET_SECRET_KEY y MAILJET_FROM_EMAIL para enviar emails.",
+    );
   }
 
   return {
-    apiKey: serverEnv.RESEND_API_KEY,
-    fromEmail: serverEnv.RESEND_FROM_EMAIL ?? "Nova Forza <onboarding@resend.dev>",
+    apiKey: serverEnv.MAILJET_API_KEY,
+    secretKey: serverEnv.MAILJET_SECRET_KEY,
+    fromEmail: serverEnv.MAILJET_FROM_EMAIL,
+    eventToken: serverEnv.MAILJET_EVENT_TOKEN ?? null,
   };
+}
+
+export function getMailjetEventToken() {
+  return serverEnv.MAILJET_EVENT_TOKEN ?? null;
 }
 
 export function hasPayPalEnv() {

@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const welcomeRouteMocks = vi.hoisted(() => ({
-  hasResendEnv: vi.fn(),
-  getResendEnv: vi.fn(),
+  hasMailjetEnv: vi.fn(),
+  getMailjetEnv: vi.fn(),
   createSupabaseAdminClient: vi.fn(),
   getMarketingData: vi.fn(),
   sendMemberWelcomeEmail: vi.fn(),
 }));
 
 vi.mock("@/lib/env", () => ({
-  hasResendEnv: welcomeRouteMocks.hasResendEnv,
-  getResendEnv: welcomeRouteMocks.getResendEnv,
+  hasMailjetEnv: welcomeRouteMocks.hasMailjetEnv,
+  getMailjetEnv: welcomeRouteMocks.getMailjetEnv,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -29,9 +29,9 @@ import { POST } from "@/app/api/auth/welcome/route";
 
 describe("POST /api/auth/welcome", () => {
   beforeEach(() => {
-    welcomeRouteMocks.hasResendEnv.mockReturnValue(true);
-    welcomeRouteMocks.getResendEnv.mockReturnValue({
-      fromEmail: "Nova Forza <onboarding@resend.dev>",
+    welcomeRouteMocks.hasMailjetEnv.mockReturnValue(true);
+    welcomeRouteMocks.getMailjetEnv.mockReturnValue({
+      fromEmail: "Nova Forza <mailer@yampi.eu>",
     });
     welcomeRouteMocks.createSupabaseAdminClient.mockReturnValue({
       auth: {
@@ -77,14 +77,14 @@ describe("POST /api/auth/welcome", () => {
     expect(welcomeRouteMocks.sendMemberWelcomeEmail).toHaveBeenCalledWith(
       "member@gym.com",
       "Nova Forza",
-      "Nova Forza <onboarding@resend.dev>",
+      "Nova Forza <mailer@yampi.eu>",
       "pedidos@gmail.com",
     );
     expect(payload).toEqual({ queued: true });
   });
 
-  it("returns a non-blocking response when resend is not configured", async () => {
-    welcomeRouteMocks.hasResendEnv.mockReturnValue(false);
+  it("returns a non-blocking response when Mailjet is not configured", async () => {
+    welcomeRouteMocks.hasMailjetEnv.mockReturnValue(false);
 
     const response = await POST(
       new Request("http://localhost/api/auth/welcome", {
