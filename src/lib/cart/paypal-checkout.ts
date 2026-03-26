@@ -62,7 +62,7 @@ export type CompletePayPalCheckoutResult =
     };
 
 export const CHECKOUT_PROCESSING_MESSAGE =
-  "Tu pago con PayPal se esta procesando. Espera unos segundos y revisa tu carrito o Mi cuenta antes de volver a intentarlo.";
+  "PayPal ya ha confirmado tu pago. Estamos terminando de registrar tu pedido en Nova Forza. No vuelvas a pagar; en unos segundos aparecera en Mi cuenta.";
 
 function buildCheckoutIdempotencyKey(cartId: string, orderId: string) {
   return `paypal-complete:${cartId}:${orderId}`;

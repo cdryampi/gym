@@ -111,6 +111,7 @@ describe("CartPageClient", () => {
       cart: buildCart(),
       lastSubmittedPickupRequest: null,
       pickupEmailWarning: null,
+      notice: null,
       error: null,
       isReady: true,
       isBusy: false,
@@ -138,6 +139,7 @@ describe("CartPageClient", () => {
       cart: buildCart(),
       lastSubmittedPickupRequest: null,
       pickupEmailWarning: null,
+      notice: null,
       error: null,
       isReady: true,
       isBusy: false,
@@ -167,6 +169,7 @@ describe("CartPageClient", () => {
       cart: buildCart(),
       lastSubmittedPickupRequest: null,
       pickupEmailWarning: null,
+      notice: null,
       error: null,
       isReady: true,
       isBusy: false,
@@ -226,6 +229,7 @@ describe("CartPageClient", () => {
       }),
       lastSubmittedPickupRequest: null,
       pickupEmailWarning: null,
+      notice: null,
       error: null,
       isReady: true,
       isBusy: false,
@@ -261,6 +265,60 @@ describe("CartPageClient", () => {
     });
   });
 
+  it("closes the PayPal dialog and shows a friendly notice when checkout is processing", async () => {
+    const completePayPalCheckoutMock = vi.fn().mockResolvedValue("processing");
+    const user = userEvent.setup();
+
+    cartProviderMocks.useCart.mockReturnValue({
+      cart: buildCart({
+        paymentSession: {
+          id: "pay_sess_01",
+          providerId: "pp_paypal_paypal",
+          status: "pending",
+          amount: 29.6,
+          currencyCode: "USD",
+          displayAmount: 99.98,
+          displayCurrencyCode: "PEN",
+          exchangeRate: null,
+          exchangeRateSource: null,
+          exchangeRateReference: null,
+          orderId: "paypal_order_01",
+          authorizationId: null,
+          captureId: null,
+          data: {
+            order_id: "paypal_order_01",
+          },
+        },
+      }),
+      lastSubmittedPickupRequest: null,
+      pickupEmailWarning: null,
+      notice: "PayPal ya ha confirmado tu pago.",
+      error: null,
+      isReady: true,
+      isBusy: false,
+      memberEmail: null,
+      clearSubmittedPickupRequest: vi.fn(),
+      updateItemQuantity: vi.fn(),
+      removeItem: vi.fn(),
+      saveEmail: vi.fn(),
+      preparePayPalCheckout: vi.fn(),
+      completePayPalCheckout: completePayPalCheckoutMock,
+    });
+
+    render(<CartPageClient />);
+
+    await user.click(screen.getByRole("button", { name: "Abrir checkout seguro de PayPal" }));
+    await user.click(screen.getByRole("button", { name: "Mock PayPal" }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Pago recibido por PayPal\. Estamos terminando de confirmar tu pedido/i),
+      ).toBeInTheDocument();
+    });
+
+    expect(navigationMocks.push).not.toHaveBeenCalled();
+  });
+
   it("keeps the generic PayPal preparation flow even if the display currency changes", () => {
     cartProviderMocks.useCart.mockReturnValue({
       cart: buildCart({
@@ -275,6 +333,7 @@ describe("CartPageClient", () => {
       }),
       lastSubmittedPickupRequest: null,
       pickupEmailWarning: null,
+      notice: null,
       error: null,
       isReady: true,
       isBusy: false,

@@ -32,6 +32,7 @@ export interface CartContextValue {
   cart: Cart | null;
   lastSubmittedPickupRequest: PickupRequestDetail | null;
   pickupEmailWarning: string | null;
+  notice: string | null;
   memberEmail: string | null;
   error: string | null;
   isReady: boolean;
@@ -51,7 +52,7 @@ export interface CartContextValue {
   completePayPalCheckout: (input?: {
     email?: string;
     notes?: string;
-  }) => Promise<PickupRequestDetail | null>;
+  }) => Promise<PickupRequestDetail | "processing" | null>;
 }
 
 export const CartContext = createContext<CartContextValue | null>(null);
@@ -62,6 +63,7 @@ type PickupCheckoutPayload = {
   emailWarning?: string | null;
   error?: string;
   processing?: boolean;
+  message?: string;
 };
 
 export function CartProvider({
@@ -75,6 +77,7 @@ export function CartProvider({
   const [lastSubmittedPickupRequest, setLastSubmittedPickupRequest] =
     useState<PickupRequestDetail | null>(null);
   const [pickupEmailWarning, setPickupEmailWarning] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [isBusy, setIsBusy] = useState(false);
@@ -97,6 +100,7 @@ export function CartProvider({
     commitCart(null);
     setLastSubmittedPickupRequest(null);
     setPickupEmailWarning(null);
+    setNotice(null);
     lastSyncedSignature.current = null;
 
     if (message) {
@@ -124,6 +128,7 @@ export function CartProvider({
 
       commitCart(nextCart);
       setError(null);
+      setNotice(null);
     } catch (refreshError) {
       invalidateBrokenCart(
         isMissingCartMessage(getErrorMessage(refreshError, ""))
@@ -218,6 +223,7 @@ export function CartProvider({
   async function runBusyAction(action: () => Promise<void>) {
     setIsBusy(true);
     setError(null);
+    setNotice(null);
 
     try {
       await action();
@@ -314,8 +320,9 @@ export function CartProvider({
       return null;
     }
 
-    setIsBusy(true);
-    setError(null);
+      setIsBusy(true);
+      setError(null);
+      setNotice(null);
 
     try {
       const { response, payload } = await postJson<CartApiPayload>(
@@ -376,8 +383,15 @@ export function CartProvider({
       );
 
       if (response.status === 202 && payload?.processing) {
-        setError(payload.error ?? "Tu pago con PayPal se esta procesando.");
-        return null;
+        setNotice(
+          payload.message ??
+            payload.error ??
+            "PayPal ya ha confirmado tu pago. Estamos terminando de registrar tu pedido.",
+        );
+        startTransition(() => {
+          setDrawerOpen(false);
+        });
+        return "processing";
       }
 
       if (!response.ok || !payload?.pickupRequest) {
@@ -414,6 +428,7 @@ export function CartProvider({
         cart,
         lastSubmittedPickupRequest,
         pickupEmailWarning,
+        notice,
         memberEmail,
         error,
         isReady,

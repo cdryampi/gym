@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           processing: true,
+          message: result.message,
           error: result.message,
         },
         { status: 202 },

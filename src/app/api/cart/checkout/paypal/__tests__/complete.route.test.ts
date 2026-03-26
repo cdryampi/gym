@@ -172,6 +172,7 @@ describe("POST /api/cart/checkout/paypal/complete", () => {
     expect(response.status).toBe(202);
     expect(payload).toEqual({
       processing: true,
+      message: "Tu pago con PayPal se esta procesando.",
       error: "Tu pago con PayPal se esta procesando.",
     });
     expect(response.headers.get("set-cookie")).toBeNull();

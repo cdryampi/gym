@@ -31,6 +31,7 @@ export default function CartPageClient() {
     cart,
     lastSubmittedPickupRequest,
     pickupEmailWarning,
+    notice,
     error,
     isReady,
     isBusy,
@@ -86,6 +87,14 @@ export default function CartPageClient() {
       email: memberEmail ? undefined : normalizedEmail || undefined,
       notes: notes.trim() || undefined,
     });
+
+    if (pickupRequest === "processing") {
+      setCheckoutMessage(
+        "Pago recibido por PayPal. Estamos terminando de confirmar tu pedido. No vuelvas a pagar.",
+      );
+      setIsPayPalDialogOpen(false);
+      return;
+    }
 
     if (!pickupRequest?.id) {
       // Re-throw so PayPalCheckoutButton's onApprove catch resets isPending.
@@ -195,6 +204,12 @@ export default function CartPageClient() {
         <div className="mb-6 border border-red-200 bg-red-100 flex items-center gap-3 px-5 py-4 text-sm text-red-700">
           <div className="h-2 w-2 rounded-full bg-red-600 animate-pulse shrink-0" />
           {error}
+        </div>
+      ) : null}
+
+      {notice ? (
+        <div className="mb-6 border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-800">
+          {notice}
         </div>
       ) : null}
 
