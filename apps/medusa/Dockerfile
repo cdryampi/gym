@@ -25,6 +25,8 @@ WORKDIR /app
 
 COPY --from=builder /app ./
 RUN rm -rf /app/src /app/integration-tests \
+  && mkdir -p /app/src \
+  && cp -R /app/.medusa/server/src/. /app/src/ \
   && mkdir -p /app/public/admin \
   && if [ -d /app/.medusa/server/public/admin ]; then cp -R /app/.medusa/server/public/admin/. /app/public/admin/; fi
 
