@@ -5,6 +5,7 @@ import type { Cart, PickupRequestDetail } from "@/lib/cart/types";
 import { defaultSiteSettings } from "@/lib/data/default-content";
 import { getMarketingData } from "@/lib/data/site";
 import { hasResendEnv } from "@/lib/env";
+import { formatTransactionalFromEmail } from "@/lib/email/policy";
 import { sendPickupRequestEmails } from "@/lib/email/pickup-request";
 import { ensurePayPalProviderEnabledForRegion } from "@/lib/medusa/paypal-admin";
 import { isPayPalPaymentProviderId } from "@/lib/medusa/paypal-provider";
@@ -194,7 +195,12 @@ async function finalizePickupRequestEmail(
   });
 
   const { settings } = await getMarketingData();
-  const internalRecipient = settings.contact_email ?? defaultSiteSettings.contact_email;
+  const internalRecipient =
+    settings.notification_email ?? defaultSiteSettings.notification_email;
+  const fromEmail = formatTransactionalFromEmail(
+    settings.site_name ?? defaultSiteSettings.site_name,
+    settings.transactional_from_email ?? defaultSiteSettings.transactional_from_email,
+  );
 
   if (pickupRequest.emailStatus === "pending") {
     try {
@@ -208,6 +214,7 @@ async function finalizePickupRequestEmail(
             pickupRequest,
             siteName: settings.site_name ?? defaultSiteSettings.site_name,
             internalRecipient,
+            fromEmail,
           }),
         );
       } else {
@@ -215,6 +222,7 @@ async function finalizePickupRequestEmail(
           pickupRequest,
           siteName: settings.site_name ?? defaultSiteSettings.site_name,
           internalRecipient,
+          fromEmail,
         });
       }
 

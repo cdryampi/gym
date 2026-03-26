@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { RESEND_ALLOWED_FROM_DOMAIN, isAllowedTransactionalMailbox } from "@/lib/email/policy";
 import { topbarVariants } from "@/lib/topbar";
 
 const optionalText = z.string().trim().max(180, "El texto es demasiado largo.").optional().or(z.literal(""));
@@ -50,6 +51,8 @@ export const siteSettingsSchema = z
     hero_highlight_two: z.string().trim().min(10).max(120),
     hero_highlight_three: z.string().trim().min(10).max(120),
     contact_email: z.string().trim().email("Introduce un email valido."),
+    notification_email: z.string().trim().email("Introduce un email valido."),
+    transactional_from_email: z.string().trim().email("Introduce un email valido."),
     contact_phone: optionalText,
     whatsapp_url: optionalUrl,
     address: optionalText,
@@ -66,23 +69,29 @@ export const siteSettingsSchema = z
     footer_text: z.string().trim().min(10, "El footer necesita algo mas de contenido.").max(240, "Maximo 240 caracteres."),
   })
   .superRefine((values, context) => {
-    if (!values.topbar_enabled) {
-      return;
+    if (values.topbar_enabled) {
+      if (!values.topbar_text?.trim()) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Escribe el mensaje del topbar.",
+          path: ["topbar_text"],
+        });
+      }
+
+      if (!values.topbar_expires_at?.trim()) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Indica una fecha limite para el topbar.",
+          path: ["topbar_expires_at"],
+        });
+      }
     }
 
-    if (!values.topbar_text?.trim()) {
+    if (!isAllowedTransactionalMailbox(values.transactional_from_email)) {
       context.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Escribe el mensaje del topbar.",
-        path: ["topbar_text"],
-      });
-    }
-
-    if (!values.topbar_expires_at?.trim()) {
-      context.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Indica una fecha limite para el topbar.",
-        path: ["topbar_expires_at"],
+        message: `El remitente transaccional debe usar el dominio @${RESEND_ALLOWED_FROM_DOMAIN}.`,
+        path: ["transactional_from_email"],
       });
     }
   });

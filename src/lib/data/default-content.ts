@@ -21,6 +21,8 @@ export const defaultSiteSettings: SiteSettings = {
   hero_highlight_two: "Entrenadores que corrigen, acompanan y hacen seguimiento real.",
   hero_highlight_three: "Sala premium local con horarios amplios y recogida en tienda.",
   contact_email: "hola@novaforza.pe",
+  notification_email: "pedidos@novaforza.pe",
+  transactional_from_email: "pedidos@novaforza.pe",
   contact_phone: "+51 987 654 321",
   whatsapp_url: "https://wa.me/51987654321",
   address: "Av. Progreso 245, zona comercial local",

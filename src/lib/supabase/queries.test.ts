@@ -27,6 +27,8 @@ describe("supabase queries helpers", () => {
       hero_highlight_two: "Highlight dos",
       hero_highlight_three: "Highlight tres",
       contact_email: "hola@novaforza.pe",
+      notification_email: "pedidos@novaforza.pe",
+      transactional_from_email: "pedidos@novaforza.pe",
       opening_hours: "Horario de prueba",
       seo_title: "SEO title",
       seo_description: "Descripcion suficientemente larga para pasar.",
@@ -38,6 +40,8 @@ describe("supabase queries helpers", () => {
     expect(settings.hero_title).toBe("Construye fuerza real");
     expect(settings.hero_video_url).toBe("/video/custom-hero.mp4");
     expect(settings.topbar_text).toBe("Promo activa");
+    expect(settings.notification_email).toBe("pedidos@novaforza.pe");
+    expect(settings.transactional_from_email).toBe("pedidos@novaforza.pe");
   });
 
   it("builds a lead payload for website intake", () => {
@@ -73,6 +77,8 @@ describe("supabase queries helpers", () => {
       hero_highlight_two: "Entrenadores que acompanan de verdad.",
       hero_highlight_three: "Sala premium local con horarios amplios.",
       contact_email: "hola@novaforza.pe",
+      notification_email: "pedidos@novaforza.pe",
+      transactional_from_email: "pedidos@novaforza.pe",
       contact_phone: "+51 987 654 321",
       whatsapp_url: "",
       address: "Av. Progreso 245, zona comercial local",
@@ -89,6 +95,8 @@ describe("supabase queries helpers", () => {
     expect(payload.id).toBe(1);
     expect(payload.hero_video_url).toBe("/video/video.mp4");
     expect(payload.topbar_expires_at).toBe(new Date("2026-04-15T18:30").toISOString());
+    expect(payload.notification_email).toBe("pedidos@novaforza.pe");
+    expect(payload.transactional_from_email).toBe("pedidos@novaforza.pe");
   });
 
   it("normalizes CMS documents and fills missing defaults", () => {

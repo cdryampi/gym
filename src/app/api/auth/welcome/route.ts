@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { hasResendEnv } from "@/lib/env";
 import { sendMemberWelcomeEmail } from "@/lib/email/welcome-member";
+import { formatTransactionalFromEmail } from "@/lib/email/policy";
+import { getMarketingData } from "@/lib/data/site";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 
 const WelcomeBodySchema = z.object({
@@ -42,7 +44,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ queued: false, skipped: true }, { status: 202 });
     }
 
-    await sendMemberWelcomeEmail(parsed.data.email);
+    const { settings } = await getMarketingData();
+
+    await sendMemberWelcomeEmail(
+      parsed.data.email,
+      settings.site_name,
+      formatTransactionalFromEmail(
+        settings.site_name,
+        settings.transactional_from_email,
+      ),
+    );
 
     return NextResponse.json({ queued: true });
   } catch (error) {

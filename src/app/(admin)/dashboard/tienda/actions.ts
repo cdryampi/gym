@@ -16,6 +16,7 @@ import {
 import { getMarketingData } from "@/lib/data/site";
 import { defaultSiteSettings } from "@/lib/data/default-content";
 import { hasMedusaAdminEnv } from "@/lib/env";
+import { formatTransactionalFromEmail } from "@/lib/email/policy";
 import { sendPickupRequestEmails } from "@/lib/email/pickup-request";
 import {
   storeCategorySchema,
@@ -112,29 +113,49 @@ export async function resendDashboardPickupRequestEmail(pickupRequestId: string)
   const pickupRequest = mapPickupRequest(pickupRequestResponse.pickup_request);
   const { settings } = await getMarketingData();
   const siteName = settings.site_name ?? defaultSiteSettings.site_name;
-  const internalRecipient = settings.contact_email ?? defaultSiteSettings.contact_email;
+  const internalRecipient =
+    settings.notification_email ?? defaultSiteSettings.notification_email;
+  const fromEmail = formatTransactionalFromEmail(
+    siteName,
+    settings.transactional_from_email ?? defaultSiteSettings.transactional_from_email,
+  );
 
   try {
     await sendPickupRequestEmails({
       pickupRequest,
       siteName,
       internalRecipient,
+      fromEmail,
     });
 
-    await markPickupRequestEmailResult(pickupRequestId, {
-      emailStatus: "sent",
-      emailSentAt: new Date().toISOString(),
-    });
+    try {
+      await markPickupRequestEmailResult(pickupRequestId, {
+        emailStatus: "sent",
+        emailSentAt: new Date().toISOString(),
+      });
+    } catch (markError) {
+      console.warn(
+        "[Pickup Request Email] El email se envio, pero no se pudo registrar el estado en Medusa:",
+        markError instanceof Error ? markError.message : String(markError),
+      );
+    }
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
         : "No se pudo reenviar el email del pedido pickup.";
 
-    await markPickupRequestEmailResult(pickupRequestId, {
-      emailStatus: "failed",
-      emailError: message,
-    });
+    try {
+      await markPickupRequestEmailResult(pickupRequestId, {
+        emailStatus: "failed",
+        emailError: message,
+      });
+    } catch (markError) {
+      console.warn(
+        "[Pickup Request Email] No se pudo registrar el fallo del email en Medusa:",
+        markError instanceof Error ? markError.message : String(markError),
+      );
+    }
 
     throw new Error(message);
   }

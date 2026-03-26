@@ -41,6 +41,8 @@ export default function GymInfoForm({ settings, disabledReason }: GymInfoFormPro
       topbar_cta_label: settings.topbar_cta_label ?? "",
       topbar_cta_url: settings.topbar_cta_url ?? "",
       topbar_expires_at: formatDateTimeLocalInput(settings.topbar_expires_at),
+      notification_email: settings.notification_email,
+      transactional_from_email: settings.transactional_from_email,
       contact_phone: settings.contact_phone ?? "",
       whatsapp_url: settings.whatsapp_url ?? "",
       address: settings.address ?? "",
@@ -74,10 +76,48 @@ export default function GymInfoForm({ settings, disabledReason }: GymInfoFormPro
             name="contact_email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email de contacto</FormLabel>
+                <FormLabel>Email publico de contacto</FormLabel>
                 <FormControl>
                   <Input type="email" {...field} />
                 </FormControl>
+                <p className="text-xs leading-5 text-[#5f6368]">
+                  Se muestra en la web publica, footer y formularios de contacto.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="notification_email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Correo operativo interno</FormLabel>
+                <FormControl>
+                  <Input type="email" {...field} />
+                </FormControl>
+                <p className="text-xs leading-5 text-[#5f6368]">
+                  Aqui llegan los avisos internos de pedidos pickup y acciones operativas.
+                </p>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className="grid gap-5 md:grid-cols-2">
+          <FormField
+            control={form.control}
+            name="transactional_from_email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Remitente transaccional</FormLabel>
+                <FormControl>
+                  <Input type="email" {...field} />
+                </FormControl>
+                <p className="text-xs leading-5 text-[#5f6368]">
+                  Es el correo que usa Resend para enviar emails. Debe pertenecer al dominio autorizado del gym.
+                </p>
                 <FormMessage />
               </FormItem>
             )}

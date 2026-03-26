@@ -11,7 +11,11 @@ function escapeHtml(value: string) {
     .replaceAll("'", "&#39;");
 }
 
-export async function sendMemberWelcomeEmail(email: string, siteName?: string | null) {
+export async function sendMemberWelcomeEmail(
+  email: string,
+  siteName?: string | null,
+  fromEmail?: string | null,
+) {
   const resolvedSiteName = siteName?.trim() || defaultSiteSettings.site_name;
   const safeEmail = escapeHtml(email);
   const safeSiteName = escapeHtml(resolvedSiteName);
@@ -19,6 +23,7 @@ export async function sendMemberWelcomeEmail(email: string, siteName?: string | 
 
   await sendResendEmail({
     to: email,
+    from: fromEmail ?? undefined,
     subject: `${resolvedSiteName} | Tu cuenta ya esta creada`,
     html: `
       <div style="margin:0;padding:32px;background:#f5f5f0;font-family:Arial,sans-serif;color:#111111;">

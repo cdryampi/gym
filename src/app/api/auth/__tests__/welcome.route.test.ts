@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const welcomeRouteMocks = vi.hoisted(() => ({
   hasResendEnv: vi.fn(),
   createSupabaseAdminClient: vi.fn(),
+  getMarketingData: vi.fn(),
   sendMemberWelcomeEmail: vi.fn(),
 }));
 
@@ -12,6 +13,10 @@ vi.mock("@/lib/env", () => ({
 
 vi.mock("@/lib/supabase/server", () => ({
   createSupabaseAdminClient: welcomeRouteMocks.createSupabaseAdminClient,
+}));
+
+vi.mock("@/lib/data/site", () => ({
+  getMarketingData: welcomeRouteMocks.getMarketingData,
 }));
 
 vi.mock("@/lib/email/welcome-member", () => ({
@@ -39,6 +44,12 @@ describe("POST /api/auth/welcome", () => {
         },
       },
     });
+    welcomeRouteMocks.getMarketingData.mockResolvedValue({
+      settings: {
+        site_name: "Nova Forza",
+        transactional_from_email: "pedidos@novaforza.pe",
+      },
+    });
     welcomeRouteMocks.sendMemberWelcomeEmail.mockResolvedValue(undefined);
   });
 
@@ -58,7 +69,11 @@ describe("POST /api/auth/welcome", () => {
     const payload = await response.json();
 
     expect(response.status).toBe(200);
-    expect(welcomeRouteMocks.sendMemberWelcomeEmail).toHaveBeenCalledWith("member@gym.com");
+    expect(welcomeRouteMocks.sendMemberWelcomeEmail).toHaveBeenCalledWith(
+      "member@gym.com",
+      "Nova Forza",
+      "Nova Forza <pedidos@novaforza.pe>",
+    );
     expect(payload).toEqual({ queued: true });
   });
 

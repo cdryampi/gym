@@ -147,6 +147,14 @@ export function normalizeSiteSettings(row: Partial<SiteSettings> | null | undefi
       defaultSiteSettings.hero_highlight_three,
     ),
     contact_email: safeString(row?.contact_email, defaultSiteSettings.contact_email),
+    notification_email: safeString(
+      row?.notification_email,
+      defaultSiteSettings.notification_email,
+    ),
+    transactional_from_email: safeString(
+      row?.transactional_from_email,
+      defaultSiteSettings.transactional_from_email,
+    ),
     contact_phone: trimToNull(row?.contact_phone) ?? defaultSiteSettings.contact_phone,
     whatsapp_url: trimToNull(row?.whatsapp_url) ?? defaultSiteSettings.whatsapp_url,
     address: trimToNull(row?.address) ?? defaultSiteSettings.address,
@@ -227,6 +235,8 @@ export function buildSiteSettingsPayload(
     hero_highlight_two: values.hero_highlight_two.trim(),
     hero_highlight_three: values.hero_highlight_three.trim(),
     contact_email: values.contact_email.trim().toLowerCase(),
+    notification_email: values.notification_email.trim().toLowerCase(),
+    transactional_from_email: values.transactional_from_email.trim().toLowerCase(),
     contact_phone: trimToNull(values.contact_phone),
     whatsapp_url: trimToNull(values.whatsapp_url),
     address: trimToNull(values.address),

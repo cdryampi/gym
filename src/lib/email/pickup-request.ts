@@ -7,6 +7,7 @@ interface PickupRequestEmailContext {
   pickupRequest: PickupRequestDetail;
   siteName: string;
   internalRecipient: string;
+  fromEmail?: string | null;
 }
 
 function escapeHtml(value: string) {
@@ -217,6 +218,7 @@ export async function sendPickupRequestEmails({
   pickupRequest,
   siteName,
   internalRecipient,
+  fromEmail,
 }: PickupRequestEmailContext) {
   const customerSubject = `${siteName} | Pedido pagado ${pickupRequest.requestNumber}`;
   const internalSubject = `${siteName} | Nuevo pedido pagado ${pickupRequest.requestNumber}`;
@@ -263,6 +265,7 @@ export async function sendPickupRequestEmails({
       try {
         await sendResendEmail({
           to: delivery.recipient,
+          from: fromEmail ?? undefined,
           subject: delivery.subject,
           html: delivery.html,
           text,

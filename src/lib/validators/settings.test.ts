@@ -19,6 +19,8 @@ const validSettings = {
   hero_highlight_two: "Entrenadores que acompanan de verdad.",
   hero_highlight_three: "Sala premium local con horarios amplios.",
   contact_email: "hola@novaforza.pe",
+  notification_email: "pedidos@novaforza.pe",
+  transactional_from_email: "pedidos@novaforza.pe",
   contact_phone: "+51 987 654 321",
   whatsapp_url: "https://wa.me/51987654321",
   address: "Av. Progreso 245, zona comercial local",
@@ -41,6 +43,24 @@ describe("siteSettingsSchema", () => {
     const result = siteSettingsSchema.safeParse({
       ...validSettings,
       contact_email: "hola-at-novaforza.pe",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects an invalid notification email", () => {
+    const result = siteSettingsSchema.safeParse({
+      ...validSettings,
+      notification_email: "pedidos-at-novaforza.pe",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a transactional sender outside the allowed domain", () => {
+    const result = siteSettingsSchema.safeParse({
+      ...validSettings,
+      transactional_from_email: "novaforza@gmail.com",
     });
 
     expect(result.success).toBe(false);
