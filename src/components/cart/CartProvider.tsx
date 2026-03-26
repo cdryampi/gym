@@ -52,7 +52,14 @@ export interface CartContextValue {
   completePayPalCheckout: (input?: {
     email?: string;
     notes?: string;
-  }) => Promise<PickupRequestDetail | "processing" | null>;
+  }) => Promise<
+    | PickupRequestDetail
+    | {
+        kind: "processing";
+        cartId: string;
+      }
+    | null
+  >;
 }
 
 export const CartContext = createContext<CartContextValue | null>(null);
@@ -359,7 +366,9 @@ export function CartProvider({
     email?: string;
     notes?: string;
   }) {
-    if (!cart?.id) {
+    const activeCartId = cart?.id ?? null;
+
+    if (!activeCartId) {
       setError("No hay un carrito activo para completar el pago.");
       return null;
     }
@@ -376,13 +385,16 @@ export function CartProvider({
       const { response, payload } = await postJson<PickupCheckoutPayload>(
         "/api/cart/checkout/paypal/complete",
         {
-          cartId: cart.id,
+          cartId: activeCartId,
           email: input?.email,
           notes: input?.notes,
         },
       );
 
       if (response.status === 202 && payload?.processing) {
+        commitCart(null);
+        setLastSubmittedPickupRequest(null);
+        setPickupEmailWarning(null);
         setNotice(
           payload.message ??
             payload.error ??
@@ -391,7 +403,10 @@ export function CartProvider({
         startTransition(() => {
           setDrawerOpen(false);
         });
-        return "processing";
+        return {
+          kind: "processing" as const,
+          cartId: activeCartId,
+        };
       }
 
       if (!response.ok || !payload?.pickupRequest) {
@@ -399,6 +414,7 @@ export function CartProvider({
       }
 
       commitCart(null);
+      setNotice(null);
       setLastSubmittedPickupRequest(payload.pickupRequest);
       setPickupEmailWarning(payload.emailWarning ?? null);
       startTransition(() => {
@@ -438,6 +454,7 @@ export function CartProvider({
         clearSubmittedPickupRequest: () => {
           setLastSubmittedPickupRequest(null);
           setPickupEmailWarning(null);
+          setNotice(null);
         },
         refreshCart,
         addItem,

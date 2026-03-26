@@ -58,7 +58,7 @@ vi.mock("@/lib/paypal/quote", () => ({
 import { recoverCompletedPickupCheckout } from "@/lib/cart/paypal-checkout";
 
 describe("recoverCompletedPickupCheckout", () => {
-  it("uses the cart payment session order id before falling back to bridge routes", async () => {
+  it("uses the cart PayPal order id before falling back to bridge routes", async () => {
     paypalCheckoutMocks.retrievePickupRequest.mockRejectedValue(new Error("missing"));
     paypalCheckoutMocks.listPickupRequests.mockRejectedValue(new Error("bridge missing"));
     paypalCheckoutMocks.retrieveOrderByCartId.mockRejectedValue(new Error("bridge missing"));
@@ -81,7 +81,7 @@ describe("recoverCompletedPickupCheckout", () => {
         exchangeRate: null,
         exchangeRateSource: null,
         exchangeRateReference: null,
-        orderId: "order_01",
+        paypalOrderId: "paypal_order_01",
         authorizationId: null,
         captureId: null,
         data: {},
@@ -133,7 +133,8 @@ describe("recoverCompletedPickupCheckout", () => {
     );
 
     expect(paypalCheckoutMocks.syncPickupRequestFromOrder).toHaveBeenCalledWith("cart_01", {
-      orderId: "order_01",
+      orderId: null,
+      paypalOrderId: "paypal_order_01",
       supabaseUserId: "user_01",
       notes: "Test",
     });

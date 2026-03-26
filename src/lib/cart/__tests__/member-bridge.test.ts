@@ -207,6 +207,7 @@ describe("member commerce bridge", () => {
       body: {
         cart_id: "cart_01",
         order_id: "order_01",
+        paypal_order_id: undefined,
         supabase_user_id: "user_01",
         notes: "Pago aprobado con PayPal.",
       },

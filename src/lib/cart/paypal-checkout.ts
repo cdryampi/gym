@@ -42,6 +42,15 @@ type CheckoutActorInput = {
   trace?: CheckoutTrace;
 };
 
+type CheckoutRecoveryInput = {
+  cartId: string;
+  pickupRequestId?: string | null;
+  checkoutMessage?: string | null;
+  user?: CheckoutUser;
+  notes?: string | null;
+  trace?: CheckoutTrace;
+};
+
 export type PreparePayPalCheckoutResult = {
   cart: Cart;
 };
@@ -61,8 +70,26 @@ export type CompletePayPalCheckoutResult =
       message: string;
     };
 
+export type PayPalCheckoutStatusResult =
+  | {
+      status: "ready";
+      pickupRequest: PickupRequestDetail;
+      emailWarning: string | null;
+    }
+  | {
+      status: "processing";
+      message: string;
+    }
+  | {
+      status: "pending_manual_review";
+      message: string;
+    };
+
 export const CHECKOUT_PROCESSING_MESSAGE =
   "PayPal ya ha confirmado tu pago. Estamos terminando de registrar tu pedido en Nova Forza. No vuelvas a pagar; en unos segundos aparecera en Mi cuenta.";
+export const CHECKOUT_MANUAL_REVIEW_MESSAGE =
+  "Hemos recibido tu pago y lo estamos revisando manualmente. No vuelvas a pagar. Si en un minuto no ves el pedido en Mi cuenta, contacta con el club.";
+export const PAYPAL_CHECKOUT_STATUS_PENDING_ATTEMPTS = 6;
 
 function buildCheckoutIdempotencyKey(cartId: string, orderId: string) {
   return `paypal-complete:${cartId}:${orderId}`;
@@ -225,6 +252,32 @@ async function finalizePickupRequestEmail(
   };
 }
 
+async function resolveRecoveredPickupRequest({
+  cartId,
+  pickupRequestId,
+  checkoutMessage,
+  user,
+  notes,
+  trace,
+}: CheckoutRecoveryInput) {
+  const recoveredPickupRequest = await recoverCompletedPickupCheckout(
+    cartId,
+    pickupRequestId,
+    checkoutMessage,
+    {
+      supabaseUserId: user?.id ?? null,
+      notes: notes?.trim() || null,
+    },
+    trace,
+  );
+
+  if (!recoveredPickupRequest) {
+    return null;
+  }
+
+  return finalizePickupRequestEmail(recoveredPickupRequest, trace);
+}
+
 export async function recoverCompletedPickupCheckout(
   cartId: string,
   pickupRequestId?: string | null,
@@ -239,7 +292,8 @@ export async function recoverCompletedPickupCheckout(
     ? [0]
     : [0, 800, 1800, 3200];
   let nextPickupRequestId = pickupRequestId ?? null;
-  let recoveredOrderId: string | null = null;
+  let recoveredMedusaOrderId: string | null = null;
+  let recoveredPayPalOrderId: string | null = null;
 
   const recover = async () => {
     for (const waitMs of retryDelaysMs) {
@@ -259,7 +313,7 @@ export async function recoverCompletedPickupCheckout(
       try {
         const currentCart = await retrieveCart(cartId);
         nextPickupRequestId = currentCart.summary.pickupRequestId;
-        recoveredOrderId ||= currentCart.paymentSession?.orderId ?? null;
+        recoveredPayPalOrderId ||= currentCart.paymentSession?.paypalOrderId ?? null;
 
         if (nextPickupRequestId) {
           const existing = await retrievePickupRequest(nextPickupRequestId);
@@ -283,19 +337,35 @@ export async function recoverCompletedPickupCheckout(
         // No bloqueamos la recuperación por un fallo transitorio del bridge.
       }
 
-      if (!recoveredOrderId) {
+      if (recoveredPayPalOrderId) {
+        try {
+          const syncResponse = await syncPickupRequestFromOrder(cartId, {
+            orderId: recoveredMedusaOrderId,
+            paypalOrderId: recoveredPayPalOrderId,
+            supabaseUserId: input?.supabaseUserId ?? null,
+            notes: input?.notes ?? null,
+          });
+
+          return mapPickupRequest(syncResponse.pickup_request);
+        } catch {
+          // Seguimos con la resolución por order_cart si el pedido todavía no está visible.
+        }
+      }
+
+      if (!recoveredMedusaOrderId) {
         try {
           const order = await retrieveOrderByCartId(cartId);
-          recoveredOrderId = order?.id ?? null;
+          recoveredMedusaOrderId = order?.id ?? null;
         } catch {
           // Si la orden aún no está visible, seguimos esperando.
         }
       }
 
-      if (recoveredOrderId) {
+      if (recoveredMedusaOrderId || recoveredPayPalOrderId) {
         try {
           const syncResponse = await syncPickupRequestFromOrder(cartId, {
-            orderId: recoveredOrderId,
+            orderId: recoveredMedusaOrderId,
+            paypalOrderId: recoveredPayPalOrderId,
             supabaseUserId: input?.supabaseUserId ?? null,
             notes: input?.notes ?? null,
           });
@@ -316,11 +386,46 @@ export async function recoverCompletedPickupCheckout(
         recover,
         (pickupRequest) => ({
           recovered: Boolean(pickupRequest),
-          orderId: recoveredOrderId,
+          orderId: recoveredMedusaOrderId ?? recoveredPayPalOrderId,
           pickupRequestId: pickupRequest?.id ?? nextPickupRequestId,
         }),
       )
     : recover();
+}
+
+export async function resolvePayPalCheckoutStatus({
+  cartId,
+  user,
+  trace,
+  notes,
+  attempt = 0,
+}: CheckoutActorInput & { attempt?: number }): Promise<PayPalCheckoutStatusResult> {
+  const finalized = await resolveRecoveredPickupRequest({
+    cartId,
+    checkoutMessage: "Checkout ya en progreso.",
+    user,
+    notes,
+    trace,
+  });
+
+  if (finalized) {
+    return {
+      status: "ready",
+      ...finalized,
+    };
+  }
+
+  if (attempt >= PAYPAL_CHECKOUT_STATUS_PENDING_ATTEMPTS) {
+    return {
+      status: "pending_manual_review",
+      message: CHECKOUT_MANUAL_REVIEW_MESSAGE,
+    };
+  }
+
+  return {
+    status: "processing",
+    message: CHECKOUT_PROCESSING_MESSAGE,
+  };
 }
 
 export async function preparePayPalCheckout({
@@ -439,7 +544,7 @@ export async function preparePayPalCheckout({
           }),
         (currentCart) => ({
           paymentSessionId: currentCart.paymentSession?.id ?? null,
-          paymentOrderId: currentCart.paymentSession?.orderId ?? null,
+          paymentOrderId: currentCart.paymentSession?.paypalOrderId ?? null,
         }),
       )
     : await initiatePayPalPaymentSession(cartId, paypalProviderId, {
@@ -554,7 +659,7 @@ export async function completePayPalCheckout({
   if (
     !cart.paymentSession ||
     !isPayPalPaymentProviderId(cart.paymentSession.providerId) ||
-    !cart.paymentSession.orderId
+    !cart.paymentSession.paypalOrderId
   ) {
     throw new Error("Primero tienes que preparar la sesión de PayPal antes de aprobar el pago.");
   }
@@ -579,7 +684,10 @@ export async function completePayPalCheckout({
           "complete_cart",
           () =>
             completeCart(cartId, {
-              idempotencyKey: buildCheckoutIdempotencyKey(cartId, cart.paymentSession!.orderId!),
+              idempotencyKey: buildCheckoutIdempotencyKey(
+                cartId,
+                cart.paymentSession!.paypalOrderId!,
+              ),
             }),
           (result) => ({
             resultType: result.type,
@@ -587,24 +695,20 @@ export async function completePayPalCheckout({
           }),
         )
       : await completeCart(cartId, {
-          idempotencyKey: buildCheckoutIdempotencyKey(cartId, cart.paymentSession.orderId),
+          idempotencyKey: buildCheckoutIdempotencyKey(cartId, cart.paymentSession.paypalOrderId),
         });
   } catch (checkoutError) {
     const checkoutMessage = getCheckoutErrorMessage(checkoutError);
-    const recoveredPickupRequest = await recoverCompletedPickupCheckout(
+    const finalized = await resolveRecoveredPickupRequest({
       cartId,
-      cart.summary.pickupRequestId,
+      pickupRequestId: cart.summary.pickupRequestId,
       checkoutMessage,
-      {
-        supabaseUserId: user?.id ?? null,
-        notes: notes?.trim() || null,
-      },
+      user,
+      notes,
       trace,
-    );
+    });
 
-    if (recoveredPickupRequest) {
-      const finalized = await finalizePickupRequestEmail(recoveredPickupRequest, trace);
-
+    if (finalized) {
       return {
         kind: "success",
         ...finalized,
@@ -636,6 +740,7 @@ export async function completePayPalCheckout({
         () =>
           syncPickupRequestFromOrder(cartId, {
             orderId: checkoutResult.order.id!,
+            paypalOrderId: cart.paymentSession?.paypalOrderId ?? null,
             supabaseUserId: user?.id ?? null,
             notes: notes?.trim() || null,
           }),
@@ -645,6 +750,7 @@ export async function completePayPalCheckout({
       )
     : await syncPickupRequestFromOrder(cartId, {
         orderId: checkoutResult.order.id,
+        paypalOrderId: cart.paymentSession?.paypalOrderId ?? null,
         supabaseUserId: user?.id ?? null,
         notes: notes?.trim() || null,
       });

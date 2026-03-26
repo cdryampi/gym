@@ -57,7 +57,7 @@ export interface CartPaymentSession {
   exchangeRate: number | null;
   exchangeRateSource: string | null;
   exchangeRateReference: string | null;
-  orderId: string | null;
+  paypalOrderId: string | null;
   authorizationId: string | null;
   captureId: string | null;
   data: Record<string, unknown>;

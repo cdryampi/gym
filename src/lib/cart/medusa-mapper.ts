@@ -82,7 +82,7 @@ function mapPaymentSession(cart: MedusaCart): Cart["paymentSession"] {
         : null,
     exchangeRateSource: asString(sessionData.exchange_rate_source),
     exchangeRateReference: asString(sessionData.exchange_rate_reference),
-    orderId: asString(sessionData.order_id),
+    paypalOrderId: asString(sessionData.order_id),
     authorizationId: asString(sessionData.authorization_id),
     captureId: asString(sessionData.capture_id),
     data: sessionData,

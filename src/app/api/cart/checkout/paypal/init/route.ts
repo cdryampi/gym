@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     trace.flush("success", {
       paymentSessionId: result.cart.paymentSession?.id ?? null,
-      paymentOrderId: result.cart.paymentSession?.orderId ?? null,
+      paymentOrderId: result.cart.paymentSession?.paypalOrderId ?? null,
     });
 
     return NextResponse.json(result);

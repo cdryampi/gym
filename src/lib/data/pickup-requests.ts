@@ -8,7 +8,11 @@ import type {
   PickupRequestDetail,
   PickupRequestStatus,
 } from "@/lib/cart/types";
-import { listPickupRequests, retrievePickupRequest } from "@/lib/cart/member-bridge";
+import {
+  listPickupRequests,
+  reconcileRecentPickupRequests,
+  retrievePickupRequest,
+} from "@/lib/cart/member-bridge";
 import { hasMedusaAdminEnv } from "@/lib/env";
 
 export interface PickupRequestsSnapshot {
@@ -96,4 +100,129 @@ export async function getLatestPickupRequestByEmail(email: string) {
   });
 
   return snapshot.pickupRequests[0] ?? null;
+}
+
+function dedupePickupRequests(pickupRequests: PickupRequestDetail[]) {
+  const uniquePickupRequests = new Map<string, PickupRequestDetail>();
+
+  pickupRequests.forEach((pickupRequest) => {
+    uniquePickupRequests.set(pickupRequest.id, pickupRequest);
+  });
+
+  return Array.from(uniquePickupRequests.values()).sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt),
+  );
+}
+
+export async function reconcileRecentPickupRequestsSnapshot(filters?: {
+  hours?: number;
+  limit?: number;
+  email?: string | null;
+}) {
+  const readinessWarning = getPickupRequestsReadinessWarning();
+
+  if (readinessWarning) {
+    return {
+      reconciledCount: 0,
+      warning: readinessWarning,
+    };
+  }
+
+  try {
+    const response = await reconcileRecentPickupRequests({
+      hours: filters?.hours ?? 24,
+      limit: filters?.limit ?? 25,
+      email: filters?.email ?? null,
+    });
+
+    return {
+      reconciledCount: response.reconciled_count ?? 0,
+      warning: null,
+    };
+  } catch (error) {
+    return {
+      reconciledCount: 0,
+      warning:
+        error instanceof Error
+          ? error.message
+          : "No se pudieron reconciliar los pedidos pickup recientes.",
+    };
+  }
+}
+
+export async function getMemberPickupRequestsHistory(input: {
+  email?: string | null;
+  supabaseUserId?: string | null;
+}) {
+  const readinessWarning = getPickupRequestsReadinessWarning();
+
+  if (readinessWarning) {
+    return {
+      pickupRequests: [] as PickupRequestDetail[],
+      warning: readinessWarning,
+    };
+  }
+
+  const email = input.email?.trim().toLowerCase() ?? null;
+  const supabaseUserId = input.supabaseUserId?.trim() ?? null;
+
+  if (!email && !supabaseUserId) {
+    return {
+      pickupRequests: [] as PickupRequestDetail[],
+      warning: null,
+    };
+  }
+
+  try {
+    if (email) {
+      await reconcileRecentPickupRequestsSnapshot({
+        email,
+        hours: 24,
+        limit: 10,
+      });
+    }
+
+    const [byUserId, byEmail] = await Promise.all([
+      supabaseUserId
+        ? listPickupRequests({
+            supabaseUserId,
+            limit: 25,
+            offset: 0,
+          }).then((response) => ({
+            warning: null,
+            pickupRequests: (response.pickup_requests ?? []).map((pickupRequest) =>
+              mapPickupRequest(pickupRequest as MedusaPickupRequest),
+            ),
+          }))
+        : Promise.resolve({ warning: null, pickupRequests: [] as PickupRequestDetail[] }),
+      email
+        ? getPickupRequestsSnapshot({
+            email,
+            limit: 25,
+            offset: 0,
+            status: null,
+          })
+        : Promise.resolve({
+            pickupRequests: [] as PickupRequestDetail[],
+            count: 0,
+            warning: null,
+          }),
+    ]);
+
+    return {
+      pickupRequests: dedupePickupRequests([
+        ...byUserId.pickupRequests,
+        ...byEmail.pickupRequests,
+      ]),
+      warning: byUserId.warning ?? byEmail.warning ?? null,
+    };
+  } catch (error) {
+    return {
+      pickupRequests: [] as PickupRequestDetail[],
+      warning:
+        error instanceof Error
+          ? error.message
+          : "No se pudo cargar el historial pickup del socio.",
+    };
+  }
 }

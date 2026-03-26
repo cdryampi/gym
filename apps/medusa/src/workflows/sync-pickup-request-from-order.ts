@@ -3,8 +3,9 @@ import { createWorkflow, WorkflowResponse } from "@medusajs/framework/workflows-
 import { syncPickupRequestFromOrderStep } from "./steps/sync-pickup-request-from-order"
 
 export type SyncPickupRequestFromOrderWorkflowInput = {
-  order_id: string
   cart_id: string
+  order_id?: string | null
+  paypal_order_id?: string | null
   supabase_user_id?: string | null
   notes?: string | null
 }

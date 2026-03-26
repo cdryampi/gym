@@ -175,7 +175,7 @@ describe("POST /api/cart/checkout/paypal/complete", () => {
       message: "Tu pago con PayPal se esta procesando.",
       error: "Tu pago con PayPal se esta procesando.",
     });
-    expect(response.headers.get("set-cookie")).toBeNull();
+    expect(response.headers.get("set-cookie")).toContain(`${GYM_CART_COOKIE}=`);
   });
 
   it("returns the checkout error when completion fails", async () => {

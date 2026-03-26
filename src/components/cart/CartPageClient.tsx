@@ -75,7 +75,7 @@ export default function CartPageClient() {
       notes: notes.trim() || undefined,
     });
 
-    if (preparedCart?.paymentSession?.orderId) {
+    if (preparedCart?.paymentSession?.paypalOrderId) {
       setCheckoutMessage("PayPal ya está listo. Aprueba el pago para completar tu pedido.");
       setIsPayPalDialogOpen(true);
     }
@@ -83,16 +83,22 @@ export default function CartPageClient() {
 
   async function handleApprovePayPal() {
     const normalizedEmail = guestEmail.trim().toLowerCase();
+    const activeCartId = cart?.id ?? null;
     const pickupRequest = await completePayPalCheckout({
       email: memberEmail ? undefined : normalizedEmail || undefined,
       notes: notes.trim() || undefined,
     });
 
-    if (pickupRequest === "processing") {
-      setCheckoutMessage(
-        "Pago recibido por PayPal. Estamos terminando de confirmar tu pedido. No vuelvas a pagar.",
-      );
+    if (pickupRequest && typeof pickupRequest === "object" && "kind" in pickupRequest) {
+      const processingCartId = pickupRequest.cartId ?? activeCartId;
+
+      if (!processingCartId) {
+        throw new Error("checkout-processing-missing-cart");
+      }
+
+      setCheckoutMessage("Pago recibido por PayPal. Estamos terminando de confirmar tu pedido.");
       setIsPayPalDialogOpen(false);
+      router.replace(`/carrito/procesando/${processingCartId}`);
       return;
     }
 
@@ -298,7 +304,7 @@ export default function CartPageClient() {
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-[#111111]">
                     ID Transacción
                   </span>
-                  <span className="font-mono text-xs">{paypalSession.orderId ?? "pendiente"}</span>
+                  <span className="font-mono text-xs">{paypalSession.paypalOrderId ?? "pendiente"}</span>
                 </div>
 
                 {paypalSession.displayAmount !== null && paypalSession.displayCurrencyCode ? (
@@ -340,7 +346,7 @@ export default function CartPageClient() {
           ) : null}
 
           <div className="mt-6 flex flex-col gap-3">
-            {!paypalSession?.orderId ? (
+            {!paypalSession?.paypalOrderId ? (
               <>
                 <div className="border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
                   Los precios de tienda se mantienen en {cart?.summary.currencyCode ?? "PEN"}.
@@ -397,7 +403,7 @@ export default function CartPageClient() {
                           <PayPalCheckoutButton
                             clientId={paypalClientId}
                             currencyCode={paypalSession.currencyCode}
-                            orderId={paypalSession.orderId}
+                            orderId={paypalSession.paypalOrderId}
                             disabled={isBusy}
                             onApproveCheckout={handleApprovePayPal}
                             onCancel={() => {
@@ -446,7 +452,7 @@ export default function CartPageClient() {
                           ) : null}
                           <div className="flex items-center justify-between gap-4">
                             <span>Order ID</span>
-                            <span className="font-mono text-xs">{paypalSession.orderId}</span>
+                            <span className="font-mono text-xs">{paypalSession.paypalOrderId}</span>
                           </div>
                         </div>
 

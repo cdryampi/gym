@@ -75,13 +75,15 @@ export async function POST(request: Request) {
         message: result.message,
       });
 
-      return NextResponse.json(
-        {
-          processing: true,
-          message: result.message,
-          error: result.message,
-        },
-        { status: 202 },
+      return clearCartCookie(
+        NextResponse.json(
+          {
+            processing: true,
+            message: result.message,
+            error: result.message,
+          },
+          { status: 202 },
+        ),
       );
     }
 

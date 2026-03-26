@@ -10,6 +10,8 @@ import {
   mapLineItems,
   normalizeMoneyAmount,
   resolvePaymentSnapshotByCart,
+  retrieveOrderIdByCartId,
+  retrieveOrderIdByPayPalOrderId,
   retrieveOrderSnapshot,
   type PgConnection,
   type PickupRequestRecord,
@@ -28,6 +30,10 @@ export const syncPickupRequestFromOrderStep = createStep<
     const pgConnection = container.resolve(
       ContainerRegistrationKeys.PG_CONNECTION
     ) as PgConnection
+    const logger = container.resolve(ContainerRegistrationKeys.LOGGER) as {
+      info: (message: string) => void
+      warn: (message: string) => void
+    }
     const pickupRequestService = container.resolve(PICKUP_REQUEST_MODULE) as {
       createPickupRequests: (data: Record<string, unknown>) => Promise<unknown>
       updatePickupRequests: (data: Record<string, unknown>) => Promise<unknown>
@@ -38,12 +44,51 @@ export const syncPickupRequestFromOrderStep = createStep<
       deletePickupRequests: (id: string | string[]) => Promise<void>
     }
 
-    const order = await retrieveOrderSnapshot(pgConnection, input.order_id)
+    let resolvedOrderId =
+      input.order_id && input.order_id.startsWith("order_") ? input.order_id : null
+    let resolutionSource: "order_id" | "cart_id" | "paypal_order_id" | null =
+      resolvedOrderId ? "order_id" : null
+
+    if (!resolvedOrderId) {
+      resolvedOrderId = await retrieveOrderIdByCartId(pgConnection, input.cart_id)
+
+      if (resolvedOrderId) {
+        resolutionSource = "cart_id"
+      }
+    }
+
+    const paypalOrderIdCandidate =
+      input.paypal_order_id ??
+      (input.order_id && !input.order_id.startsWith("order_") ? input.order_id : null)
+
+    if (!resolvedOrderId && paypalOrderIdCandidate) {
+      resolvedOrderId = await retrieveOrderIdByPayPalOrderId(
+        pgConnection,
+        paypalOrderIdCandidate
+      )
+
+      if (resolvedOrderId) {
+        resolutionSource = "paypal_order_id"
+      }
+    }
+
+    logger.info(
+      `[PICKUP SYNC] cart_id=${input.cart_id} requested_order_id=${input.order_id ?? "null"} paypal_order_id=${paypalOrderIdCandidate ?? "null"} resolved_order_id=${resolvedOrderId ?? "null"} source=${resolutionSource ?? "unresolved"}`
+    )
+
+    if (!resolvedOrderId) {
+      throw new MedusaError(
+        MedusaError.Types.NOT_FOUND,
+        `No Medusa order could be resolved for cart '${input.cart_id}'${paypalOrderIdCandidate ? ` or PayPal order '${paypalOrderIdCandidate}'` : ""}.`
+      )
+    }
+
+    const order = await retrieveOrderSnapshot(pgConnection, resolvedOrderId)
 
     if (!order?.id) {
       throw new MedusaError(
         MedusaError.Types.NOT_FOUND,
-        `Order with id '${input.order_id}' not found.`
+        `Order with id '${resolvedOrderId}' not found.`
       )
     }
 
@@ -80,7 +125,7 @@ export const syncPickupRequestFromOrderStep = createStep<
       Array.isArray(cart?.items) ? cart.items.map((item) => asRecord(item) ?? {}) : []
     )
     const existingByOrder = await pickupRequestService.listPickupRequests(
-      { order_id: input.order_id },
+      { order_id: resolvedOrderId },
       { take: 1 }
     )
     const existingByCart =
@@ -146,11 +191,11 @@ export const syncPickupRequestFromOrderStep = createStep<
         asString(existingByCart?.exchange_rate_reference),
       line_items_snapshot: lineItemsSnapshot,
       source: asString(existingByCart?.source) ?? "gym-storefront",
-      order_id: input.order_id,
+      order_id: resolvedOrderId,
       payment_collection_id: paymentSnapshot.payment_collection_id,
       payment_provider: paymentSnapshot.payment_provider,
       payment_status: paymentSnapshot.payment_status,
-      paypal_order_id: paymentSnapshot.paypal_order_id,
+      paypal_order_id: paypalOrderIdCandidate ?? paymentSnapshot.paypal_order_id,
       paypal_capture_id: paymentSnapshot.paypal_capture_id,
       payment_authorized_at: paymentSnapshot.payment_authorized_at,
       payment_captured_at: paymentSnapshot.payment_captured_at,

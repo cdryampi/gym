@@ -329,7 +329,7 @@ describe("cart medusa helpers", () => {
         fields: "*payment_sessions",
       },
     );
-    expect(cart.paymentSession?.orderId).toBe("paypal_order_01");
+    expect(cart.paymentSession?.paypalOrderId).toBe("paypal_order_01");
     expect(cart.paymentSession?.currencyCode).toBe("USD");
     expect(cart.paymentSession?.amount).toBe(29.6);
     expect(cart.paymentSession?.displayCurrencyCode).toBe("PEN");
@@ -401,7 +401,7 @@ describe("cart medusa helpers", () => {
     });
 
     expect(initiatePaymentSessionMock).toHaveBeenCalledTimes(1);
-    expect(cart.paymentSession?.orderId).toBe("paypal_order_new");
+    expect(cart.paymentSession?.paypalOrderId).toBe("paypal_order_new");
   });
 
   it("reuses the cart when a shipping method is already attached", async () => {

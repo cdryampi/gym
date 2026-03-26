@@ -14,6 +14,7 @@ const cartProviderMocks = vi.hoisted(() => ({
 
 const navigationMocks = vi.hoisted(() => ({
   push: vi.fn(),
+  replace: vi.fn(),
 }));
 
 vi.mock("next/link", () => ({
@@ -99,6 +100,7 @@ function buildCart(overrides: Partial<Cart> = {}): Cart {
 describe("CartPageClient", () => {
   beforeEach(() => {
     navigationMocks.push.mockReset();
+    navigationMocks.replace.mockReset();
     vi.stubEnv("NEXT_PUBLIC_PAYPAL_CLIENT_ID", "paypal_client_test");
   });
 
@@ -219,7 +221,7 @@ describe("CartPageClient", () => {
           exchangeRate: null,
           exchangeRateSource: null,
           exchangeRateReference: null,
-          orderId: "paypal_order_01",
+          paypalOrderId: "paypal_order_01",
           authorizationId: null,
           captureId: null,
           data: {
@@ -266,7 +268,10 @@ describe("CartPageClient", () => {
   });
 
   it("closes the PayPal dialog and shows a friendly notice when checkout is processing", async () => {
-    const completePayPalCheckoutMock = vi.fn().mockResolvedValue("processing");
+    const completePayPalCheckoutMock = vi.fn().mockResolvedValue({
+      kind: "processing",
+      cartId: "cart_01",
+    });
     const user = userEvent.setup();
 
     cartProviderMocks.useCart.mockReturnValue({
@@ -282,7 +287,7 @@ describe("CartPageClient", () => {
           exchangeRate: null,
           exchangeRateSource: null,
           exchangeRateReference: null,
-          orderId: "paypal_order_01",
+          paypalOrderId: "paypal_order_01",
           authorizationId: null,
           captureId: null,
           data: {
@@ -292,7 +297,7 @@ describe("CartPageClient", () => {
       }),
       lastSubmittedPickupRequest: null,
       pickupEmailWarning: null,
-      notice: "PayPal ya ha confirmado tu pago.",
+      notice: null,
       error: null,
       isReady: true,
       isBusy: false,
@@ -311,11 +316,8 @@ describe("CartPageClient", () => {
     await user.click(screen.getByRole("button", { name: "Mock PayPal" }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Pago recibido por PayPal\. Estamos terminando de confirmar tu pedido/i),
-      ).toBeInTheDocument();
+      expect(navigationMocks.replace).toHaveBeenCalledWith("/carrito/procesando/cart_01");
     });
-
     expect(navigationMocks.push).not.toHaveBeenCalled();
   });
 

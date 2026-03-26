@@ -14,7 +14,10 @@ import {
   pickupRequestPaymentStatusLabels,
   pickupRequestStatusLabels,
 } from "@/lib/cart/pickup-request";
-import { getPickupRequestsSnapshot } from "@/lib/data/pickup-requests";
+import {
+  getPickupRequestsSnapshot,
+  reconcileRecentPickupRequestsSnapshot,
+} from "@/lib/data/pickup-requests";
 
 function formatDate(value: string) {
   try {
@@ -28,6 +31,10 @@ function formatDate(value: string) {
 }
 
 export default async function DashboardStorePickupRequestsPage() {
+  await reconcileRecentPickupRequestsSnapshot({
+    hours: 24,
+    limit: 25,
+  });
   const snapshot = await getPickupRequestsSnapshot();
 
   return (

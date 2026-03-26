@@ -65,6 +65,20 @@ export default function MemberAuthForm({ mode }: Readonly<MemberAuthFormProps>) 
     },
   });
 
+  function triggerWelcomeEmail(email: string) {
+    void fetch("/api/auth/welcome", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    }).catch(() => {
+      // El registro no depende del email de bienvenida.
+    });
+  }
+
   async function onSubmit(values: MemberAuthValues) {
     setError(null);
 
@@ -82,12 +96,14 @@ export default function MemberAuthForm({ mode }: Readonly<MemberAuthFormProps>) 
       }
 
       if (!data.session) {
+        triggerWelcomeEmail(values.email);
         const completeParams = new URLSearchParams();
         completeParams.set("email", values.email);
         router.push(`/registro/completado?${completeParams.toString()}`);
         return;
       }
 
+      triggerWelcomeEmail(values.email);
       const welcomeUrl = `${next}${next.includes("?") ? "&" : "?"}welcome=1`;
       router.push(welcomeUrl);
       router.refresh();

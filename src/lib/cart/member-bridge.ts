@@ -174,7 +174,8 @@ export async function createPickupRequest(
 export async function syncPickupRequestFromOrder(
   cartId: string,
   payload: {
-    orderId: string;
+    orderId?: string | null;
+    paypalOrderId?: string | null;
     supabaseUserId?: string | null;
     notes?: string | null;
   },
@@ -184,7 +185,8 @@ export async function syncPickupRequestFromOrder(
       "/admin/gym/pickup-requests/sync-order",
       {
         cart_id: cartId,
-        order_id: payload.orderId,
+        order_id: payload.orderId ?? undefined,
+        paypal_order_id: payload.paypalOrderId ?? undefined,
         supabase_user_id: payload.supabaseUserId ?? undefined,
         notes: payload.notes ?? undefined,
       },
@@ -192,6 +194,32 @@ export async function syncPickupRequestFromOrder(
   } catch (error) {
     throw new Error(
       `No se pudo proyectar el pedido pagado a pickup_request: ${toBridgeError(error, "fallo desconocido")}`,
+    );
+  }
+}
+
+interface MedusaAdminReconcileRecentPickupRequestsResponse {
+  pickup_requests: MedusaPickupRequest[];
+  reconciled_count: number;
+}
+
+export async function reconcileRecentPickupRequests(filters?: {
+  hours?: number;
+  limit?: number;
+  email?: string | null;
+}) {
+  try {
+    return await requestMedusaAdmin<MedusaAdminReconcileRecentPickupRequestsResponse>(
+      "/admin/gym/pickup-requests/reconcile-recent",
+      {
+        hours: filters?.hours ?? undefined,
+        limit: filters?.limit ?? undefined,
+        email: filters?.email ?? undefined,
+      },
+    );
+  } catch (error) {
+    throw new Error(
+      `No se pudieron reconciliar los pedidos pickup recientes: ${toBridgeError(error, "fallo desconocido")}`,
     );
   }
 }

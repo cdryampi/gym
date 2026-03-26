@@ -56,8 +56,9 @@ export type PickupRequestRecord = {
 }
 
 export type SyncPickupRequestFromOrderStepInput = {
-  order_id: string
   cart_id: string
+  order_id?: string | null
+  paypal_order_id?: string | null
   supabase_user_id?: string | null
   notes?: string | null
 }
@@ -372,6 +373,57 @@ export async function retrieveOrderSnapshot(
         }
       }),
   }
+}
+
+export async function retrieveOrderIdByCartId(
+  pgConnection: PgConnection,
+  cartId: string
+) {
+  const result = await pgConnection.raw(
+    `
+      select oc.order_id
+      from order_cart oc
+      where oc.cart_id = ?
+      limit 1
+    `,
+    [cartId]
+  )
+
+  const row = Array.isArray(result.rows) ? result.rows[0] : null
+  return asString(row?.order_id)
+}
+
+export async function retrieveOrderIdByPayPalOrderId(
+  pgConnection: PgConnection,
+  paypalOrderId: string
+) {
+  const result = await pgConnection.raw(
+    `
+      select distinct oc.order_id
+      from cart_payment_collection cpc
+      inner join order_cart oc
+        on oc.cart_id = cpc.cart_id
+      left join payment_collection pc
+        on pc.id = cpc.payment_collection_id
+       and pc.deleted_at is null
+      left join payment p
+        on p.payment_collection_id = pc.id
+       and p.deleted_at is null
+      left join payment_session ps
+        on ps.payment_collection_id = pc.id
+       and ps.deleted_at is null
+      where cpc.deleted_at is null
+        and (
+          p.data ->> 'order_id' = ?
+          or ps.data ->> 'order_id' = ?
+        )
+      limit 1
+    `,
+    [paypalOrderId, paypalOrderId]
+  )
+
+  const row = Array.isArray(result.rows) ? result.rows[0] : null
+  return asString(row?.order_id)
 }
 
 export async function resolvePaymentSnapshotByCart(

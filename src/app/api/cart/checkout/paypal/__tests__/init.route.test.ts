@@ -54,7 +54,7 @@ describe("POST /api/cart/checkout/paypal/init", () => {
       cart: {
         paymentSession: {
           id: "pay_sess_01",
-          orderId: "paypal_order_01",
+          paypalOrderId: "paypal_order_01",
         },
       },
     });
@@ -85,7 +85,7 @@ describe("POST /api/cart/checkout/paypal/init", () => {
       user: null,
       trace: expect.any(Object),
     });
-    expect(payload.cart.paymentSession.orderId).toBe("paypal_order_01");
+    expect(payload.cart.paymentSession.paypalOrderId).toBe("paypal_order_01");
   });
 
   it("returns an explicit error when a product is missing paypal_price_usd", async () => {

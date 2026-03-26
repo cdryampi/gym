@@ -5,6 +5,7 @@ const originalEnv = { ...process.env };
 const dataPickupMocks = vi.hoisted(() => ({
   hasMedusaAdminEnv: vi.fn(),
   listPickupRequests: vi.fn(),
+  reconcileRecentPickupRequests: vi.fn(),
   retrievePickupRequest: vi.fn(),
 }));
 
@@ -14,6 +15,7 @@ vi.mock("@/lib/env", () => ({
 
 vi.mock("@/lib/cart/member-bridge", () => ({
   listPickupRequests: dataPickupMocks.listPickupRequests,
+  reconcileRecentPickupRequests: dataPickupMocks.reconcileRecentPickupRequests,
   retrievePickupRequest: dataPickupMocks.retrievePickupRequest,
 }));
 
@@ -168,5 +170,89 @@ describe("pickup requests dashboard data", () => {
       offset: 0,
     });
     expect(pickupRequest?.id).toBe("pick_last");
+  });
+
+  it("reconciles recent pickup requests before reading the member history and dedupes results", async () => {
+    dataPickupMocks.hasMedusaAdminEnv.mockReturnValue(true);
+    dataPickupMocks.reconcileRecentPickupRequests.mockResolvedValue({
+      pickup_requests: [],
+      reconciled_count: 1,
+    });
+    dataPickupMocks.listPickupRequests
+      .mockResolvedValueOnce({
+        pickup_requests: [
+          {
+            id: "pick_user",
+            request_number: "NF-20260322-USER",
+            cart_id: "cart_user",
+            supabase_user_id: "user_01",
+            email: "member@gym.com",
+            status: "requested",
+            currency_code: "PEN",
+            item_count: 1,
+            subtotal: 25,
+            total: 25,
+            email_status: "pending",
+            source: "gym-storefront",
+            created_at: "2026-03-22T12:00:00.000Z",
+            updated_at: "2026-03-22T12:00:00.000Z",
+            line_items_snapshot: [],
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        pickup_requests: [
+          {
+            id: "pick_user",
+            request_number: "NF-20260322-USER",
+            cart_id: "cart_user",
+            supabase_user_id: "user_01",
+            email: "member@gym.com",
+            status: "requested",
+            currency_code: "PEN",
+            item_count: 1,
+            subtotal: 25,
+            total: 25,
+            email_status: "pending",
+            source: "gym-storefront",
+            created_at: "2026-03-22T12:00:00.000Z",
+            updated_at: "2026-03-22T12:00:00.000Z",
+            line_items_snapshot: [],
+          },
+          {
+            id: "pick_email",
+            request_number: "NF-20260322-EMAIL",
+            cart_id: "cart_email",
+            email: "member@gym.com",
+            status: "confirmed",
+            currency_code: "PEN",
+            item_count: 1,
+            subtotal: 30,
+            total: 30,
+            email_status: "sent",
+            source: "gym-storefront",
+            created_at: "2026-03-22T13:00:00.000Z",
+            updated_at: "2026-03-22T13:00:00.000Z",
+            line_items_snapshot: [],
+          },
+        ],
+        count: 2,
+      });
+
+    const { getMemberPickupRequestsHistory } = await importPickupRequestsModule();
+    const history = await getMemberPickupRequestsHistory({
+      email: "member@gym.com",
+      supabaseUserId: "user_01",
+    });
+
+    expect(dataPickupMocks.reconcileRecentPickupRequests).toHaveBeenCalledWith({
+      hours: 24,
+      limit: 10,
+      email: "member@gym.com",
+    });
+    expect(history.pickupRequests.map((pickupRequest) => pickupRequest.id)).toEqual([
+      "pick_email",
+      "pick_user",
+    ]);
   });
 });
