@@ -1,3 +1,4 @@
+import { PackageSearch, ShoppingBag } from "lucide-react";
 import Link from "next/link";
 
 import AdminMetricCard from "@/components/admin/AdminMetricCard";
@@ -25,6 +26,8 @@ export default async function DashboardStorePage() {
       <DashboardPageHeader
         title="Tienda"
         description="Resumen operativo de taxonomy, catalogo y edicion interna de la tienda."
+        icon={ShoppingBag}
+        eyebrow="Commerce"
       />
 
       {snapshot.warning ? <DashboardNotice message={snapshot.warning} /> : null}
@@ -39,6 +42,7 @@ export default async function DashboardStorePage() {
         title="Estado actual"
         description="Gestion operativa del catalogo segun el provider configurado para el dashboard."
         badge={<Badge variant={sourceMeta.tone}>{sourceMeta.label}</Badge>}
+        icon={PackageSearch}
       >
         <div className="grid gap-4 md:grid-cols-3">
           <AdminSurface inset className="p-4">

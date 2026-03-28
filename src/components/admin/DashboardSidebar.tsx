@@ -61,11 +61,18 @@ export default function DashboardSidebar() {
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "flex min-w-fit items-center gap-3 rounded-none border border-transparent px-3.5 py-3 text-sm text-[#5f6368] transition-colors hover:border-black/8 hover:bg-[#faf8f2] hover:text-[#111111] xl:min-w-0",
-                isActive && "border-[#d71920]/12 bg-[#fff3f3] text-[#111111]",
+                isActive && "border-[#d71920]/12 bg-[#fff3f3] text-[#111111] shadow-[0_16px_38px_-28px_rgba(215,25,32,0.5)]",
               )}
             >
-              <Icon className={cn("h-4 w-4 text-[#8c9198]", isActive && "text-[#d71920]")} />
-              {link.label}
+              <div
+                className={cn(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-none border border-black/6 bg-[#f4f1ea] text-[#7a7f87]",
+                  isActive && "border-[#d71920]/12 bg-white text-[#d71920]",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+              </div>
+              <span className="font-medium">{link.label}</span>
             </Link>
           );
         })}

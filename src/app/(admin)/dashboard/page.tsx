@@ -1,4 +1,5 @@
 import {
+  BarChart3,
   Building2,
   Inbox,
   Megaphone,
@@ -65,17 +66,24 @@ export default async function DashboardPage() {
       <DashboardPageHeader
         title="Resumen"
         description="Vista rapida del estado comercial y operativo del sitio publico, los leads y la tienda activa."
+        icon={BarChart3}
+        eyebrow="Vision general"
       />
 
       {warning ? <DashboardNotice message={warning} /> : null}
       {storeSnapshot.warning ? <DashboardNotice message={storeSnapshot.warning} /> : null}
 
       <section className="space-y-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a7f87]">
-            Prioridad operativa
-          </p>
-          <p className="mt-1 text-sm text-[#5f6368]">Lo urgente para atender hoy.</p>
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-none border border-[#d71920]/10 bg-[#fff5f5] text-[#d71920]">
+            <Inbox className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a7f87]">
+              Prioridad operativa
+            </p>
+            <p className="mt-1 text-sm text-[#5f6368]">Lo urgente para atender hoy.</p>
+          </div>
         </div>
         <div className="grid gap-4 xl:grid-cols-3">
           {leadMetrics.map((metric) => (
@@ -85,11 +93,16 @@ export default async function DashboardPage() {
       </section>
 
       <section className="space-y-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a7f87]">
-            Salud comercial
-          </p>
-          <p className="mt-1 text-sm text-[#5f6368]">Indicadores del catalogo y flujo de tienda.</p>
+        <div className="flex items-start gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-none border border-black/8 bg-[#f4f1ea] text-[#5f6368]">
+            <ShoppingBag className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a7f87]">
+              Salud comercial
+            </p>
+            <p className="mt-1 text-sm text-[#5f6368]">Indicadores del catalogo y flujo de tienda.</p>
+          </div>
         </div>
         <div className="grid gap-4 xl:grid-cols-3">
           {commerceMetrics.map((metric) => (
@@ -103,6 +116,7 @@ export default async function DashboardPage() {
           title="Estado comercial"
           description="Lo esencial para saber si la captacion, la identidad publica y la tienda estan alineadas."
           badge={<Badge variant={topbarMeta.tone}>{topbarMeta.label}</Badge>}
+          icon={Megaphone}
         >
           <div className="grid gap-4 md:grid-cols-2">
             <AdminSurface inset className="p-4">
@@ -153,6 +167,7 @@ export default async function DashboardPage() {
         <AdminSection
           title="Inventario publico"
           description="Conteo rapido del contenido visible hoy entre web comercial y catalogo."
+          icon={ShoppingBag}
         >
           <div className="grid gap-3">
             {inventory.map((item) => {
@@ -177,6 +192,7 @@ export default async function DashboardPage() {
       <AdminSection
         title="Modulos previstos"
         description="Ruta de crecimiento documentada sin adelantar complejidad en el MVP."
+        icon={ShieldCheck}
       >
         <div className="flex flex-wrap gap-2">
           {plannedModules.map((module) => (

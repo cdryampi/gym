@@ -12,22 +12,32 @@ import { formatShortDate } from "@/lib/utils";
 
 import AdminSurface from "./AdminSurface";
 import DashboardEmptyState from "./DashboardEmptyState";
+import LeadDetailsDialogTrigger from "./LeadDetailsDialogTrigger";
 import LeadStatusBadge from "./LeadStatusBadge";
 import LeadStatusSelect from "./LeadStatusSelect";
 
 interface LeadsTableProps {
   leads: Lead[];
   disabledReason?: string;
+  hasActiveFilters?: boolean;
 }
 
-export default function LeadsTable({ leads, disabledReason }: LeadsTableProps) {
+export default function LeadsTable({
+  leads,
+  disabledReason,
+  hasActiveFilters = false,
+}: LeadsTableProps) {
   if (!leads.length) {
     return (
       <DashboardEmptyState
-        title="Todavia no hay leads"
-        description="Cuando alguien complete el formulario publico, aparecera aqui con su estado y fecha de entrada."
-        actionHref="/#contacto"
-        actionLabel="Probar formulario publico"
+        title={hasActiveFilters ? "No hay resultados para estos filtros" : "Todavia no hay leads"}
+        description={
+          hasActiveFilters
+            ? "Prueba con otra busqueda o limpia los filtros para volver a ver toda la bandeja."
+            : "Cuando alguien complete el formulario publico, aparecera aqui con su estado y fecha de entrada."
+        }
+        actionHref={hasActiveFilters ? undefined : "/#contacto"}
+        actionLabel={hasActiveFilters ? undefined : "Probar formulario publico"}
       />
     );
   }
@@ -73,12 +83,13 @@ export default function LeadsTable({ leads, disabledReason }: LeadsTableProps) {
             </div>
             <p className="mt-3 text-sm leading-6 text-[#5f6368]">{lead.message}</p>
             <p className="mt-3 text-sm text-[#5f6368]">Telefono: {lead.phone || "Sin telefono"}</p>
-            <div className="mt-4">
+            <div className="mt-4 space-y-4">
               <LeadStatusSelect
                 leadId={lead.id}
                 currentStatus={lead.status}
                 disabledReason={disabledReason}
               />
+              <LeadDetailsDialogTrigger lead={lead} disabledReason={disabledReason} />
             </div>
           </AdminSurface>
         ))}
@@ -94,6 +105,7 @@ export default function LeadsTable({ leads, disabledReason }: LeadsTableProps) {
               <TableHead>Estado</TableHead>
               <TableHead>Origen</TableHead>
               <TableHead>Fecha</TableHead>
+              <TableHead className="text-right">Detalle</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -118,6 +130,9 @@ export default function LeadsTable({ leads, disabledReason }: LeadsTableProps) {
                 </TableCell>
                 <TableCell className="uppercase text-[#5f6368]">{lead.source}</TableCell>
                 <TableCell>{formatShortDate(lead.created_at)}</TableCell>
+                <TableCell className="text-right">
+                  <LeadDetailsDialogTrigger lead={lead} disabledReason={disabledReason} />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

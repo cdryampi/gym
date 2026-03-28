@@ -12,7 +12,16 @@ describe("LeadsTable", () => {
     expect(screen.getByText("Todavia no hay leads")).toBeInTheDocument();
   });
 
-  it("renders lead summaries and a responsive lead list", () => {
+  it("shows a filtered empty state when filters are active", () => {
+    render(<LeadsTable leads={[]} hasActiveFilters />);
+
+    expect(screen.getByText("No hay resultados para estos filtros")).toBeInTheDocument();
+    expect(
+      screen.getByText("Prueba con otra busqueda o limpia los filtros para volver a ver toda la bandeja."),
+    ).toBeInTheDocument();
+  });
+
+  it("renders lead summaries, status controls and detail triggers", () => {
     render(<LeadsTable leads={defaultLeads} />);
 
     expect(screen.getByText("Nuevos")).toBeInTheDocument();
@@ -20,6 +29,7 @@ describe("LeadsTable", () => {
     expect(screen.getByText("Cerrados")).toBeInTheDocument();
     expect(screen.getAllByText(defaultLeads[0].name).length).toBeGreaterThan(0);
     expect(screen.getAllByText(defaultLeads[0].email).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: "Ver detalle" }).length).toBeGreaterThan(0);
   });
 
   it("disables the status selector when the page is read only", () => {

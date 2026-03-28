@@ -27,24 +27,28 @@ export default function AdminMetricCard({
   tone = "default",
 }: Readonly<AdminMetricCardProps>) {
   return (
-    <AdminSurface className="p-5">
+    <AdminSurface className="p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7a7f87]">
+        <div className="space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b7078]">
             {label}
           </p>
-          <p className="text-3xl font-semibold tracking-tight text-[#111111]">{value}</p>
+          <p className="text-3xl font-semibold tracking-tight text-[#111111] sm:text-[2.1rem]">
+            {value}
+          </p>
         </div>
         <div
           className={cn(
-            "flex h-11 w-11 items-center justify-center rounded-none",
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-none border border-black/6 shadow-[0_14px_36px_-24px_rgba(17,17,17,0.45)]",
             toneClasses[tone],
           )}
         >
           <Icon className="h-5 w-5" />
         </div>
       </div>
-      <p className="mt-4 text-sm leading-6 text-[#5f6368]">{hint}</p>
+      <div className="mt-4 border-t border-black/8 pt-4">
+        <p className="text-sm leading-6 text-[#4f5359]">{hint}</p>
+      </div>
     </AdminSurface>
   );
 }

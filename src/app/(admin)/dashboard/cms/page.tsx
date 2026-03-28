@@ -1,3 +1,5 @@
+import { FileText, ShieldAlert } from "lucide-react";
+
 import AdminSection from "@/components/admin/AdminSection";
 import CmsDocumentsForm from "@/components/admin/CmsDocumentsForm";
 import DashboardNotice from "@/components/admin/DashboardNotice";
@@ -17,6 +19,8 @@ export default async function DashboardCmsPage() {
       <DashboardPageHeader
         title="Legales y errores"
         description="Gestiona las paginas legales, el banner de cookies y los textos genericos de fallback desde un CMS simple."
+        icon={FileText}
+        eyebrow="Documentos y sistema"
       />
       {snapshot.warning ? <DashboardNotice message={snapshot.warning} /> : null}
       {disabledReason ? <DashboardNotice message={disabledReason} /> : null}
@@ -24,6 +28,7 @@ export default async function DashboardCmsPage() {
       <AdminSection
         title="CMS legal y sistema"
         description="Cada documento se publica por separado y la web usa fallback local si Supabase no responde."
+        icon={ShieldAlert}
       >
         <CmsDocumentsForm documents={snapshot.documents} disabledReason={disabledReason} />
       </AdminSection>

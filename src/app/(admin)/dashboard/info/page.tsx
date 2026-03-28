@@ -1,3 +1,5 @@
+import { Building2, MapPinned } from "lucide-react";
+
 import AdminSection from "@/components/admin/AdminSection";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
@@ -16,13 +18,16 @@ export default async function DashboardInfoPage() {
     <div className="space-y-6">
       <DashboardPageHeader
         title="Datos del Gym"
-        description="Información básica, contacto, ubicación y horarios."
+        description="Informacion basica, contacto, ubicacion y horarios."
+        icon={Building2}
+        eyebrow="Identidad y contacto"
       />
       {warning ? <DashboardNotice message={warning} /> : null}
       {disabledReason ? <DashboardNotice message={disabledReason} /> : null}
       <AdminSection
-        title="Información operativa"
-        description="Gestiona cómo te contactan y dónde te encuentran."
+        title="Informacion operativa"
+        description="Gestiona como te contactan y donde te encuentran."
+        icon={MapPinned}
       >
         <GymInfoForm settings={settings} disabledReason={disabledReason} />
       </AdminSection>

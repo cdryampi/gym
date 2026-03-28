@@ -1,3 +1,5 @@
+import { Settings2, ShieldCheck } from "lucide-react";
+
 import AdminSection from "@/components/admin/AdminSection";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
@@ -16,13 +18,16 @@ export default async function DashboardSettingsPage() {
     <div className="space-y-6">
       <DashboardPageHeader
         title="Ajustes Internos"
-        description="Configuración avanzada del sitio: identidad, buscadores y pie de página."
+        description="Configuracion avanzada del sitio: identidad, buscadores y pie de pagina."
+        icon={Settings2}
+        eyebrow="Sistema"
       />
       {warning ? <DashboardNotice message={warning} /> : null}
       {disabledReason ? <DashboardNotice message={disabledReason} /> : null}
       <AdminSection
         title="Configuracion global"
         description="Una sola ruta para editar la capa publica sin perder contexto."
+        icon={ShieldCheck}
       >
         <SettingsForm settings={settings} disabledReason={disabledReason} />
       </AdminSection>

@@ -1,3 +1,5 @@
+import { CalendarClock, Megaphone } from "lucide-react";
+
 import AdminSection from "@/components/admin/AdminSection";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
@@ -17,12 +19,15 @@ export default async function DashboardMarketingPage() {
       <DashboardPageHeader
         title="Marketing"
         description={`Gestiona planes y horarios visibles de ${settings.site_name}.`}
+        icon={Megaphone}
+        eyebrow="Contenido comercial"
       />
       {warning ? <DashboardNotice message={warning} /> : null}
       {disabledReason ? <DashboardNotice message={disabledReason} /> : null}
       <AdminSection
         title="Contenido comercial editable"
         description="Opera los bloques publicos de planes y horarios desde una sola pantalla."
+        icon={CalendarClock}
       >
         <MarketingContentForm
           plans={plans}

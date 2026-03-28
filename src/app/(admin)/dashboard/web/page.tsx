@@ -1,3 +1,5 @@
+import { Globe, LayoutTemplate } from "lucide-react";
+
 import AdminSection from "@/components/admin/AdminSection";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
@@ -15,14 +17,17 @@ export default async function DashboardWebPage() {
   return (
     <div className="space-y-6">
       <DashboardPageHeader
-        title="Diseño Web"
-        description="Controla la primera impresión: bienvenida y avisos destacados."
+        title="Diseno Web"
+        description="Controla la primera impresion: bienvenida y avisos destacados."
+        icon={Globe}
+        eyebrow="Sitio publico"
       />
       {warning ? <DashboardNotice message={warning} /> : null}
       {disabledReason ? <DashboardNotice message={disabledReason} /> : null}
       <AdminSection
         title="Secciones visuales"
         description="Edita el texto de bienvenida y las promociones vigentes."
+        icon={LayoutTemplate}
       >
         <WebSectionForm settings={settings} disabledReason={disabledReason} />
       </AdminSection>
