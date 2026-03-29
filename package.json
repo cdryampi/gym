@@ -19,6 +19,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install chromium",
     "test:scope": "node scripts/run-tests-by-path.mjs",
     "test:cart": "node scripts/run-tests-by-path.mjs src/components/cart src/lib/cart src/lib/data/__tests__/pickup-requests.test.ts src/lib/email/__tests__/pickup-request.test.ts apps/medusa/src/api/admin/gym/pickup-requests",
     "test:admin": "node scripts/run-tests-by-path.mjs src/components/admin src/lib/admin-access.test.ts src/lib/admin-dashboard.test.ts src/lib/topbar.test.ts src/lib/data/store-admin src/lib/supabase/dashboard-snapshot.test.ts",
@@ -50,6 +54,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",

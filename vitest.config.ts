@@ -9,7 +9,14 @@ export default defineConfig({
     },
   },
   test: {
-    exclude: ["apps/medusa/**", "node_modules/**"],
+    exclude: [
+      "apps/medusa/**",
+      "node_modules/**",
+      "tests/e2e/**",
+      "playwright.config.ts",
+      "playwright-report/**",
+      "test-results/**",
+    ],
     environment: "node",
     globals: true,
     setupFiles: "./vitest.setup.ts",

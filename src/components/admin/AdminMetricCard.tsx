@@ -29,11 +29,11 @@ export default function AdminMetricCard({
   return (
     <AdminSurface className="p-5 sm:p-6">
       <div className="flex items-start justify-between gap-4">
-        <div className="space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b7078]">
+        <div className="space-y-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-[#7a7f87]">
             {label}
           </p>
-          <p className="text-3xl font-semibold tracking-tight text-[#111111] sm:text-[2.1rem]">
+          <p className="text-4xl font-extrabold tracking-tighter text-[#111111] sm:text-[2.25rem]">
             {value}
           </p>
         </div>

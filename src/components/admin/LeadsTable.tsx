@@ -74,12 +74,16 @@ export default function LeadsTable({
               <p className="font-semibold text-[#111111]">{lead.name}</p>
               <p className="mt-1 text-sm text-[#5f6368]">{lead.email}</p>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7a7f87]">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <LeadStatusBadge status={lead.status} />
-              <span>|</span>
-              <span>{lead.source}</span>
-              <span>|</span>
-              <span>{formatShortDate(lead.created_at)}</span>
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#7a7f87]">
+                <span className="inline-flex items-center rounded-none border border-black/8 bg-[#f3f4f6] px-2 py-0.5">
+                  {lead.source}
+                </span>
+                <span className="text-[#9ea4ad]">
+                  {formatShortDate(lead.created_at)}
+                </span>
+              </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-[#5f6368]">{lead.message}</p>
             <p className="mt-3 text-sm text-[#5f6368]">Telefono: {lead.phone || "Sin telefono"}</p>

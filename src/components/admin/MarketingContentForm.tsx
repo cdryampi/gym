@@ -5,6 +5,7 @@ import {
   ArrowDown,
   ArrowUp,
   Check,
+  ChevronDown,
   Loader2,
   Plus,
   Save,
@@ -218,6 +219,16 @@ export default function MarketingContentForm({
 }: Readonly<MarketingContentFormProps>) {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [openPlans, setOpenPlans] = useState<Record<string, boolean>>({ "0": true });
+  const [openSchedules, setOpenSchedules] = useState<Record<string, boolean>>({ "0": true });
+
+  const togglePlan = (idx: number) => {
+    setOpenPlans((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
+
+  const toggleSchedule = (idx: number) => {
+    setOpenSchedules((prev) => ({ ...prev, [idx]: !prev[idx] }));
+  };
 
   const form = useForm<MarketingContentValues>({
     resolver: zodResolver(marketingContentSchema),
@@ -351,200 +362,258 @@ export default function MarketingContentForm({
             </div>
 
             <div className="space-y-4">
-              {planFields.fields.map((field, index) => (
-                <AdminSurface
-                  key={field.id}
-                  inset
-                  className="space-y-4 border border-black/8 bg-[#fbfbf8] p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/6 pb-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[#111111]">
-                        Plan {index + 1}
-                      </p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#7a7f87]">
-                        Orden visual {index + 1}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending || index === 0}
-                        onClick={() => handleMovePlan(index, -1)}
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending || index === planFields.fields.length - 1}
-                        onClick={() => handleMovePlan(index, 1)}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={watchedPlans[index]?.is_featured ? "secondary" : "outline"}
-                        size="sm"
-                        disabled={isPending || Boolean(disabledReason)}
-                        onClick={() => handleFeaturedPlan(index)}
-                      >
-                        <Star className="h-4 w-4" />
-                        Destacar
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending || Boolean(disabledReason) || planFields.fields.length === 1}
-                        onClick={() => {
-                          planFields.remove(index);
-                          const nextPlans = form.getValues("plans");
-                          syncPlanOrders(form.setValue, nextPlans);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </Button>
-                    </div>
-                  </div>
+              {planFields.fields.map((field, index) => {
+                const isOpen = openPlans[index] ?? false;
+                const planValue = watchedPlans[index];
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name={`plans.${index}.title`}
-                      render={({ field: planField }) => (
-                        <FormItem>
-                          <FormLabel>Nombre</FormLabel>
-                          <FormControl>
-                            <Input {...planField} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                return (
+                  <AdminSurface
+                    key={field.id}
+                    inset
+                    className="overflow-hidden border border-black/8 bg-[#fbfbf8]"
+                  >
+                    <div
+                      className={cn(
+                        "flex cursor-pointer items-center justify-between gap-4 p-4 transition-colors hover:bg-black/2",
+                        !isOpen && "bg-[#fcfcfa]",
                       )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`plans.${index}.badge`}
-                      render={({ field: planField }) => (
-                        <FormItem>
-                          <FormLabel>Badge</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Recomendado" {...planField} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name={`plans.${index}.description`}
-                    render={({ field: planField }) => (
-                      <FormItem>
-                        <FormLabel>Descripcion corta</FormLabel>
-                        <FormControl>
-                          <Textarea rows={2} placeholder="Texto comercial opcional." {...planField} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name={`plans.${index}.price_label`}
-                      render={({ field: planField }) => (
-                        <FormItem>
-                          <FormLabel>Precio visible</FormLabel>
-                          <FormControl>
-                            <Input placeholder="S/150" {...planField} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name={`plans.${index}.billing_label`}
-                      render={({ field: planField }) => (
-                        <FormItem>
-                          <FormLabel>Periodo</FormLabel>
-                          <FormControl>
-                            <Input placeholder="/mes" {...planField} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name={`plans.${index}.is_active`}
-                      render={({ field: planField }) => (
-                        <FormItem>
-                          <FormLabel>Visibilidad</FormLabel>
-                          <FormControl>
-                            <button
-                              type="button"
-                              disabled={isPending || Boolean(disabledReason)}
-                              onClick={() => planField.onChange(!planField.value)}
+                      onClick={() => togglePlan(index)}
+                    >
+                      <div className="flex flex-1 items-center gap-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-black/8 bg-white text-xs font-bold text-[#111111]">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="truncate text-sm font-semibold text-[#111111]">
+                              {planValue?.title || `Plan ${index + 1}`}
+                            </span>
+                            {planValue?.price_label && (
+                              <span className="text-xs text-[#5f6368]">
+                                • {planValue.price_label}
+                                {planValue.billing_label}
+                              </span>
+                            )}
+                            {planValue?.is_featured && (
+                              <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            )}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div
                               className={cn(
-                                "flex h-12 w-full items-center justify-center gap-2 border px-4 text-sm font-semibold transition",
-                                planField.value
-                                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                  : "border-zinc-200 bg-zinc-50 text-zinc-600",
+                                "h-1.5 w-1.5 rounded-full",
+                                planValue?.is_active ? "bg-emerald-500" : "bg-zinc-400",
+                              )}
+                            />
+                            <span className="text-[10px] uppercase tracking-wider text-[#7a7f87]">
+                              {planValue?.is_active ? "Activo" : "Oculto"}
+                              {planValue?.badge && ` • ${planValue.badge}`}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="hidden sm:flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isPending || index === 0}
+                            onClick={() => handleMovePlan(index, -1)}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isPending || index === planFields.fields.length - 1}
+                            onClick={() => handleMovePlan(index, 1)}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={isPending || Boolean(disabledReason) || planFields.fields.length === 1}
+                          onClick={() => {
+                            planFields.remove(index);
+                            const nextPlans = form.getValues("plans");
+                            syncPlanOrders(form.setValue, nextPlans);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500/70" />
+                        </Button>
+                        <ChevronDown
+                          className={cn(
+                            "h-5 w-5 text-[#a1a1a1] transition-transform",
+                            isOpen && "rotate-180",
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {isOpen && (
+                      <div className="space-y-4 border-t border-black/6 p-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-white/50 p-2 border border-black/5">
+                           <p className="text-xs font-semibold uppercase tracking-widest text-[#7a7f87]">
+                             Configuracion de Plan {index + 1}
+                           </p>
+                           <Button
+                            type="button"
+                            variant={watchedPlans[index]?.is_featured ? "secondary" : "outline"}
+                            size="sm"
+                            className="h-7 text-xs"
+                            disabled={isPending || Boolean(disabledReason)}
+                            onClick={() => handleFeaturedPlan(index)}
+                          >
+                            <Star className="mr-1 h-3 w-3" />
+                            {watchedPlans[index]?.is_featured ? "Plan Destacado" : "Hacer Destacado"}
+                          </Button>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name={`plans.${index}.title`}
+                            render={({ field: planField }) => (
+                              <FormItem>
+                                <FormLabel>Nombre</FormLabel>
+                                <FormControl>
+                                  <Input {...planField} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`plans.${index}.badge`}
+                            render={({ field: planField }) => (
+                              <FormItem>
+                                <FormLabel>Badge</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Recomendado" {...planField} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name={`plans.${index}.description`}
+                          render={({ field: planField }) => (
+                            <FormItem>
+                              <FormLabel>Descripcion corta</FormLabel>
+                              <FormControl>
+                                <Textarea rows={2} placeholder="Texto comercial opcional." {...planField} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name={`plans.${index}.price_label`}
+                            render={({ field: planField }) => (
+                              <FormItem>
+                                <FormLabel>Precio visible</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="S/150" {...planField} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`plans.${index}.billing_label`}
+                            render={({ field: planField }) => (
+                              <FormItem>
+                                <FormLabel>Periodo</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="/mes" {...planField} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name={`plans.${index}.is_active`}
+                            render={({ field: planField }) => (
+                              <FormItem>
+                                <FormLabel>Visibilidad</FormLabel>
+                                <FormControl>
+                                  <button
+                                    type="button"
+                                    disabled={isPending || Boolean(disabledReason)}
+                                    onClick={() => planField.onChange(!planField.value)}
+                                    className={cn(
+                                      "flex h-10 w-full items-center justify-center gap-2 border px-4 text-xs font-semibold transition",
+                                      planField.value
+                                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                        : "border-zinc-200 bg-zinc-50 text-zinc-600",
+                                    )}
+                                  >
+                                    {planField.value ? (
+                                      <Check className="h-4 w-4" />
+                                    ) : (
+                                      <X className="h-4 w-4" />
+                                    )}
+                                    {planField.value ? "Activo en web" : "Oculto en web"}
+                                  </button>
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <AdminSurface className="flex items-center justify-between border-black/8 bg-white p-3">
+                            <div>
+                              <p className="text-xs font-semibold text-[#111111]">Plan destacado</p>
+                              <p className="mt-1 text-[11px] text-[#5f6368]">
+                                Solo uno se ve como recomendado.
+                              </p>
+                            </div>
+                            <div
+                              className={cn(
+                                "rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]",
+                                watchedPlans[index]?.is_featured
+                                  ? "bg-[#111111] text-white"
+                                  : "bg-[#f3f4f6] text-[#6b7280]",
                               )}
                             >
-                              {planField.value ? (
-                                <Check className="h-4 w-4" />
-                              ) : (
-                                <X className="h-4 w-4" />
-                              )}
-                              {planField.value ? "Activo en web" : "Oculto en web"}
-                            </button>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                              {watchedPlans[index]?.is_featured ? "Activo" : "Normal"}
+                            </div>
+                          </AdminSurface>
+                        </div>
 
-                    <AdminSurface inset className="flex items-center justify-between border border-black/8 bg-white p-4">
-                      <div>
-                        <p className="text-sm font-semibold text-[#111111]">Plan destacado</p>
-                        <p className="mt-1 text-sm text-[#5f6368]">
-                          Solo uno se renderiza como recomendado.
-                        </p>
+                        <PlanFeaturesEditor
+                          control={form.control}
+                          planIndex={index}
+                          disabled={isPending || Boolean(disabledReason)}
+                        />
                       </div>
-                      <div
-                        className={cn(
-                          "rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]",
-                          watchedPlans[index]?.is_featured
-                            ? "bg-[#111111] text-white"
-                            : "bg-[#f3f4f6] text-[#6b7280]",
-                        )}
-                      >
-                        {watchedPlans[index]?.is_featured ? "Activo" : "Normal"}
-                      </div>
-                    </AdminSurface>
-                  </div>
-
-                  <PlanFeaturesEditor
-                    control={form.control}
-                    planIndex={index}
-                    disabled={isPending || Boolean(disabledReason)}
-                  />
-                </AdminSurface>
-              ))}
+                    )}
+                  </AdminSurface>
+                );
+              })}
             </div>
           </AdminSurface>
 
@@ -569,145 +638,199 @@ export default function MarketingContentForm({
             </div>
 
             <div className="space-y-4">
-              {scheduleFields.fields.map((field, index) => (
-                <AdminSurface
-                  key={field.id}
-                  inset
-                  className="space-y-4 border border-black/8 bg-[#fbfbf8] p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-black/6 pb-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[#111111]">Fila {index + 1}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.16em] text-[#7a7f87]">
-                        Orden visual {index + 1}
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending || index === 0}
-                        onClick={() => handleMoveScheduleRow(index, -1)}
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending || index === scheduleFields.fields.length - 1}
-                        onClick={() => handleMoveScheduleRow(index, 1)}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        disabled={isPending || Boolean(disabledReason) || scheduleFields.fields.length === 1}
-                        onClick={() => {
-                          scheduleFields.remove(index);
-                          const nextRows = form.getValues("scheduleRows");
-                          syncScheduleOrders(form.setValue, nextRows);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Eliminar
-                      </Button>
-                    </div>
-                  </div>
+              {scheduleFields.fields.map((field, index) => {
+                const isOpen = openSchedules[index] ?? false;
+                const rowValue = watchedScheduleRows[index];
 
-                  <FormField
-                    control={form.control}
-                    name={`scheduleRows.${index}.label`}
-                    render={({ field: rowField }) => (
-                      <FormItem>
-                        <FormLabel>Titulo</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Lunes - Viernes" {...rowField} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name={`scheduleRows.${index}.description`}
-                    render={({ field: rowField }) => (
-                      <FormItem>
-                        <FormLabel>Descripcion corta</FormLabel>
-                        <FormControl>
-                          <Textarea rows={2} placeholder="Opcional." {...rowField} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name={`scheduleRows.${index}.opens_at`}
-                      render={({ field: rowField }) => (
-                        <FormItem>
-                          <FormLabel>Apertura</FormLabel>
-                          <FormControl>
-                            <Input placeholder="05:00 AM" {...rowField} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
+                return (
+                  <AdminSurface
+                    key={field.id}
+                    inset
+                    className="overflow-hidden border border-black/8 bg-[#fbfbf8]"
+                  >
+                    <div
+                      className={cn(
+                        "flex cursor-pointer items-center justify-between gap-4 p-4 transition-colors hover:bg-black/2",
+                        !isOpen && "bg-[#fcfcfa]",
                       )}
-                    />
+                      onClick={() => toggleSchedule(index)}
+                    >
+                      <div className="flex flex-1 items-center gap-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-black/8 bg-white text-xs font-bold text-[#111111]">
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="truncate text-sm font-semibold text-[#111111]">
+                              {rowValue?.label || `Fila ${index + 1}`}
+                            </span>
+                            {(rowValue?.opens_at || rowValue?.closes_at) && (
+                              <span className="text-xs text-[#5f6368]">
+                                • {rowValue.opens_at} - {rowValue.closes_at}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div
+                              className={cn(
+                                "h-1.5 w-1.5 rounded-full",
+                                rowValue?.is_active ? "bg-emerald-500" : "bg-zinc-400",
+                              )}
+                            />
+                            <span className="text-[10px] uppercase tracking-wider text-[#7a7f87]">
+                              {rowValue?.is_active ? "Activo" : "Oculto"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                    <FormField
-                      control={form.control}
-                      name={`scheduleRows.${index}.closes_at`}
-                      render={({ field: rowField }) => (
-                        <FormItem>
-                          <FormLabel>Cierre</FormLabel>
-                          <FormControl>
-                            <Input placeholder="11:00 PM" {...rowField} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name={`scheduleRows.${index}.is_active`}
-                    render={({ field: rowField }) => (
-                      <FormItem>
-                        <FormLabel>Visibilidad</FormLabel>
-                        <FormControl>
-                          <button
+                      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="hidden sm:flex gap-1">
+                          <Button
                             type="button"
-                            disabled={isPending || Boolean(disabledReason)}
-                            onClick={() => rowField.onChange(!rowField.value)}
-                            className={cn(
-                              "flex h-12 w-full items-center justify-center gap-2 border px-4 text-sm font-semibold transition",
-                              rowField.value
-                                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                                : "border-zinc-200 bg-zinc-50 text-zinc-600",
-                            )}
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isPending || index === 0}
+                            onClick={() => handleMoveScheduleRow(index, -1)}
                           >
-                            {rowField.value ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <X className="h-4 w-4" />
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            disabled={isPending || index === scheduleFields.fields.length - 1}
+                            onClick={() => handleMoveScheduleRow(index, 1)}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={isPending || Boolean(disabledReason) || scheduleFields.fields.length === 1}
+                          onClick={() => {
+                            scheduleFields.remove(index);
+                            const nextRows = form.getValues("scheduleRows");
+                            syncScheduleOrders(form.setValue, nextRows);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500/70" />
+                        </Button>
+                        <ChevronDown
+                          className={cn(
+                            "h-5 w-5 text-[#a1a1a1] transition-transform",
+                            isOpen && "rotate-180",
+                          )}
+                        />
+                      </div>
+                    </div>
+
+                    {isOpen && (
+                      <div className="space-y-4 border-t border-black/6 p-4">
+                        <div className="bg-white/50 p-2 border border-black/5">
+                           <p className="text-xs font-semibold uppercase tracking-widest text-[#7a7f87]">
+                             Configuracion de Fila {index + 1}
+                           </p>
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name={`scheduleRows.${index}.label`}
+                          render={({ field: rowField }) => (
+                            <FormItem>
+                              <FormLabel>Titulo</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Lunes - Viernes" {...rowField} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name={`scheduleRows.${index}.description`}
+                          render={({ field: rowField }) => (
+                            <FormItem>
+                              <FormLabel>Descripcion corta</FormLabel>
+                              <FormControl>
+                                <Textarea rows={2} placeholder="Opcional." {...rowField} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            control={form.control}
+                            name={`scheduleRows.${index}.opens_at`}
+                            render={({ field: rowField }) => (
+                              <FormItem>
+                                <FormLabel>Apertura</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="05:00 AM" {...rowField} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
                             )}
-                            {rowField.value ? "Activo en web" : "Oculto en web"}
-                          </button>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`scheduleRows.${index}.closes_at`}
+                            render={({ field: rowField }) => (
+                              <FormItem>
+                                <FormLabel>Cierre</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="11:00 PM" {...rowField} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={form.control}
+                          name={`scheduleRows.${index}.is_active`}
+                          render={({ field: rowField }) => (
+                            <FormItem>
+                              <FormLabel>Visibilidad</FormLabel>
+                              <FormControl>
+                                <button
+                                  type="button"
+                                  disabled={isPending || Boolean(disabledReason)}
+                                  onClick={() => rowField.onChange(!rowField.value)}
+                                  className={cn(
+                                    "flex h-10 w-full items-center justify-center gap-2 border px-4 text-xs font-semibold transition",
+                                    rowField.value
+                                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                      : "border-zinc-200 bg-zinc-50 text-zinc-600",
+                                  )}
+                                >
+                                  {rowField.value ? (
+                                    <Check className="h-4 w-4" />
+                                  ) : (
+                                    <X className="h-4 w-4" />
+                                  )}
+                                  {rowField.value ? "Activo en web" : "Oculto en web"}
+                                </button>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     )}
-                  />
-                </AdminSurface>
-              ))}
+                  </AdminSurface>
+                );
+              })}
             </div>
           </AdminSurface>
         </div>
