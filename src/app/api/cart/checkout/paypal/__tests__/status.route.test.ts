@@ -9,6 +9,7 @@ const statusRouteMocks = vi.hoisted(() => ({
 vi.mock("@/lib/cart/paypal-checkout", () => ({
   CHECKOUT_MANUAL_REVIEW_MESSAGE: "Manual review",
   CHECKOUT_PROCESSING_MESSAGE: "Processing",
+  CHECKOUT_STATUS_ERROR_MESSAGE: "Error state",
   resolvePayPalCheckoutStatus: statusRouteMocks.resolvePayPalCheckoutStatus,
 }));
 
@@ -104,6 +105,42 @@ describe("GET /api/cart/checkout/paypal/status", () => {
     expect(payload).toEqual({
       status: "processing",
       message: "Processing",
+    });
+  });
+
+  it("returns manual review payload when the checkout needs operator follow-up", async () => {
+    statusRouteMocks.resolvePayPalCheckoutStatus.mockResolvedValue({
+      status: "pending_manual_review",
+      message: "Manual review",
+    });
+
+    const response = await GET(
+      new Request("http://localhost/api/cart/checkout/paypal/status?cartId=cart_01&attempt=6"),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({
+      status: "pending_manual_review",
+      message: "Manual review",
+    });
+  });
+
+  it("returns a structured error payload when the status check crashes", async () => {
+    statusRouteMocks.resolvePayPalCheckoutStatus.mockRejectedValue(
+      new Error("Medusa timeout"),
+    );
+
+    const response = await GET(
+      new Request("http://localhost/api/cart/checkout/paypal/status?cartId=cart_01"),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(payload).toEqual({
+      status: "error",
+      message: "Error state",
+      detail: "Medusa timeout",
     });
   });
 });

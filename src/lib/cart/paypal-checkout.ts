@@ -90,6 +90,8 @@ export const CHECKOUT_PROCESSING_MESSAGE =
   "PayPal ya ha confirmado tu pago. Estamos terminando de registrar tu pedido en Nova Forza. No vuelvas a pagar; en unos segundos aparecera en Mi cuenta.";
 export const CHECKOUT_MANUAL_REVIEW_MESSAGE =
   "Hemos recibido tu pago y lo estamos revisando manualmente. No vuelvas a pagar. Si en un minuto no ves el pedido en Mi cuenta, contacta con el club.";
+export const CHECKOUT_STATUS_ERROR_MESSAGE =
+  "No hemos podido confirmar el estado final del pedido desde la web. No vuelvas a pagar por ahora. Primero revisa Mi cuenta y, si no aparece, contacta con el club con tu referencia temporal.";
 export const PAYPAL_CHECKOUT_STATUS_PENDING_ATTEMPTS = 6;
 
 function buildCheckoutIdempotencyKey(cartId: string, orderId: string) {

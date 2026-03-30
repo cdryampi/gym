@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import {
   CHECKOUT_MANUAL_REVIEW_MESSAGE,
   CHECKOUT_PROCESSING_MESSAGE,
+  CHECKOUT_STATUS_ERROR_MESSAGE,
   resolvePayPalCheckoutStatus,
 } from "@/lib/cart/paypal-checkout";
 import { createCheckoutTrace } from "@/lib/paypal/checkout-trace";
@@ -73,6 +74,13 @@ export async function GET(request: Request) {
       error: message,
     });
 
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      {
+        status: "error",
+        message: CHECKOUT_STATUS_ERROR_MESSAGE,
+        detail: message,
+      },
+      { status: 500 },
+    );
   }
 }
