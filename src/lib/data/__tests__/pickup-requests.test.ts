@@ -136,6 +136,70 @@ describe("pickup requests dashboard data", () => {
     expect(pickupRequest).toBeNull();
   });
 
+  it("returns a member pickup request by id when it belongs to the authenticated account", async () => {
+    dataPickupMocks.hasMedusaAdminEnv.mockReturnValue(true);
+    dataPickupMocks.retrievePickupRequest.mockResolvedValue({
+      pickup_request: {
+        id: "pick_member",
+        request_number: "NF-20260330-MEMBER",
+        cart_id: "cart_member",
+        supabase_user_id: "user_01",
+        email: "member@gym.com",
+        status: "confirmed",
+        currency_code: "PEN",
+        item_count: 1,
+        subtotal: 49,
+        total: 49,
+        email_status: "sent",
+        source: "gym-storefront",
+        created_at: "2026-03-30T10:00:00.000Z",
+        updated_at: "2026-03-30T10:00:00.000Z",
+        line_items_snapshot: [],
+      },
+    });
+    const { getMemberPickupRequestById } = await importPickupRequestsModule();
+
+    const pickupRequest = await getMemberPickupRequestById({
+      id: "pick_member",
+      email: "member@gym.com",
+      supabaseUserId: "user_01",
+    });
+
+    expect(pickupRequest?.id).toBe("pick_member");
+  });
+
+  it("returns null for member detail lookup when the pickup request belongs to another account", async () => {
+    dataPickupMocks.hasMedusaAdminEnv.mockReturnValue(true);
+    dataPickupMocks.retrievePickupRequest.mockResolvedValue({
+      pickup_request: {
+        id: "pick_other",
+        request_number: "NF-20260330-OTHER",
+        cart_id: "cart_other",
+        supabase_user_id: "user_02",
+        email: "other@gym.com",
+        status: "confirmed",
+        currency_code: "PEN",
+        item_count: 1,
+        subtotal: 49,
+        total: 49,
+        email_status: "sent",
+        source: "gym-storefront",
+        created_at: "2026-03-30T10:00:00.000Z",
+        updated_at: "2026-03-30T10:00:00.000Z",
+        line_items_snapshot: [],
+      },
+    });
+    const { getMemberPickupRequestById } = await importPickupRequestsModule();
+
+    const pickupRequest = await getMemberPickupRequestById({
+      id: "pick_other",
+      email: "member@gym.com",
+      supabaseUserId: "user_01",
+    });
+
+    expect(pickupRequest).toBeNull();
+  });
+
   it("returns the latest pickup request by email from the snapshot", async () => {
     dataPickupMocks.hasMedusaAdminEnv.mockReturnValue(true);
     dataPickupMocks.listPickupRequests.mockResolvedValue({

@@ -92,6 +92,40 @@ export async function getPickupRequestById(id: string): Promise<PickupRequestDet
   }
 }
 
+function matchesMemberPickupRequest(
+  pickupRequest: PickupRequestDetail,
+  input: {
+    email?: string | null;
+    supabaseUserId?: string | null;
+  },
+) {
+  const email = input.email?.trim().toLowerCase() ?? null;
+  const supabaseUserId = input.supabaseUserId?.trim() ?? null;
+
+  return (
+    (email && pickupRequest.email.trim().toLowerCase() === email) ||
+    (supabaseUserId && pickupRequest.supabaseUserId === supabaseUserId)
+  );
+}
+
+export async function getMemberPickupRequestById(input: {
+  id: string;
+  email?: string | null;
+  supabaseUserId?: string | null;
+}): Promise<PickupRequestDetail | null> {
+  const pickupRequest = await getPickupRequestById(input.id);
+
+  if (!pickupRequest) {
+    return null;
+  }
+
+  if (!matchesMemberPickupRequest(pickupRequest, input)) {
+    return null;
+  }
+
+  return pickupRequest;
+}
+
 export async function getLatestPickupRequestByEmail(email: string) {
   const snapshot = await getPickupRequestsSnapshot({
     email,

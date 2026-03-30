@@ -216,6 +216,11 @@ export default async function MemberAccountPage() {
                         </strong>
                         .
                       </p>
+                      <Button asChild variant="outline" size="sm" className="mt-2 tracking-normal">
+                        <Link href={`/mi-cuenta/pedidos/${latestPickupRequest.id}`}>
+                          Abrir detalle
+                        </Link>
+                      </Button>
                     </>
                   ) : (
                     <p className="text-sm leading-6 text-[#5f6368]">
@@ -256,6 +261,9 @@ export default async function MemberAccountPage() {
                         <Badge variant={getPickupRequestPaymentTone(pickupRequest.paymentStatus)}>
                           {pickupRequestPaymentStatusLabels[pickupRequest.paymentStatus]}
                         </Badge>
+                        <Button asChild variant="outline" size="sm" className="tracking-normal">
+                          <Link href={`/mi-cuenta/pedidos/${pickupRequest.id}`}>Ver detalle</Link>
+                        </Button>
                       </div>
                     </div>
                   ))}
