@@ -126,6 +126,24 @@ describe("GET /api/cart/checkout/paypal/status", () => {
     });
   });
 
+  it("returns a terminal error when the reference is no longer recoverable", async () => {
+    statusRouteMocks.resolvePayPalCheckoutStatus.mockResolvedValue({
+      status: "error",
+      message: "Invalid reference",
+    });
+
+    const response = await GET(
+      new Request("http://localhost/api/cart/checkout/paypal/status?cartId=cart_missing&attempt=2"),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload).toEqual({
+      status: "error",
+      message: "Invalid reference",
+    });
+  });
+
   it("returns a structured error payload when the status check crashes", async () => {
     statusRouteMocks.resolvePayPalCheckoutStatus.mockRejectedValue(
       new Error("Medusa timeout"),

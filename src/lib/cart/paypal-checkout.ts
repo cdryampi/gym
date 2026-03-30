@@ -29,7 +29,7 @@ import {
   updateCartEmail,
   updateCartMetadata,
 } from "./medusa";
-import { STALE_COMPLETED_CART_MESSAGE } from "./runtime";
+import { isMissingCartMessage, STALE_COMPLETED_CART_MESSAGE } from "./runtime";
 
 type CheckoutTrace = ReturnType<typeof createCheckoutTrace>;
 
@@ -84,6 +84,10 @@ export type PayPalCheckoutStatusResult =
   | {
       status: "pending_manual_review";
       message: string;
+    }
+  | {
+      status: "error";
+      message: string;
     };
 
 export const CHECKOUT_PROCESSING_MESSAGE =
@@ -92,7 +96,10 @@ export const CHECKOUT_MANUAL_REVIEW_MESSAGE =
   "Hemos recibido tu pago y lo estamos revisando manualmente. No vuelvas a pagar. Si en un minuto no ves el pedido en Mi cuenta, contacta con el club.";
 export const CHECKOUT_STATUS_ERROR_MESSAGE =
   "No hemos podido confirmar el estado final del pedido desde la web. No vuelvas a pagar por ahora. Primero revisa Mi cuenta y, si no aparece, contacta con el club con tu referencia temporal.";
+export const CHECKOUT_INVALID_REFERENCE_MESSAGE =
+  "No hemos encontrado un pedido pendiente para esta referencia. No vuelvas a pagar por ahora. Revisa Mi cuenta y, si no aparece nada, vuelve a empezar desde la tienda o contacta con el club.";
 export const PAYPAL_CHECKOUT_STATUS_PENDING_ATTEMPTS = 6;
+export const PAYPAL_CHECKOUT_STATUS_INVALID_REFERENCE_ATTEMPTS = 2;
 
 function buildCheckoutIdempotencyKey(cartId: string, orderId: string) {
   return `paypal-complete:${cartId}:${orderId}`;
@@ -426,6 +433,17 @@ export async function resolvePayPalCheckoutStatus({
     };
   }
 
+  if (attempt >= PAYPAL_CHECKOUT_STATUS_INVALID_REFERENCE_ATTEMPTS) {
+    const referenceLooksInvalid = await isCheckoutReferenceInvalid(cartId);
+
+    if (referenceLooksInvalid) {
+      return {
+        status: "error",
+        message: CHECKOUT_INVALID_REFERENCE_MESSAGE,
+      };
+    }
+  }
+
   if (attempt >= PAYPAL_CHECKOUT_STATUS_PENDING_ATTEMPTS) {
     return {
       status: "pending_manual_review",
@@ -437,6 +455,51 @@ export async function resolvePayPalCheckoutStatus({
     status: "processing",
     message: CHECKOUT_PROCESSING_MESSAGE,
   };
+}
+
+async function isCheckoutReferenceInvalid(cartId: string) {
+  let cartMissing = false;
+
+  try {
+    const cart = await retrieveCart(cartId);
+
+    if (cart.summary.pickupRequestId || cart.completedAt) {
+      return false;
+    }
+
+    return false;
+  } catch (error) {
+    if (!isMissingCartMessage(getCheckoutErrorMessage(error))) {
+      return false;
+    }
+
+    cartMissing = true;
+  }
+
+  try {
+    const response = await listPickupRequests({
+      cartId,
+      limit: 1,
+    });
+
+    if (response.pickup_requests[0]) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  try {
+    const order = await retrieveOrderByCartId(cartId);
+
+    if (order?.id) {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
+  return cartMissing;
 }
 
 export async function preparePayPalCheckout({

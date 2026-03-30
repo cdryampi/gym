@@ -60,6 +60,13 @@ export async function GET(request: Request) {
       });
     }
 
+    if (result.status === "error") {
+      return NextResponse.json({
+        status: "error",
+        message: result.message ?? CHECKOUT_STATUS_ERROR_MESSAGE,
+      });
+    }
+
     return NextResponse.json({
       status: result.status,
       message:

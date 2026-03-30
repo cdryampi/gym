@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const paypalCheckoutMocks = vi.hoisted(() => ({
   retrievePickupRequest: vi.fn(),
@@ -56,9 +56,42 @@ vi.mock("@/lib/paypal/quote", () => ({
   resolvePayPalChargeQuote: vi.fn(),
 }));
 
-import { recoverCompletedPickupCheckout } from "@/lib/cart/paypal-checkout";
+import {
+  CHECKOUT_INVALID_REFERENCE_MESSAGE,
+  recoverCompletedPickupCheckout,
+  resolvePayPalCheckoutStatus,
+} from "@/lib/cart/paypal-checkout";
 
 describe("recoverCompletedPickupCheckout", () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("marks invalid references as error when there is no cart, order or pickup request after retries", async () => {
+    paypalCheckoutMocks.retrievePickupRequest.mockRejectedValue(new Error("missing"));
+    paypalCheckoutMocks.listPickupRequests.mockResolvedValue({
+      pickup_requests: [],
+      count: 0,
+      limit: 1,
+      offset: 0,
+    });
+    paypalCheckoutMocks.retrieveOrderByCartId.mockResolvedValue(null);
+    paypalCheckoutMocks.retrieveCart.mockRejectedValue(
+      new Error("No se pudo cargar el carrito: cart not found"),
+    );
+
+    const result = await resolvePayPalCheckoutStatus({
+      cartId: "cart_missing",
+      attempt: 2,
+      user: null,
+    });
+
+    expect(result).toEqual({
+      status: "error",
+      message: CHECKOUT_INVALID_REFERENCE_MESSAGE,
+    });
+  });
+
   it("uses the cart PayPal order id before falling back to bridge routes", async () => {
     paypalCheckoutMocks.retrievePickupRequest.mockRejectedValue(new Error("missing"));
     paypalCheckoutMocks.listPickupRequests.mockRejectedValue(new Error("bridge missing"));
