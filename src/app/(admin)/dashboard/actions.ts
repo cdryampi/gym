@@ -9,10 +9,11 @@ import {
   saveCmsDocumentRecord,
   saveMarketingContentRecord,
   saveSiteSettingsRecord,
+  updateLeadFollowUpRecord,
   updateLeadStatusRecord,
 } from "@/lib/supabase/queries";
 import { cmsDocumentSchema, type CmsDocumentValues } from "@/lib/validators/cms-document";
-import { leadStatusSchema } from "@/lib/validators/lead";
+import { leadFollowUpSchema, type LeadFollowUpValues, leadStatusSchema } from "@/lib/validators/lead";
 import { marketingContentSchema, type MarketingContentValues } from "@/lib/validators/marketing";
 import { siteSettingsSchema, type SiteSettingsValues } from "@/lib/validators/settings";
 
@@ -88,6 +89,14 @@ export async function updateLeadStatus(id: string, status: "new" | "contacted" |
   const parsed = leadStatusSchema.parse({ status });
   const supabase = await getAuthenticatedSupabase();
   await updateLeadStatusRecord(supabase, id, parsed.status);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/leads");
+}
+
+export async function saveLeadFollowUp(id: string, values: LeadFollowUpValues) {
+  const parsed = leadFollowUpSchema.parse(values);
+  const supabase = await getAuthenticatedSupabase();
+  await updateLeadFollowUpRecord(supabase, id, parsed);
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/leads");
 }

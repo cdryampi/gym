@@ -1668,34 +1668,46 @@ export type Database = {
       }
       leads: {
         Row: {
+          channel: string | null
+          contacted_at: string | null
           created_at: string
           email: string
           id: string
           message: string
           metadata: Json
           name: string
+          next_step: string | null
+          outcome: string | null
           phone: string | null
           source: string
           status: Database["public"]["Enums"]["lead_status"]
         }
         Insert: {
+          channel?: string | null
+          contacted_at?: string | null
           created_at?: string
           email: string
           id?: string
           message: string
           metadata?: Json
           name: string
+          next_step?: string | null
+          outcome?: string | null
           phone?: string | null
           source?: string
           status?: Database["public"]["Enums"]["lead_status"]
         }
         Update: {
+          channel?: string | null
+          contacted_at?: string | null
           created_at?: string
           email?: string
           id?: string
           message?: string
           metadata?: Json
           name?: string
+          next_step?: string | null
+          outcome?: string | null
           phone?: string | null
           source?: string
           status?: Database["public"]["Enums"]["lead_status"]

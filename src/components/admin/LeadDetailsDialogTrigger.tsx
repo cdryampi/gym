@@ -15,6 +15,7 @@ import { getLeadMetadataEntries } from "@/lib/data/leads";
 import type { Lead } from "@/lib/supabase/database.types";
 import { formatShortDate } from "@/lib/utils";
 
+import LeadFollowUpForm from "./LeadFollowUpForm";
 import LeadStatusBadge from "./LeadStatusBadge";
 import LeadStatusSelect from "./LeadStatusSelect";
 
@@ -124,14 +125,29 @@ export default function LeadDetailsDialogTrigger({
 
             <section className="space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
-                Estado del lead
+                Operacion comercial
               </p>
-              <div className="rounded-none border border-black/8 bg-white p-5">
-                <LeadStatusSelect
-                  leadId={lead.id}
-                  currentStatus={lead.status}
-                  disabledReason={disabledReason}
-                />
+              <div className="space-y-4">
+                <div className="rounded-none border border-black/8 bg-white p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
+                    Estado del lead
+                  </p>
+                  <div className="mt-4">
+                    <LeadStatusSelect
+                      leadId={lead.id}
+                      currentStatus={lead.status}
+                      disabledReason={disabledReason}
+                    />
+                  </div>
+                </div>
+                <div className="rounded-none border border-black/8 bg-white p-5">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#7a7f87]">
+                    Seguimiento minimo
+                  </p>
+                  <div className="mt-4">
+                    <LeadFollowUpForm lead={lead} disabledReason={disabledReason} />
+                  </div>
+                </div>
               </div>
             </section>
           </section>

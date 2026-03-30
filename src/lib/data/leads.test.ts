@@ -9,6 +9,8 @@ import {
 const mockLeads: Lead[] = [
   {
     id: "1",
+    channel: null,
+    contacted_at: null,
     name: "John Doe",
     email: "john@example.com",
     phone: "123456789",
@@ -17,9 +19,13 @@ const mockLeads: Lead[] = [
     status: "new",
     created_at: "2023-01-01T10:00:00Z",
     metadata: {},
+    next_step: null,
+    outcome: null,
   },
   {
     id: "2",
+    channel: "WhatsApp",
+    contacted_at: "2023-01-02T11:00:00Z",
     name: "Jane Smith",
     email: "jane@gmail.com",
     phone: "987654321",
@@ -28,9 +34,13 @@ const mockLeads: Lead[] = [
     status: "contacted",
     created_at: "2023-01-02T10:00:00Z",
     metadata: {},
+    next_step: "Enviar precios",
+    outcome: "Pidio informacion",
   },
   {
     id: "3",
+    channel: "Email",
+    contacted_at: "2023-01-01T13:00:00Z",
     name: "Bob Wilson",
     email: "bob@outlook.com",
     phone: null,
@@ -39,6 +49,8 @@ const mockLeads: Lead[] = [
     status: "closed",
     created_at: "2023-01-01T12:00:00Z",
     metadata: {},
+    next_step: null,
+    outcome: "Cerrado",
   },
 ];
 

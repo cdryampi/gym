@@ -1,5 +1,6 @@
 import {
   buildCmsDocumentPayload,
+  buildLeadFollowUpPayload,
   buildLeadInsertPayload,
   buildSiteSettingsPayload,
   normalizeCmsDocuments,
@@ -55,6 +56,20 @@ describe("supabase queries helpers", () => {
     expect(payload.email).toBe("laura@example.com");
     expect(payload.phone).toBe("+34 600 111 222");
     expect(payload.source).toBe("website");
+  });
+
+  it("builds a lead follow-up payload trimming optional fields", () => {
+    const payload = buildLeadFollowUpPayload({
+      contacted_at: "2026-03-29T18:45",
+      channel: " WhatsApp ",
+      outcome: " Pidio precios ",
+      next_step: " Enviar comparativa manana ",
+    });
+
+    expect(payload.contacted_at).toBe(new Date("2026-03-29T18:45").toISOString());
+    expect(payload.channel).toBe("WhatsApp");
+    expect(payload.outcome).toBe("Pidio precios");
+    expect(payload.next_step).toBe("Enviar comparativa manana");
   });
 
   it("builds a site settings payload with parsed keywords", () => {

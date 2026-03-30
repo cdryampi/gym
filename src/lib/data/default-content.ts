@@ -59,6 +59,8 @@ export const plannedModules = [
 export const defaultLeads: Lead[] = [
   {
     id: "lead-demo-1",
+    channel: null,
+    contacted_at: null,
     name: "Lucia Romero",
     email: "lucia@example.com",
     phone: "+51 999 112 233",
@@ -70,9 +72,13 @@ export const defaultLeads: Lead[] = [
       interest: "prueba",
     },
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
+    next_step: "Responder hoy con los planes iniciales y ofrecer una prueba guiada.",
+    outcome: null,
   },
   {
     id: "lead-demo-2",
+    channel: "WhatsApp",
+    contacted_at: new Date(Date.now() - 1000 * 60 * 60 * 20).toISOString(),
     name: "Diego Flores",
     email: "diego@example.com",
     phone: "+51 988 445 566",
@@ -84,9 +90,13 @@ export const defaultLeads: Lead[] = [
       interest: "plan progreso",
     },
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 26).toISOString(),
+    next_step: "Enviar comparativa de horarios y confirmar visita esta semana.",
+    outcome: "Pidio precios y horarios antes de agendar visita.",
   },
   {
     id: "lead-demo-3",
+    channel: "Visita guiada",
+    contacted_at: new Date(Date.now() - 1000 * 60 * 60 * 44).toISOString(),
     name: "Paola Rivas",
     email: "paola@example.com",
     phone: null,
@@ -98,5 +108,7 @@ export const defaultLeads: Lead[] = [
       interest: "inscripcion",
     },
     created_at: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    next_step: null,
+    outcome: "Inscripcion cerrada tras visita y seguimiento final.",
   },
 ];

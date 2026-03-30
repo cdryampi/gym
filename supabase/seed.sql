@@ -464,7 +464,19 @@ on conflict (key) do update set
   is_published = excluded.is_published,
   updated_at = excluded.updated_at;
 
-insert into public.leads (name, email, phone, message, source, status, metadata)
+insert into public.leads (
+  name,
+  email,
+  phone,
+  message,
+  source,
+  status,
+  metadata,
+  contacted_at,
+  channel,
+  outcome,
+  next_step
+)
 values
   (
     'Lucia Romero',
@@ -473,7 +485,11 @@ values
     'Quiero reservar una prueba y saber que plan me conviene si busco bajar grasa.',
     'seed',
     'new'::public.lead_status,
-    '{"demo": true, "interest": "prueba"}'::jsonb
+    '{"demo": true, "interest": "prueba"}'::jsonb,
+    null,
+    null,
+    null,
+    'Responder hoy con los planes iniciales y ofrecer una prueba guiada.'
   ),
   (
     'Diego Flores',
@@ -482,7 +498,11 @@ values
     'Me interesa el plan Progreso para entrenar fuerza antes de ir a trabajar.',
     'seed',
     'contacted'::public.lead_status,
-    '{"demo": true, "interest": "plan progreso"}'::jsonb
+    '{"demo": true, "interest": "plan progreso"}'::jsonb,
+    timezone('utc', now()) - interval '20 hour',
+    'WhatsApp',
+    'Pidio precios y horarios antes de agendar visita.',
+    'Enviar comparativa de horarios y confirmar visita esta semana.'
   ),
   (
     'Paola Rivas',
@@ -491,7 +511,11 @@ values
     'Ya hice la visita guiada y quiero volver para cerrar mi inscripcion este fin de semana.',
     'seed',
     'closed'::public.lead_status,
-    '{"demo": true, "interest": "inscripcion"}'::jsonb
+    '{"demo": true, "interest": "inscripcion"}'::jsonb,
+    timezone('utc', now()) - interval '44 hour',
+    'Visita guiada',
+    'Inscripcion cerrada tras visita y seguimiento final.',
+    null
   );
 
 insert into public.products (

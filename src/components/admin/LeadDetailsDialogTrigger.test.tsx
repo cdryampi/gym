@@ -8,6 +8,7 @@ import LeadDetailsDialogTrigger from "@/components/admin/LeadDetailsDialogTrigge
 import { defaultLeads } from "@/lib/data/default-content";
 
 vi.mock("@/app/(admin)/dashboard/actions", () => ({
+  saveLeadFollowUp: vi.fn().mockResolvedValue(undefined),
   updateLeadStatus: vi.fn().mockResolvedValue(undefined),
 }));
 
@@ -24,9 +25,10 @@ describe("LeadDetailsDialogTrigger", () => {
     expect(screen.getAllByText(defaultLeads[0].email).length).toBeGreaterThan(0);
     expect(screen.getByText("Interest")).toBeInTheDocument();
     expect(screen.getByText("prueba")).toBeInTheDocument();
+    expect(screen.getByLabelText("Siguiente paso")).toHaveValue(defaultLeads[0].next_step);
   });
 
-  it("shows the phone fallback and keeps the status control disabled in read only mode", async () => {
+  it("shows the phone fallback and keeps the operational controls disabled in read only mode", async () => {
     const user = userEvent.setup();
 
     render(
@@ -41,5 +43,6 @@ describe("LeadDetailsDialogTrigger", () => {
     expect(await screen.findByText("Sin telefono")).toBeInTheDocument();
     expect(screen.queryByText("Contexto capturado")).toBeInTheDocument();
     expect(screen.getByLabelText("Estado del lead")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Guardar seguimiento" })).toBeDisabled();
   });
 });

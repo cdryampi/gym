@@ -26,6 +26,7 @@ import {
 } from "@/lib/data/store";
 import type { ContactFormValues } from "@/lib/validators/contact";
 import type { CmsDocumentValues } from "@/lib/validators/cms-document";
+import type { LeadFollowUpValues } from "@/lib/validators/lead";
 import type { MarketingContentValues } from "@/lib/validators/marketing";
 import type { SiteSettingsValues } from "@/lib/validators/settings";
 import type { StoreCategoryValues, StoreProductValues } from "@/lib/validators/store";
@@ -269,6 +270,8 @@ export function normalizeLeads(rows: Partial<Lead>[] | null | undefined): Lead[]
         : "new";
 
       leads.push({
+        channel: trimToNull(row.channel),
+        contacted_at: trimToNull(row.contacted_at),
         id: row.id,
         name: safeString(row.name, `Lead ${index + 1}`),
         email: safeString(row.email, "sin-email@invalid.local"),
@@ -278,6 +281,8 @@ export function normalizeLeads(rows: Partial<Lead>[] | null | undefined): Lead[]
         status,
         metadata: (row.metadata as Json) ?? {},
         created_at: row.created_at ?? new Date(0).toISOString(),
+        next_step: trimToNull(row.next_step),
+        outcome: trimToNull(row.outcome),
       });
 
       return leads;
@@ -290,6 +295,8 @@ export function normalizeLead(row: Partial<Lead> | null | undefined): Lead {
     : "new";
 
   return {
+    channel: trimToNull(row?.channel),
+    contacted_at: trimToNull(row?.contacted_at),
     id: row?.id || "unknown",
     name: safeString(row?.name, "Nombre no disponible"),
     email: safeString(row?.email, "sin-email@invalid.local"),
@@ -299,6 +306,8 @@ export function normalizeLead(row: Partial<Lead> | null | undefined): Lead {
     status,
     metadata: (row?.metadata as Json) ?? {},
     created_at: row?.created_at ?? new Date(0).toISOString(),
+    next_step: trimToNull(row?.next_step),
+    outcome: trimToNull(row?.outcome),
   };
 }
 
@@ -313,6 +322,17 @@ export function buildLeadInsertPayload(
     source: "website",
     status: "new",
     metadata: {},
+  };
+}
+
+export function buildLeadFollowUpPayload(
+  values: LeadFollowUpValues,
+): Database["public"]["Tables"]["leads"]["Update"] {
+  return {
+    contacted_at: toIsoDateTimeOrNull(values.contacted_at),
+    channel: trimToNull(values.channel),
+    outcome: trimToNull(values.outcome),
+    next_step: trimToNull(values.next_step),
   };
 }
 
@@ -913,6 +933,28 @@ export async function updateLeadStatusRecord(
 
   if (error) {
     throw new Error(mapSupabaseError(error, "el lead"));
+  }
+
+  if (!data) {
+    throw new Error("El lead que intentas actualizar ya no existe.");
+  }
+}
+
+export async function updateLeadFollowUpRecord(
+  supabase: GymSupabaseClient,
+  id: string,
+  values: LeadFollowUpValues,
+) {
+  const payload = buildLeadFollowUpPayload(values);
+  const { data, error } = await supabase
+    .from("leads")
+    .update(payload)
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "el seguimiento del lead"));
   }
 
   if (!data) {
