@@ -219,10 +219,17 @@ describe("CartProvider", () => {
     expect(document.cookie).not.toContain("gym_cart_id=");
   });
 
-  it("does not try to sync the member cart before the cookie cart is hydrated", async () => {
+  it("tries to recover the member cart after clearing a stale cookie cart", async () => {
     document.cookie = "gym_cart_id=cart_cookie; path=/";
     cartMedusaMocks.retrieveCart.mockRejectedValue(
       new Error("Cart with id cart_cookie does not exist"),
+    );
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          cart: null,
+        }),
+      ),
     );
 
     render(
@@ -237,8 +244,48 @@ describe("CartProvider", () => {
       expect(screen.getByText(STALE_CART_MESSAGE)).toBeInTheDocument();
     });
 
-    expect(fetch).not.toHaveBeenCalledWith("/api/cart/member", expect.anything());
+    expect(fetch).toHaveBeenCalledWith("/api/cart/member", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
     expect(document.cookie).not.toContain("gym_cart_id=");
+  });
+
+  it("recovers the active member cart when the cookie is missing but the session is still valid", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          cart: buildCart({
+            id: "cart_member_active",
+            customerId: "cus_01",
+          }),
+        }),
+      ),
+    );
+
+    render(
+      <CartProvider memberEmail="socio@gym.com">
+        <CartProbe />
+      </CartProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("cart_member_active")).toBeInTheDocument();
+      expect(screen.getByText("cus_01")).toBeInTheDocument();
+      expect(screen.getByText("no-error")).toBeInTheDocument();
+    });
+
+    expect(fetch).toHaveBeenCalledWith("/api/cart/member", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({}),
+    });
+    expect(document.cookie).toContain("gym_cart_id=cart_member_active");
   });
 
   it("keeps the guest cart and associates it to the signed-in member", async () => {

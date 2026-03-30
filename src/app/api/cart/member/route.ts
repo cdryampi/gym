@@ -5,6 +5,7 @@ import { mapMedusaCart, retrieveCart } from "@/lib/cart/medusa";
 import {
   attachCartToMember,
   revalidateMemberCommerceCustomer,
+  retrieveActiveCartForMember,
   resolveCartIdFromRequest,
   resolveOrCreateMemberCommerceCustomer,
 } from "@/lib/cart/member-bridge";
@@ -13,6 +14,19 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "No se pudo sincronizar el carrito del miembro.";
+}
+
+function isRecoverableActiveCartLookupError(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const normalized = error.message.toLowerCase();
+
+  return (
+    normalized.includes("no se pudo recuperar el carrito activo del socio") &&
+    normalized.includes("not found")
+  );
 }
 
 function clearCartCookie(response: NextResponse) {
@@ -66,6 +80,20 @@ export async function POST(request: Request) {
             throw retryError;
           }
         }
+      }
+    } else {
+      try {
+        const activeCartResponse = await retrieveActiveCartForMember(
+          customerBridge.medusa_customer_id,
+        );
+
+        cartResponse = activeCartResponse?.cart ? { cart: activeCartResponse.cart } : null;
+      } catch (activeCartError) {
+        if (!isRecoverableActiveCartLookupError(activeCartError)) {
+          throw activeCartError;
+        }
+
+        cartResponse = null;
       }
     }
 

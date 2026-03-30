@@ -30,6 +30,7 @@ import {
   createPickupRequest,
   listPickupRequests,
   markPickupRequestEmailResult,
+  retrieveActiveCartForMember,
   syncPickupRequestFromOrder,
   updatePickupRequestStatus,
 } from "@/lib/cart/member-bridge";
@@ -83,6 +84,31 @@ describe("member commerce bridge", () => {
       },
     });
     expect(response.cart.customer_id).toBe("cus_01");
+  });
+
+  it("retrieves the current active cart for a member customer", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      cart: {
+        id: "cart_active_01",
+        customer_id: "cus_01",
+      },
+    });
+
+    memberBridgeMocks.getMedusaAdminSdk.mockReturnValue({
+      client: {
+        fetch: fetchMock,
+      },
+    });
+
+    const response = await retrieveActiveCartForMember("cus_01");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/admin/gym/carts/active?customer_id=cus_01",
+      {
+        method: "GET",
+      },
+    );
+    expect(response.cart?.id).toBe("cart_active_01");
   });
 
   it("creates a pickup request from a cart snapshot", async () => {

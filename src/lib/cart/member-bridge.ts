@@ -144,6 +144,25 @@ export async function attachCartToMember(cartId: string, customerId: string, ema
   }
 }
 
+export async function retrieveActiveCartForMember(customerId: string) {
+  const query = new URLSearchParams({
+    customer_id: customerId,
+  });
+
+  try {
+    return await getMedusaAdminSdk().client.fetch<MedusaAdminCartResponse | { cart: null }>(
+      `/admin/gym/carts/active?${query.toString()}`,
+      {
+        method: "GET",
+      },
+    );
+  } catch (error) {
+    throw new Error(
+      `No se pudo recuperar el carrito activo del socio: ${toBridgeError(error, "fallo desconocido")}`,
+    );
+  }
+}
+
 export async function createPickupRequest(
   cartId: string,
   payload: {

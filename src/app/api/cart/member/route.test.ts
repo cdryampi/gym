@@ -6,6 +6,7 @@ import { STALE_CART_MESSAGE } from "@/lib/cart/runtime";
 const memberRouteMocks = vi.hoisted(() => ({
   attachCartToMember: vi.fn(),
   revalidateMemberCommerceCustomer: vi.fn(),
+  retrieveActiveCartForMember: vi.fn(),
   resolveCartIdFromRequest: vi.fn(),
   resolveOrCreateMemberCommerceCustomer: vi.fn(),
   createSupabaseServerClient: vi.fn(),
@@ -16,6 +17,7 @@ const memberRouteMocks = vi.hoisted(() => ({
 vi.mock("@/lib/cart/member-bridge", () => ({
   attachCartToMember: memberRouteMocks.attachCartToMember,
   revalidateMemberCommerceCustomer: memberRouteMocks.revalidateMemberCommerceCustomer,
+  retrieveActiveCartForMember: memberRouteMocks.retrieveActiveCartForMember,
   resolveCartIdFromRequest: memberRouteMocks.resolveCartIdFromRequest,
   resolveOrCreateMemberCommerceCustomer: memberRouteMocks.resolveOrCreateMemberCommerceCustomer,
 }));
@@ -41,6 +43,9 @@ describe("POST /api/cart/member", () => {
     memberRouteMocks.revalidateMemberCommerceCustomer.mockResolvedValue({
       medusa_customer_id: "cus_02",
       email: "socio@gym.com",
+    });
+    memberRouteMocks.retrieveActiveCartForMember.mockResolvedValue({
+      cart: null,
     });
     memberRouteMocks.createSupabaseServerClient.mockResolvedValue({
       auth: {
@@ -89,6 +94,51 @@ describe("POST /api/cart/member", () => {
       "socio@gym.com",
     );
     expect(payload.cart.id).toBe("cart_01");
+  });
+
+  it("recovers the current active cart when the member session has no cart cookie", async () => {
+    memberRouteMocks.resolveCartIdFromRequest.mockResolvedValue(null);
+    memberRouteMocks.retrieveActiveCartForMember.mockResolvedValue({
+      cart: {
+        id: "cart_active_01",
+      },
+    });
+    memberRouteMocks.mapMedusaCart.mockReturnValue({
+      id: "cart_active_01",
+      items: [],
+      summary: { itemCount: 0 },
+    });
+
+    const response = await POST(
+      new Request("http://localhost/api/cart/member", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(memberRouteMocks.retrieveActiveCartForMember).toHaveBeenCalledWith("cus_01");
+    expect(payload.cart.id).toBe("cart_active_01");
+  });
+
+  it("degrades gracefully when active-cart recovery is not yet available in Medusa", async () => {
+    memberRouteMocks.resolveCartIdFromRequest.mockResolvedValue(null);
+    memberRouteMocks.retrieveActiveCartForMember.mockRejectedValue(
+      new Error("No se pudo recuperar el carrito activo del socio: Not Found"),
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/cart/member", {
+        method: "POST",
+        body: JSON.stringify({}),
+      }),
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.customer.medusa_customer_id).toBe("cus_01");
+    expect(payload.cart).toBeNull();
   });
 
   it("returns a stale-cart response when Medusa reports the cart as missing", async () => {

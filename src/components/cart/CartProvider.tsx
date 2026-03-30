@@ -147,10 +147,9 @@ export function CartProvider({
     }
   }
 
-  async function syncCartWithMember(targetCartId: string) {
-    const { response, payload } = await postJson<CartApiPayload>("/api/cart/member", {
-      cartId: targetCartId,
-    });
+  async function syncCartWithMember(targetCartId?: string | null) {
+    const body = targetCartId ? { cartId: targetCartId } : {};
+    const { response, payload } = await postJson<CartApiPayload>("/api/cart/member", body);
 
     if (!response.ok) {
       if (isMissingCartMessage(payload?.error ?? null)) {
@@ -158,6 +157,9 @@ export function CartProvider({
       }
       throw new Error(payload?.error ?? "No se pudo vincular el carrito a la cuenta.");
     }
+
+    setError(null);
+    setNotice(null);
 
     if (payload?.cart) {
       commitCart(payload.cart);
@@ -198,6 +200,21 @@ export function CartProvider({
     });
   });
 
+  const recoverMemberCart = useEffectEvent(() => {
+    void syncCartWithMember(null).catch((syncError) => {
+      const message = getErrorMessage(
+        syncError,
+        "No se pudo recuperar el carrito activo de tu cuenta de socio.",
+      );
+
+      if (isMissingCartMessage(message)) {
+        return;
+      }
+
+      setError(message);
+    });
+  });
+
   useEffect(() => {
     hydrateCart();
   }, []);
@@ -211,20 +228,21 @@ export function CartProvider({
       return;
     }
 
-    const cartId = cart?.id;
-
-    if (!cartId) {
-      return;
-    }
-
-    const signature = `${memberEmail}:${cartId}`;
+    const cartId = cart?.id ?? null;
+    const signature = `${memberEmail}:${cartId ?? "no-cart"}`;
 
     if (lastSyncedSignature.current === signature) {
       return;
     }
 
     lastSyncedSignature.current = signature;
-    syncMemberCart(cartId);
+
+    if (cartId) {
+      syncMemberCart(cartId);
+      return;
+    }
+
+    recoverMemberCart();
   }, [isReady, memberEmail, cart?.id]);
 
   async function runBusyAction(action: () => Promise<void>) {
