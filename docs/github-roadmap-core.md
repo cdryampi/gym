@@ -52,8 +52,8 @@ Epic: [#15 Store + pickup hardening](https://github.com/cdryampi/gym/issues/15)
 Epic: [#16 Mi cuenta v2](https://github.com/cdryampi/gym/issues/16)
 
 - [#34](https://github.com/cdryampi/gym/issues/34) Anadir ajustes basicos de cuenta del socio.
-- [#35](https://github.com/cdryampi/gym/issues/35) Separar claramente auth del socio vs. modulo de miembros del gimnasio.
-- [#36](https://github.com/cdryampi/gym/issues/36) Definir backlog corto de mejoras de mi-cuenta que sigan siendo core.
+- [#35](https://github.com/cdryampi/gym/issues/35) Separar claramente auth del socio vs. modulo de miembros del gimnasio. Referencia local: `docs/auth-vs-miembros-boundary.md`.
+- [#36](https://github.com/cdryampi/gym/issues/36) Definir backlog corto de mejoras de mi-cuenta que sigan siendo core. Referencia local: `docs/mi-cuenta-core-backlog.md`.
 
 ## Fase 5 — Backlog de expansion
 

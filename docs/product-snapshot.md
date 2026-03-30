@@ -28,7 +28,7 @@ La arquitectura actual combina:
 - `/carrito` carrito y flujo pickup
 - `/carrito/procesando/[cartId]` estado intermedio de checkout
 - `/carrito/confirmacion/[id]` confirmacion de pedido
-- `/mi-cuenta` vista de cuenta del usuario
+- `/mi-cuenta` superficie privada ligera de cuenta del usuario
 - `/registro` y `/registro/completado`
 - paginas legales: `aviso-legal`, `privacidad`, `cookies`, `terminos`, `desistimiento`
 
@@ -87,7 +87,7 @@ La arquitectura actual combina:
 - `Planes` y `Horarios` existen hoy como secciones de la home, no como rutas publicas propias.
 - Hay capas admin presentes como `cms` y `advanced`, pero no forman todavia un CMS amplio ni un modulo cerrado.
 - El comercio esta centrado en pickup; no hay una experiencia de ecommerce completa mas alla de ese flujo.
-- La cuenta existe, pero todavia no es un modulo profundo de miembros.
+- La cuenta existe como capa de acceso y lectura privada ligera; todavia no es el modulo operativo de miembros.
 
 ## Capturas clave
 

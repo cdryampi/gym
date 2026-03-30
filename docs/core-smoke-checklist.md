@@ -123,7 +123,9 @@ Ruta: `/mi-cuenta`
 Verifica:
 
 - la pagina carga para el usuario autenticado
+- se ve una cuenta basica coherente y acciones de sesion
 - se ve el historial pickup o un empty state coherente
+- no se presenta `mi-cuenta` como modulo de miembros
 - no hay errores al volver desde checkout o confirmacion
 
 ### 11. Dashboard tienda
