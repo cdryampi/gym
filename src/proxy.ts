@@ -62,7 +62,10 @@ export async function proxy(request: NextRequest) {
       throw error;
     }
 
-    console.error("Supabase auth is misconfigured in proxy.", error);
+    console.warn(
+      "Supabase auth could not be resolved in proxy.",
+      error instanceof Error ? error.message : String(error),
+    );
   }
 
   if (isAdminRoute(request.nextUrl.pathname) && !user) {

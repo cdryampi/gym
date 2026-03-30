@@ -33,7 +33,7 @@ export function updateSession(request: NextRequest, initialResponse?: NextRespon
     },
   });
 
-  void supabase.auth.getUser();
+  void supabase.auth.getUser().catch(() => undefined);
 
   return response;
 }

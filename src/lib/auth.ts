@@ -68,7 +68,10 @@ export async function getSupabaseUser() {
       throw error;
     }
 
-    console.error("Supabase auth is misconfigured while resolving the current user.", error);
+    console.warn(
+      "Supabase auth could not be resolved while determining the current user.",
+      error instanceof Error ? error.message : String(error),
+    );
     return null;
   }
 }
