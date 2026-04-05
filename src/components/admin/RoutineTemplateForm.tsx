@@ -345,10 +345,42 @@ export default function RoutineTemplateForm({
     control: form.control,
     name: "blocks",
   });
-
-  const formValues = useWatch({
+  const basePreviewValues = toFormValues(detail);
+  const watchedTitle = useWatch({
     control: form.control,
+    name: "title",
+    defaultValue: basePreviewValues.title,
   });
+  const watchedGoal = useWatch({
+    control: form.control,
+    name: "goal",
+    defaultValue: basePreviewValues.goal,
+  });
+  const watchedDifficultyLabel = useWatch({
+    control: form.control,
+    name: "difficultyLabel",
+    defaultValue: basePreviewValues.difficultyLabel,
+  });
+  const watchedIsActive = useWatch({
+    control: form.control,
+    name: "isActive",
+    defaultValue: basePreviewValues.isActive,
+  });
+  const watchedBlocks = useWatch({
+    control: form.control,
+    name: "blocks",
+    defaultValue: basePreviewValues.blocks,
+  });
+
+  const previewValues: RoutineTemplateFormValues = {
+    ...basePreviewValues,
+    ...form.getValues(),
+    title: watchedTitle,
+    goal: watchedGoal,
+    difficultyLabel: watchedDifficultyLabel,
+    isActive: watchedIsActive,
+    blocks: watchedBlocks,
+  };
 
   function onSubmit(values: RoutineTemplateFormValues) {
     setFeedback(null);
@@ -484,7 +516,7 @@ export default function RoutineTemplateForm({
            <div className="space-y-8">
               <div className="sticky top-24 space-y-8">
                 {viewMode === "preview" ? (
-                   <MobilePreview values={formValues} />
+                   <MobilePreview values={previewValues} />
                 ) : (
                   <div className="space-y-6">
                     <div className="bg-[#111111] p-6 text-white">
@@ -557,8 +589,8 @@ export default function RoutineTemplateForm({
                          <div className="flex items-center justify-between">
                             <span className="text-[10px] font-bold uppercase text-[#4b5563]">Estado App</span>
                             <div className="flex items-center gap-2">
-                               <div className={cn("h-2 w-2 rounded-full", formValues.isActive ? "bg-green-500" : "bg-red-500")} />
-                               <span className="text-[10px] font-black uppercase text-[#111111]">{formValues.isActive ? "Visible" : "Oculta"}</span>
+                               <div className={cn("h-2 w-2 rounded-full", previewValues.isActive ? "bg-green-500" : "bg-red-500")} />
+                               <span className="text-[10px] font-black uppercase text-[#111111]">{previewValues.isActive ? "Visible" : "Oculta"}</span>
                             </div>
                          </div>
                          <p className="text-[10px] leading-relaxed text-[#4b5563]">
