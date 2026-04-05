@@ -36,7 +36,7 @@ describe("DashboardSidebar", () => {
       group.querySelector(":scope > a")?.textContent?.trim(),
     );
 
-    expect(screen.getByTestId("mock-image")).toHaveAttribute("data-alt", "Titan Logo");
+    expect(screen.getByTestId("mock-image")).toHaveAttribute("data-alt", "Nuova Forza Logo");
     expect(screen.getByRole("link", { name: /MOBILE HUB/i })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /ROUTINE DESIGNER/i })).toBeInTheDocument();
     expect(topLevelLabels).toContain("MOBILE HUB");
