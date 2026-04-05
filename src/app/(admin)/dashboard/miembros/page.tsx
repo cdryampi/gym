@@ -1,9 +1,7 @@
 import { 
-  ClipboardList, 
   UserPlus, 
   Users, 
   Search, 
-  ArrowUpRight, 
   Dumbbell, 
   ShieldCheck,
   Activity
@@ -12,7 +10,6 @@ import Link from "next/link";
 
 import AdminMetricCard from "@/components/admin/AdminMetricCard";
 import AdminSection from "@/components/admin/AdminSection";
-import AdminSurface from "@/components/admin/AdminSurface";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
 import { Badge } from "@/components/ui/badge";
 import {

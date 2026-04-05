@@ -3,13 +3,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GripVertical, Plus, Smartphone, Trash2, Eye, Layout } from "lucide-react";
 import { useState, useTransition } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 import { saveRoutineTemplateAction } from "@/app/(admin)/dashboard/rutinas/actions";
-import type {
-  DashboardRoutineTemplateDetail,
-  TrainerOption,
-} from "@/lib/data/gym-management";
+import type { DashboardRoutineTemplateDetail } from "@/lib/data/gym-management";
 import { routineTemplateFormSchema, type RoutineTemplateFormValues } from "@/lib/validators/gym-routines";
 import { Button } from "@/components/ui/button";
 import {
@@ -332,12 +329,10 @@ function RoutineBlockEditor({
 
 interface RoutineTemplateFormProps {
   detail?: DashboardRoutineTemplateDetail | null;
-  trainerOptions: TrainerOption[];
 }
 
 export default function RoutineTemplateForm({
   detail,
-  trainerOptions,
 }: Readonly<RoutineTemplateFormProps>) {
   const [viewMode, setViewMode] = useState<"editor" | "preview">("editor");
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -351,7 +346,9 @@ export default function RoutineTemplateForm({
     name: "blocks",
   });
 
-  const formValues = form.watch();
+  const formValues = useWatch({
+    control: form.control,
+  });
 
   function onSubmit(values: RoutineTemplateFormValues) {
     setFeedback(null);

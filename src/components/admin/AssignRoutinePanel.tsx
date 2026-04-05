@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Check, Dumbbell, Calendar, MessageSquare, Info, Zap } from "lucide-react";
 
 import { assignRoutineFromDashboardAction } from "@/app/(admin)/dashboard/miembros/actions";
@@ -45,7 +45,10 @@ export default function AssignRoutinePanel({
     },
   });
 
-  const selectedId = form.watch("templateId");
+  const selectedId = useWatch({
+    control: form.control,
+    name: "templateId",
+  });
   const selectedTemplate = templates.find(t => t.id === selectedId);
 
   function onSubmit(values: AssignRoutineFormValues) {

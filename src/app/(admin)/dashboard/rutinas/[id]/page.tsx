@@ -4,10 +4,7 @@ import AdminSection from "@/components/admin/AdminSection";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
 import RoutineTemplateForm from "@/components/admin/RoutineTemplateForm";
 import AdminSurface from "@/components/admin/AdminSurface";
-import {
-  getDashboardRoutineTemplateDetail,
-  listDashboardTrainerOptions,
-} from "@/lib/data/gym-management";
+import { getDashboardRoutineTemplateDetail } from "@/lib/data/gym-management";
 import { Badge } from "@/components/ui/badge";
 import { formatShortDate } from "@/lib/utils";
 import { LayoutTemplate } from "lucide-react";
@@ -18,10 +15,7 @@ export default async function DashboardRoutineDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [detail, trainerOptions] = await Promise.all([
-    getDashboardRoutineTemplateDetail(id),
-    listDashboardTrainerOptions(),
-  ]);
+  const detail = await getDashboardRoutineTemplateDetail(id);
 
   if (!detail) {
     notFound();
@@ -117,7 +111,7 @@ export default async function DashboardRoutineDetailPage({
 
         {/* MAIN: Editor Visual */}
         <main className="min-w-0">
-          <RoutineTemplateForm detail={detail} trainerOptions={trainerOptions} />
+          <RoutineTemplateForm detail={detail} />
         </main>
       </div>
     </div>

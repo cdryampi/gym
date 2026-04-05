@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 
 import DashboardSidebar from "@/components/admin/DashboardSidebar";
 import SignOutButton from "@/components/admin/SignOutButton";
-import AdminSurface from "@/components/admin/AdminSurface";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import { Card } from "@/components/ui/card";
 import { ADMIN_LOGIN_PATH } from "@/lib/admin";

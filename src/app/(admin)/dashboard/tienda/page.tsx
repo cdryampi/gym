@@ -1,5 +1,4 @@
 import { 
-  PackageSearch, 
   ShoppingBag, 
   Tag, 
   Layers, 
@@ -11,7 +10,6 @@ import {
 import Link from "next/link";
 
 import AdminMetricCard from "@/components/admin/AdminMetricCard";
-import AdminSection from "@/components/admin/AdminSection";
 import AdminSurface from "@/components/admin/AdminSurface";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
@@ -19,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 import { buildStoreCategoryTree } from "@/lib/data/store";
 import { getStoreAdminSnapshot } from "@/lib/data/store-admin";
 import { buildCommerceMetrics, getCommerceSourceMeta } from "@/lib/admin-dashboard";
-import { cn } from "@/lib/utils";
 
 export default async function DashboardStorePage() {
   const snapshot = await getStoreAdminSnapshot();

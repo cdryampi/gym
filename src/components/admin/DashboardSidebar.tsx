@@ -83,7 +83,7 @@ function isItemActive(pathname: string, href: string) {
   return href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 }
 
-const THEME_STORAGE_KEY = "titan-theme";
+const THEME_STORAGE_KEY = "nuova-forza-theme";
 const themeListeners = new Set<() => void>();
 
 function getThemeSnapshot() {
@@ -149,16 +149,16 @@ export default function DashboardSidebar() {
           <div className="relative h-10 w-10 shrink-0 bg-white p-1.5">
              <Image 
                src="/images/logo/logo-trans.webp" 
-               alt="Titan Logo" 
+               alt="Nuova Forza Logo" 
                fill 
                className="object-contain"
              />
           </div>
           <div>
             <h2 className="font-display text-2xl font-black uppercase tracking-tighter leading-none">
-              TITAN<span className="text-[#d71920]">GYM</span>
+              NUOVA<span className="text-[#d71920]">FORZA</span>
             </h2>
-            <p className="mt-1 text-[8px] font-black uppercase tracking-[0.4em] text-white/30">Backoffice Engine</p>
+            <p className="mt-1 text-[8px] font-black uppercase tracking-[0.4em] text-white/30">Backoffice Gym</p>
           </div>
         </div>
       </div>

@@ -5,9 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { DEFAULT_LEAD_FILTERS, LeadFilters, LeadSort } from "@/lib/data/leads";
-import { cn } from "@/lib/utils";
 
 interface LeadsToolbarProps {
   filters: LeadFilters;

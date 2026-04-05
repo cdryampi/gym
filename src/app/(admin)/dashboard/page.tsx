@@ -1,21 +1,14 @@
 import {
-  BarChart3,
-  Building2,
-  Inbox,
-  Megaphone,
-  Package,
   ShieldCheck,
   ShoppingBag,
   Users,
   ArrowUpRight,
-  TrendingUp,
   Activity,
   Zap
 } from "lucide-react";
 import Link from "next/link";
 
 import AdminMetricCard from "@/components/admin/AdminMetricCard";
-import AdminSection from "@/components/admin/AdminSection";
 import AdminSurface from "@/components/admin/AdminSurface";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
@@ -28,7 +21,6 @@ import {
   getTopbarStatusMeta,
 } from "@/lib/admin-dashboard";
 import { getOrderedTrainingZones } from "@/data/training-zones";
-import { plannedModules } from "@/lib/data/default-content";
 import { novaForzaHomeContent } from "@/lib/data/nova-forza-content";
 import { getDashboardData } from "@/lib/data/site";
 import { getStoreAdminSnapshot } from "@/lib/data/store-admin";
@@ -151,21 +143,6 @@ export default async function DashboardPage() {
             </div>
           </section>
 
-          {/* RUTA DE CRECIMIENTO */}
-          <AdminSection
-            title="SISTEMAS PREVISTOS"
-            description="Modulos en fase de discovery o roadmap tecnico."
-            icon={TrendingUp}
-            className="pt-6 border-t border-black/5"
-          >
-            <div className="flex flex-wrap gap-3">
-              {plannedModules.map((module) => (
-                <div key={module} className="bg-white border border-black/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#111111]">
-                  {module}
-                </div>
-              ))}
-            </div>
-          </AdminSection>
         </div>
 
         {/* SIDEBAR: SALUD Y ESTADO */}

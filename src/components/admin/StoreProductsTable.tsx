@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Edit3, Trash2, Package, ImageIcon } from "lucide-react";
+import { Edit3, ImageIcon } from "lucide-react";
 
 import type { StoreDashboardProduct } from "@/lib/data/store";
 import { formatProductPrice, formatUsdPrice, productStockStatusLabels } from "@/lib/data/products";
@@ -17,7 +17,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import AdminSurface from "./AdminSurface";
 import DeleteStoreItemButton from "./DeleteStoreItemButton";
 import { cn } from "@/lib/utils";
 

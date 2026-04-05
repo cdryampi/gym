@@ -1,12 +1,9 @@
 import AdminSection from "@/components/admin/AdminSection";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
 import RoutineTemplateForm from "@/components/admin/RoutineTemplateForm";
-import { listDashboardTrainerOptions } from "@/lib/data/gym-management";
 import { LayoutTemplate } from "lucide-react";
 
 export default async function DashboardNewRoutinePage() {
-  const trainerOptions = await listDashboardTrainerOptions();
-
   return (
     <div className="space-y-6">
       <DashboardPageHeader
@@ -20,7 +17,7 @@ export default async function DashboardNewRoutinePage() {
         title="Editor completo"
         description="Este editor define la estructura que luego se asigna a los miembros desde dashboard o mobile staff."
       >
-        <RoutineTemplateForm trainerOptions={trainerOptions} />
+        <RoutineTemplateForm />
       </AdminSection>
     </div>
   );

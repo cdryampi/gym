@@ -6,7 +6,6 @@ import {
   Users, 
   Filter, 
   Zap, 
-  ArrowUpRight,
   Target
 } from "lucide-react";
 

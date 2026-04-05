@@ -30,7 +30,7 @@ async function setupStorage() {
   const buckets = ['routine-assets', 'product-images'];
   
   for (const bucketName of buckets) {
-    const { data, error } = await supabase.storage.getBucket(bucketName);
+    const { error } = await supabase.storage.getBucket(bucketName);
     
     if (error && error.message.toLowerCase().includes('not found')) {
       console.log(`Creando bucket: ${bucketName}...`);

@@ -3,7 +3,6 @@ import {
   ShoppingBag, 
   Plus, 
   Tag, 
-  ArrowUpRight,
   TrendingUp,
   BarChart4,
   LayoutGrid
@@ -17,7 +16,6 @@ import DashboardNotice from "@/components/admin/DashboardNotice";
 import DashboardPageHeader from "@/components/admin/DashboardPageHeader";
 import StoreProductsTable from "@/components/admin/StoreProductsTable";
 import { getStoreAdminSnapshot } from "@/lib/data/store-admin";
-import { Badge } from "@/components/ui/badge";
 
 export default async function DashboardStoreProductsPage() {
   const snapshot = await getStoreAdminSnapshot();

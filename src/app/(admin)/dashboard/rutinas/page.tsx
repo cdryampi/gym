@@ -13,7 +13,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { listDashboardRoutineTemplates } from "@/lib/data/gym-management";
-import { formatShortDate } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { LayoutTemplate, Plus, Users } from "lucide-react";
 
