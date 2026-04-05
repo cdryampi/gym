@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
   buildStoreProductPreview,
@@ -15,7 +15,17 @@ const categories: StoreCategory[] = [
   { id: "root-acc", slug: "accesorios", name: "Accesorios", order: 2, active: true },
 ];
 
+const originalSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
 describe("store data helpers", () => {
+  beforeAll(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://nbjkfyjeewprnxxibhwz.supabase.co";
+  });
+
+  afterAll(() => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = originalSupabaseUrl;
+  });
+
   it("builds a parent-child category tree", () => {
     const tree = buildStoreCategoryTree(categories);
 
@@ -122,5 +132,44 @@ describe("store data helpers", () => {
     ]);
     expect(preview.options?.[0]?.title).toBe("Presentacion");
     expect(preview.variants?.[0]?.price).toBe(45.5);
+  });
+
+  it("normalizes preview images to the Supabase public bucket", () => {
+    const preview = buildStoreProductPreview(
+      {
+        name: "Straps Pro",
+        slug: "straps-pro",
+        category_id: "root-acc",
+        eyebrow: "",
+        short_description: "Accesorio para entrenar mejor.",
+        description: "Descripcion larga para poder validar la ficha del producto en la preview.",
+        price: 19.9,
+        paypal_price_usd: "",
+        compare_price: "",
+        discount_label: "",
+        currency: "pen",
+        stock_status: "in_stock",
+        featured: false,
+        pickup_only: true,
+        pickup_note: "",
+        pickup_summary: "",
+        pickup_eta: "",
+        tags_text: "",
+        highlights_text: "",
+        benefits_text: "",
+        usage_steps_text: "",
+        images_text: "http://localhost:3000/images/products/straps.png\nnova-guantes.png",
+        specifications_text: "",
+        cta_label: "Reservar",
+        order: 0,
+        active: true,
+      },
+      categories,
+    );
+
+    expect(preview.images).toEqual([
+      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/straps.png",
+      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/nova-guantes.png",
+    ]);
   });
 });

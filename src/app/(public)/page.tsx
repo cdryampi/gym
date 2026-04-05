@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import ContactSection from "@/components/marketing/ContactSection";
+import FloatingWhatsAppButton from "@/components/marketing/FloatingWhatsAppButton";
 import HeroSection from "@/components/marketing/HeroSection";
 import PlansSection from "@/components/marketing/PlansSection";
 import ProductsSection from "@/components/marketing/ProductsSection";
@@ -20,17 +21,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PublicHomePage() {
-  const { settings, plans, scheduleRows } = await getMarketingData();
+  const { settings, plans, scheduleRows, testimonials } = await getMarketingData();
 
   return (
     <div className="bg-[#151518]">
       <HeroSection settings={settings} />
+      <FloatingWhatsAppButton settings={settings} />
       <ValueSection />
       <PlansSection settings={settings} plans={plans} />
       <ScheduleSection rows={scheduleRows} />
       <TeamSection />
       <ProductsSection />
-      <TestimonialsSection />
+      <TestimonialsSection testimonials={testimonials} />
       <TrainingZonesSection />
       <ContactSection settings={settings} />
     </div>

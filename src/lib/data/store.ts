@@ -1,5 +1,6 @@
 import { productCategories, type Product, type ProductCategory } from "@/data/types";
 import { getDefaultCommerceCurrencyCode } from "@/lib/commerce/currency";
+import { normalizeCommerceImageUrls } from "@/lib/commerce/image-urls";
 import { slugify, trimToNull } from "@/lib/utils";
 import type {
   StoreCategoryInput,
@@ -380,7 +381,9 @@ export function buildStoreProductPreview(
   const usageSteps = parseTextareaLines(
     typeof values.usage_steps_text === "string" ? values.usage_steps_text : "",
   );
-  const images = parseTextareaLines(typeof values.images_text === "string" ? values.images_text : "");
+  const images = normalizeCommerceImageUrls(
+    parseTextareaLines(typeof values.images_text === "string" ? values.images_text : ""),
+  );
   const safeImages = images.length > 0 ? images : ["/images/products/product-1.png"];
   const specifications = parseSpecificationLines(
     typeof values.specifications_text === "string" ? values.specifications_text : "",

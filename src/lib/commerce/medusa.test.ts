@@ -275,8 +275,8 @@ describe("medusa commerce", () => {
     );
 
     expect(product?.images).toEqual([
-      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/product-images/nova-whey.png",
-      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/product-images/nova-creatina.png",
+      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/nova-whey.png",
+      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/nova-creatina.png",
     ]);
   });
 

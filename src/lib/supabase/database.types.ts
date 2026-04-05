@@ -9,6 +9,7 @@ export type Json =
 export type DBCmsDocument = Database["public"]["Tables"]["cms_documents"]["Row"];
 export type DBMarketingPlan = Database["public"]["Tables"]["marketing_plans"]["Row"];
 export type DBMarketingScheduleRow = Database["public"]["Tables"]["marketing_schedule_rows"]["Row"];
+export type DBMarketingTestimonial = Database["public"]["Tables"]["marketing_testimonials"]["Row"];
 export type Lead = Database["public"]["Tables"]["leads"]["Row"];
 export type LeadStatus = Database["public"]["Enums"]["lead_status"];
 export type SiteSettings = Database["public"]["Tables"]["site_settings"]["Row"];
@@ -1901,6 +1902,69 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "marketing_schedule_rows_site_settings_id_fkey"
+            columns: ["site_settings_id"]
+            isOneToOne: false
+            referencedRelation: "site_settings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_testimonials: {
+        Row: {
+          approved_at: string | null
+          author_detail: string
+          author_initials: string
+          author_name: string
+          created_at: string
+          id: string
+          member_profile_id: string
+          moderation_status: string
+          quote: string
+          rating: number
+          site_settings_id: number
+          supabase_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          author_detail: string
+          author_initials: string
+          author_name: string
+          created_at?: string
+          id?: string
+          member_profile_id: string
+          moderation_status?: string
+          quote: string
+          rating: number
+          site_settings_id?: number
+          supabase_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          author_detail?: string
+          author_initials?: string
+          author_name?: string
+          created_at?: string
+          id?: string
+          member_profile_id?: string
+          moderation_status?: string
+          quote?: string
+          rating?: number
+          site_settings_id?: number
+          supabase_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_testimonials_member_profile_id_fkey"
+            columns: ["member_profile_id"]
+            isOneToOne: false
+            referencedRelation: "member_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_testimonials_site_settings_id_fkey"
             columns: ["site_settings_id"]
             isOneToOne: false
             referencedRelation: "site_settings"

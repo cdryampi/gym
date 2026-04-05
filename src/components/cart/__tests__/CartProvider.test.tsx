@@ -213,7 +213,7 @@ describe("CartProvider", () => {
     await waitFor(() => {
       expect(screen.getByText("ready")).toBeInTheDocument();
       expect(screen.getByText("no-cart")).toBeInTheDocument();
-      expect(screen.getByText(STALE_CART_MESSAGE)).toBeInTheDocument();
+      expect(screen.getByText("no-error")).toBeInTheDocument();
     });
 
     expect(document.cookie).not.toContain("gym_cart_id=");
@@ -241,7 +241,7 @@ describe("CartProvider", () => {
     await waitFor(() => {
       expect(screen.getByText("ready")).toBeInTheDocument();
       expect(screen.getByText("no-cart")).toBeInTheDocument();
-      expect(screen.getByText(STALE_CART_MESSAGE)).toBeInTheDocument();
+      expect(screen.getByText("no-error")).toBeInTheDocument();
     });
 
     expect(fetch).toHaveBeenCalledWith("/api/cart/member", {
@@ -469,6 +469,168 @@ describe("CartProvider", () => {
     expect(cartMedusaMocks.addCartLineItem).toHaveBeenNthCalledWith(
       2,
       "cart_new",
+      "variant_vanilla",
+      1,
+    );
+  });
+
+  it("recovers the active member cart before creating a new one when there is no cookie cart", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          cart: buildCart({
+            id: "cart_member_active",
+            customerId: "cus_01",
+          }),
+        }),
+      ),
+    );
+    cartMedusaMocks.addCartLineItem.mockResolvedValue(
+      buildCart({
+        id: "cart_member_active",
+        customerId: "cus_01",
+        items: [
+          {
+            id: "line_02",
+            title: "Nova Whey",
+            thumbnail: null,
+            quantity: 2,
+            productId: "prod_01",
+            productTitle: "Nova Whey",
+            productHandle: "nova-whey",
+            variantId: "variant_vanilla",
+            variantTitle: "Vanilla",
+            variantSku: null,
+            unitPrice: 49.99,
+            subtotal: 99.98,
+            total: 99.98,
+            currencyCode: "PEN",
+            requiresShipping: false,
+            selectedOptions: [],
+          },
+        ],
+        summary: {
+          currencyCode: "PEN",
+          itemCount: 2,
+          subtotal: 99.98,
+          total: 99.98,
+          taxTotal: 0,
+          shippingTotal: 0,
+          discountTotal: 0,
+          requiresShipping: false,
+          pickupRequestStatus: "draft",
+          pickupRequestedAt: null,
+          pickupRequestId: null,
+          pickupRequestNumber: null,
+        },
+      }),
+    );
+
+    render(
+      <CartProvider memberEmail="socio@gym.com">
+        <CartAddProbe />
+      </CartProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("cart_member_active")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Anadir" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("2")).toBeInTheDocument();
+      expect(screen.getByText("no-error")).toBeInTheDocument();
+    });
+
+    expect(cartMedusaMocks.createCart).not.toHaveBeenCalled();
+    expect(cartMedusaMocks.addCartLineItem).toHaveBeenCalledWith(
+      "cart_member_active",
+      "variant_vanilla",
+      1,
+    );
+  });
+
+  it("abandons the broken cart and retries with a fresh one when Medusa fails with fetch error", async () => {
+    const user = userEvent.setup();
+    document.cookie = "gym_cart_id=cart_cookie; path=/";
+    cartMedusaMocks.retrieveCart.mockResolvedValue(buildCart());
+    cartMedusaMocks.createCart.mockResolvedValue(
+      buildCart({
+        id: "cart_replacement",
+        items: [],
+        summary: {
+          currencyCode: "PEN",
+          itemCount: 0,
+          subtotal: 0,
+          total: 0,
+          taxTotal: 0,
+          shippingTotal: 0,
+          discountTotal: 0,
+          requiresShipping: false,
+          pickupRequestStatus: "draft",
+          pickupRequestedAt: null,
+          pickupRequestId: null,
+          pickupRequestNumber: null,
+        },
+      }),
+    );
+    cartMedusaMocks.addCartLineItem
+      .mockRejectedValueOnce(new Error("No se pudo anadir el producto: Failed to fetch"))
+      .mockResolvedValueOnce(
+        buildCart({
+          id: "cart_replacement",
+          items: [
+            {
+              id: "line_03",
+              title: "Nova Whey",
+              thumbnail: null,
+              quantity: 1,
+              productId: "prod_01",
+              productTitle: "Nova Whey",
+              productHandle: "nova-whey",
+              variantId: "variant_vanilla",
+              variantTitle: "Vanilla",
+              variantSku: null,
+              unitPrice: 49.99,
+              subtotal: 49.99,
+              total: 49.99,
+              currencyCode: "PEN",
+              requiresShipping: false,
+              selectedOptions: [],
+            },
+          ],
+        }),
+      );
+
+    render(
+      <CartProvider>
+        <CartAddProbe />
+      </CartProvider>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("cart_cookie")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "Anadir" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("cart_replacement")).toBeInTheDocument();
+      expect(screen.getByText("no-error")).toBeInTheDocument();
+    });
+
+    expect(cartMedusaMocks.createCart).toHaveBeenCalledWith(null);
+    expect(cartMedusaMocks.addCartLineItem).toHaveBeenNthCalledWith(
+      1,
+      "cart_cookie",
+      "variant_vanilla",
+      1,
+    );
+    expect(cartMedusaMocks.addCartLineItem).toHaveBeenNthCalledWith(
+      2,
+      "cart_replacement",
       "variant_vanilla",
       1,
     );

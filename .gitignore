@@ -42,7 +42,14 @@ medusa_test.json
 apps/medusa/seed_error.log
 *.bak
 apps/medusa/test_output*.txt
-/debug/
+/debug/*
+!/debug/README.md
+!/debug/medusa/
+/debug/medusa/*
+!/debug/medusa/.gitkeep
+!/debug/sys-logs/
+/debug/sys-logs/*
+!/debug/sys-logs/.gitkeep
 /tmp/
 tmp/
 apps/medusa/apiKeyOutput.txt

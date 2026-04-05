@@ -115,6 +115,17 @@ src/
 - Reutiliza `components/ui` antes de crear primitives nuevas.
 - Manten `strict` TypeScript limpio.
 - Prefiere server components por defecto y `"use client"` solo cuando haga falta.
+- Si tocas `src/lib/supabase/queries.ts`, los nuevos tests van en `src/lib/supabase/__tests__/`.
+- Si tocas logica de dominio que consulta Supabase, el test se queda junto al modulo de dominio.
+
+## Debug y logs locales
+
+- No crees ficheros de debug sueltos en la raiz ni dentro de `apps/medusa` u otras carpetas de codigo.
+- Usa `debug/README.md` como referencia rapida antes de guardar artefactos temporales.
+- Guarda salidas de depuracion funcional en `debug/medusa/` o en una subcarpeta equivalente dentro de `debug/`.
+- Guarda sys logs, volcados de consola o logs de procesos en `debug/sys-logs/`.
+- No enlaces esos artefactos desde codigo de produccion.
+- Si el artefacto era solo para una sesion puntual, eliminalo al terminar.
 
 ## Supabase
 

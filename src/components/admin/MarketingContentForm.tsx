@@ -1,23 +1,13 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  ArrowDown,
-  ArrowUp,
-  Check,
-  ChevronDown,
-  Loader2,
-  Plus,
-  Save,
-  Star,
-  Trash2,
-  X,
-} from "lucide-react";
-import { useState, useTransition } from "react";
+import { AlertCircle, ArrowDown, ArrowUp, Check, ChevronDown, Loader2, Plus, Save, Star, Trash2, X } from "lucide-react";
+import { useEffect, useState, useTransition } from "react";
 import { useFieldArray, useForm, useWatch, type Control, type UseFormSetValue } from "react-hook-form";
 
 import { saveMarketingContent } from "@/app/(admin)/dashboard/actions";
 import AdminSurface from "@/components/admin/AdminSurface";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -151,11 +141,11 @@ function PlanFeaturesEditor({ control, planIndex, disabled }: Readonly<PlanFeatu
             <FormField
               control={control}
               name={`plans.${planIndex}.features.${featureIndex}.label`}
-              render={({ field: featureField }) => (
+              render={({ field: featureField, fieldState }) => (
                 <FormItem>
-                  <FormLabel>Texto</FormLabel>
+                  <FormLabel className={cn(fieldState.error && "text-red-500")}>Texto</FormLabel>
                   <FormControl>
-                    <Input {...featureField} />
+                    <Input {...featureField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -273,6 +263,61 @@ export default function MarketingContentForm({
   const watchedPlans = useWatch({ control: form.control, name: "plans" }) ?? [];
   const watchedScheduleRows = useWatch({ control: form.control, name: "scheduleRows" }) ?? [];
 
+  useEffect(() => {
+    if (form.formState.submitCount <= 0) {
+      return;
+    }
+
+    const planIndexesToOpen = Object.keys(form.formState.errors.plans ?? {})
+      .map((key) => Number.parseInt(key, 10))
+      .filter((index) => !Number.isNaN(index));
+    const scheduleIndexesToOpen = Object.keys(form.formState.errors.scheduleRows ?? {})
+      .map((key) => Number.parseInt(key, 10))
+      .filter((index) => !Number.isNaN(index));
+
+    if (planIndexesToOpen.length === 0 && scheduleIndexesToOpen.length === 0) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      if (planIndexesToOpen.length > 0) {
+        setOpenPlans((prev) => {
+          let changed = false;
+          const next = { ...prev };
+
+          for (const index of planIndexesToOpen) {
+            if (!next[index]) {
+              next[index] = true;
+              changed = true;
+            }
+          }
+
+          return changed ? next : prev;
+        });
+      }
+
+      if (scheduleIndexesToOpen.length > 0) {
+        setOpenSchedules((prev) => {
+          let changed = false;
+          const next = { ...prev };
+
+          for (const index of scheduleIndexesToOpen) {
+            if (!next[index]) {
+              next[index] = true;
+              changed = true;
+            }
+          }
+
+          return changed ? next : prev;
+        });
+      }
+    });
+  }, [
+    form.formState.submitCount,
+    form.formState.errors.plans,
+    form.formState.errors.scheduleRows,
+  ]);
+
   function handleMovePlan(index: number, direction: -1 | 1) {
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= watchedPlans.length) {
@@ -345,6 +390,12 @@ export default function MarketingContentForm({
                 <p className="mt-1 text-sm text-[#5f6368]">
                   Edita nombre, precio, destacado y bullets del bloque comercial.
                 </p>
+                {form.formState.errors.plans?.message && (
+                  <p className="mt-2 text-xs font-bold text-red-600 flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {form.formState.errors.plans.message}
+                  </p>
+                )}
               </div>
               <Button
                 type="button"
@@ -365,27 +416,40 @@ export default function MarketingContentForm({
               {planFields.fields.map((field, index) => {
                 const isOpen = openPlans[index] ?? false;
                 const planValue = watchedPlans[index];
+                const hasError = !!form.formState.errors.plans?.[index];
 
                 return (
                   <AdminSurface
                     key={field.id}
                     inset
-                    className="overflow-hidden border border-black/8 bg-[#fbfbf8]"
+                    className={cn(
+                      "overflow-hidden border bg-[#fbfbf8]",
+                      hasError ? "border-red-200" : "border-black/8"
+                    )}
                   >
                     <div
                       className={cn(
                         "flex cursor-pointer items-center justify-between gap-4 p-4 transition-colors hover:bg-black/2",
                         !isOpen && "bg-[#fcfcfa]",
+                        hasError && !isOpen && "bg-red-50/30"
                       )}
                       onClick={() => togglePlan(index)}
                     >
                       <div className="flex flex-1 items-center gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-black/8 bg-white text-xs font-bold text-[#111111]">
+                        <div className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center border text-xs font-bold",
+                          hasError 
+                            ? "border-red-200 bg-red-50 text-red-600" 
+                            : "border-black/8 bg-white text-[#111111]"
+                        )}>
                           {index + 1}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="truncate text-sm font-semibold text-[#111111]">
+                            <span className={cn(
+                              "truncate text-sm font-semibold",
+                              hasError ? "text-red-700" : "text-[#111111]"
+                            )}>
                               {planValue?.title || `Plan ${index + 1}`}
                             </span>
                             {planValue?.price_label && (
@@ -396,6 +460,14 @@ export default function MarketingContentForm({
                             )}
                             {planValue?.is_featured && (
                               <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            )}
+                            {hasError && (
+                              <Badge
+                                variant="default"
+                                className="h-5 rounded-none border-red-200 bg-red-50 px-2 py-0 text-[8px] font-black uppercase tracking-widest text-red-700"
+                              >
+                                ERROR
+                              </Badge>
                             )}
                           </div>
                           <div className="mt-1 flex items-center gap-2">
@@ -454,6 +526,7 @@ export default function MarketingContentForm({
                           className={cn(
                             "h-5 w-5 text-[#a1a1a1] transition-transform",
                             isOpen && "rotate-180",
+                            hasError && "text-red-500"
                           )}
                         />
                       </div>
@@ -482,11 +555,11 @@ export default function MarketingContentForm({
                           <FormField
                             control={form.control}
                             name={`plans.${index}.title`}
-                            render={({ field: planField }) => (
+                            render={({ field: planField, fieldState }) => (
                               <FormItem>
-                                <FormLabel>Nombre</FormLabel>
+                                <FormLabel className={cn(fieldState.error && "text-red-500")}>Nombre</FormLabel>
                                 <FormControl>
-                                  <Input {...planField} />
+                                  <Input {...planField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -496,11 +569,11 @@ export default function MarketingContentForm({
                           <FormField
                             control={form.control}
                             name={`plans.${index}.badge`}
-                            render={({ field: planField }) => (
+                            render={({ field: planField, fieldState }) => (
                               <FormItem>
-                                <FormLabel>Badge</FormLabel>
+                                <FormLabel className={cn(fieldState.error && "text-red-500")}>Badge</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="Recomendado" {...planField} />
+                                  <Input placeholder="Recomendado" {...planField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -511,11 +584,11 @@ export default function MarketingContentForm({
                         <FormField
                           control={form.control}
                           name={`plans.${index}.description`}
-                          render={({ field: planField }) => (
+                          render={({ field: planField, fieldState }) => (
                             <FormItem>
-                              <FormLabel>Descripcion corta</FormLabel>
+                              <FormLabel className={cn(fieldState.error && "text-red-500")}>Descripcion corta</FormLabel>
                               <FormControl>
-                                <Textarea rows={2} placeholder="Texto comercial opcional." {...planField} />
+                                <Textarea rows={2} placeholder="Texto comercial opcional." {...planField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -526,11 +599,11 @@ export default function MarketingContentForm({
                           <FormField
                             control={form.control}
                             name={`plans.${index}.price_label`}
-                            render={({ field: planField }) => (
+                            render={({ field: planField, fieldState }) => (
                               <FormItem>
-                                <FormLabel>Precio visible</FormLabel>
+                                <FormLabel className={cn(fieldState.error && "text-red-500")}>Precio visible</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="S/150" {...planField} />
+                                  <Input placeholder="S/150" {...planField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -540,11 +613,11 @@ export default function MarketingContentForm({
                           <FormField
                             control={form.control}
                             name={`plans.${index}.billing_label`}
-                            render={({ field: planField }) => (
+                            render={({ field: planField, fieldState }) => (
                               <FormItem>
-                                <FormLabel>Periodo</FormLabel>
+                                <FormLabel className={cn(fieldState.error && "text-red-500")}>Periodo</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="/mes" {...planField} />
+                                  <Input placeholder="/mes" {...planField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -624,6 +697,12 @@ export default function MarketingContentForm({
                 <p className="mt-1 text-sm text-[#5f6368]">
                   Gestiona las filas visibles del bloque de apertura.
                 </p>
+                {form.formState.errors.scheduleRows?.message && (
+                  <p className="mt-2 text-xs font-bold text-red-600 flex items-center gap-1.5">
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    {form.formState.errors.scheduleRows.message}
+                  </p>
+                )}
               </div>
               <Button
                 type="button"
@@ -641,33 +720,54 @@ export default function MarketingContentForm({
               {scheduleFields.fields.map((field, index) => {
                 const isOpen = openSchedules[index] ?? false;
                 const rowValue = watchedScheduleRows[index];
+                const hasError = !!form.formState.errors.scheduleRows?.[index];
 
                 return (
                   <AdminSurface
                     key={field.id}
                     inset
-                    className="overflow-hidden border border-black/8 bg-[#fbfbf8]"
+                    className={cn(
+                      "overflow-hidden border bg-[#fbfbf8]",
+                      hasError ? "border-red-200" : "border-black/8"
+                    )}
                   >
                     <div
                       className={cn(
                         "flex cursor-pointer items-center justify-between gap-4 p-4 transition-colors hover:bg-black/2",
                         !isOpen && "bg-[#fcfcfa]",
+                        hasError && !isOpen && "bg-red-50/30"
                       )}
                       onClick={() => toggleSchedule(index)}
                     >
                       <div className="flex flex-1 items-center gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center border border-black/8 bg-white text-xs font-bold text-[#111111]">
+                        <div className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center border text-xs font-bold",
+                          hasError 
+                            ? "border-red-200 bg-red-50 text-red-600" 
+                            : "border-black/8 bg-white text-[#111111]"
+                        )}>
                           {index + 1}
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className="truncate text-sm font-semibold text-[#111111]">
+                            <span className={cn(
+                              "truncate text-sm font-semibold",
+                              hasError ? "text-red-700" : "text-[#111111]"
+                            )}>
                               {rowValue?.label || `Fila ${index + 1}`}
                             </span>
                             {(rowValue?.opens_at || rowValue?.closes_at) && (
                               <span className="text-xs text-[#5f6368]">
                                 • {rowValue.opens_at} - {rowValue.closes_at}
                               </span>
+                            )}
+                            {hasError && (
+                              <Badge
+                                variant="default"
+                                className="h-5 rounded-none border-red-200 bg-red-50 px-2 py-0 text-[8px] font-black uppercase tracking-widest text-red-700"
+                              >
+                                ERROR
+                              </Badge>
                             )}
                           </div>
                           <div className="mt-1 flex items-center gap-2">
@@ -725,6 +825,7 @@ export default function MarketingContentForm({
                           className={cn(
                             "h-5 w-5 text-[#a1a1a1] transition-transform",
                             isOpen && "rotate-180",
+                            hasError && "text-red-500"
                           )}
                         />
                       </div>
@@ -741,11 +842,11 @@ export default function MarketingContentForm({
                         <FormField
                           control={form.control}
                           name={`scheduleRows.${index}.label`}
-                          render={({ field: rowField }) => (
+                          render={({ field: rowField, fieldState }) => (
                             <FormItem>
-                              <FormLabel>Titulo</FormLabel>
+                              <FormLabel className={cn(fieldState.error && "text-red-500")}>Titulo</FormLabel>
                               <FormControl>
-                                <Input placeholder="Lunes - Viernes" {...rowField} />
+                                <Input placeholder="Lunes - Viernes" {...rowField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -755,11 +856,11 @@ export default function MarketingContentForm({
                         <FormField
                           control={form.control}
                           name={`scheduleRows.${index}.description`}
-                          render={({ field: rowField }) => (
+                          render={({ field: rowField, fieldState }) => (
                             <FormItem>
-                              <FormLabel>Descripcion corta</FormLabel>
+                              <FormLabel className={cn(fieldState.error && "text-red-500")}>Descripcion corta</FormLabel>
                               <FormControl>
-                                <Textarea rows={2} placeholder="Opcional." {...rowField} />
+                                <Textarea rows={2} placeholder="Opcional." {...rowField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                               </FormControl>
                               <FormMessage />
                             </FormItem>
@@ -770,11 +871,11 @@ export default function MarketingContentForm({
                           <FormField
                             control={form.control}
                             name={`scheduleRows.${index}.opens_at`}
-                            render={({ field: rowField }) => (
+                            render={({ field: rowField, fieldState }) => (
                               <FormItem>
-                                <FormLabel>Apertura</FormLabel>
+                                <FormLabel className={cn(fieldState.error && "text-red-500")}>Apertura</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="05:00 AM" {...rowField} />
+                                  <Input placeholder="05:00 AM" {...rowField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>
@@ -784,11 +885,11 @@ export default function MarketingContentForm({
                           <FormField
                             control={form.control}
                             name={`scheduleRows.${index}.closes_at`}
-                            render={({ field: rowField }) => (
+                            render={({ field: rowField, fieldState }) => (
                               <FormItem>
-                                <FormLabel>Cierre</FormLabel>
+                                <FormLabel className={cn(fieldState.error && "text-red-500")}>Cierre</FormLabel>
                                 <FormControl>
-                                  <Input placeholder="11:00 PM" {...rowField} />
+                                  <Input placeholder="11:00 PM" {...rowField} className={cn(fieldState.error && "border-red-300 focus-visible:ring-red-500")} />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

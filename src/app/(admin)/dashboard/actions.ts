@@ -6,6 +6,7 @@ import { requireAdminUser } from "@/lib/auth";
 import { hasSupabaseServiceRole } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
+  moderateMarketingTestimonialRecord,
   saveCmsDocumentRecord,
   saveMarketingContentRecord,
   saveSiteSettingsRecord,
@@ -15,6 +16,10 @@ import {
 import { cmsDocumentSchema, type CmsDocumentValues } from "@/lib/validators/cms-document";
 import { leadFollowUpSchema, type LeadFollowUpValues, leadStatusSchema } from "@/lib/validators/lead";
 import { marketingContentSchema, type MarketingContentValues } from "@/lib/validators/marketing";
+import {
+  moderateMarketingTestimonialSchema,
+  type MarketingTestimonialModerationStatus,
+} from "@/lib/validators/marketing-testimonial";
 import { siteSettingsSchema, type SiteSettingsValues } from "@/lib/validators/settings";
 
 async function getAuthenticatedSupabase() {
@@ -106,4 +111,24 @@ export async function saveCmsDocument(values: CmsDocumentValues) {
   const supabase = await getAuthenticatedSupabase();
   await saveCmsDocumentRecord(supabase, parsed);
   revalidateApp();
+}
+
+export async function moderateMarketingTestimonial(
+  id: string,
+  moderationStatus: Extract<MarketingTestimonialModerationStatus, "approved" | "rejected">,
+) {
+  const parsed = moderateMarketingTestimonialSchema.parse({
+    id,
+    moderationStatus,
+  });
+  const supabase = await getAuthenticatedSupabase();
+
+  if (parsed.moderationStatus === "pending") {
+    throw new Error("La moderacion manual solo permite aprobar o rechazar la resena.");
+  }
+
+  await moderateMarketingTestimonialRecord(supabase, parsed.id, parsed.moderationStatus);
+  revalidatePath("/");
+  revalidatePath("/mi-cuenta");
+  revalidatePath("/dashboard/marketing");
 }

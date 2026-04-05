@@ -1,11 +1,17 @@
 import type { User } from "@supabase/supabase-js";
 
 import { getCurrentMemberUser } from "@/lib/auth";
+import type { MarketingTestimonial } from "@/lib/data/marketing-content";
+import { ensureMemberProfileForUser } from "@/lib/data/gym-management";
 import {
   getMemberAuthProviderLabel,
   getMemberDisplayName,
   isPasswordAuthProvider,
 } from "@/lib/member-account";
+import {
+  getMemberMarketingTestimonialRecord,
+  upsertMemberMarketingTestimonialRecord,
+} from "@/lib/supabase/queries";
 import {
   type MemberAccountDeleteValues,
   memberAccountDeleteSchema,
@@ -14,6 +20,10 @@ import {
   type MemberAccountProfileValues,
   memberAccountProfileSchema,
 } from "@/lib/validators/member-account";
+import {
+  type MemberMarketingTestimonialValues,
+  memberMarketingTestimonialSchema,
+} from "@/lib/validators/marketing-testimonial";
 import {
   createSupabaseAdminClient,
   createSupabasePublicClient,
@@ -27,6 +37,8 @@ export type MemberAccountViewModel = {
   providerLabel: string;
   canManagePassword: boolean;
 };
+
+export type MemberMarketingTestimonialViewModel = MarketingTestimonial;
 
 type MemberProfileRow = {
   email: string;
@@ -57,6 +69,30 @@ function assertSelfUser(user: User | null): asserts user is User {
   }
 }
 
+function buildAuthorInitials(fullName: string) {
+  const parts = fullName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (parts.length === 0) {
+    return "TG";
+  }
+
+  return parts.map((part) => part.charAt(0).toUpperCase()).join("");
+}
+
+function buildAuthorDetail(joinDate: string | null | undefined) {
+  const year = joinDate?.slice(0, 4);
+
+  if (year && /^\d{4}$/.test(year)) {
+    return `Socio desde ${year}`;
+  }
+
+  return "Miembro verificado";
+}
+
 async function reauthenticatePasswordUser(user: User, password: string) {
   if (!isPasswordAuthProvider(user)) {
     throw new Error("Esta cuenta no permite verificar contrasena desde este flujo.");
@@ -82,6 +118,40 @@ export async function getMemberAccountViewModel(user: User): Promise<MemberAccou
     fullName: profile?.full_name ?? getMemberDisplayName(user),
     phone: profile?.phone ?? null,
     providerLabel: getMemberAuthProviderLabel(user),
+  };
+}
+
+export async function getAuthenticatedMemberTestimonial() {
+  const user = await getCurrentMemberUser();
+  assertSelfUser(user);
+  const serverClient = await createSupabaseServerClient();
+
+  return getMemberMarketingTestimonialRecord(serverClient, user.id);
+}
+
+export async function upsertAuthenticatedMemberTestimonial(values: unknown) {
+  const user = await getCurrentMemberUser();
+  assertSelfUser(user);
+  const parsed = memberMarketingTestimonialSchema.parse(values) as MemberMarketingTestimonialValues;
+  const serverClient = await createSupabaseServerClient();
+  const memberProfile = await ensureMemberProfileForUser(user);
+  const existing = await getMemberMarketingTestimonialRecord(serverClient, user.id);
+  const authorName = memberProfile.full_name?.trim() || getMemberDisplayName(user);
+
+  const testimonial = await upsertMemberMarketingTestimonialRecord(serverClient, {
+    author_detail: buildAuthorDetail(memberProfile.join_date),
+    author_initials: buildAuthorInitials(authorName),
+    author_name: authorName,
+    member_profile_id: memberProfile.id,
+    quote: parsed.quote.trim(),
+    rating: parsed.rating,
+    site_settings_id: 1,
+    supabase_user_id: user.id,
+  });
+
+  return {
+    mode: existing ? ("updated" as const) : ("created" as const),
+    testimonial,
   };
 }
 

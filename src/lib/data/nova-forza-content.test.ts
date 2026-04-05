@@ -10,6 +10,5 @@ describe("novaForzaHomeContent", () => {
     expect(defaultMarketingScheduleRows).toHaveLength(3);
     expect(novaForzaHomeContent.team).toHaveLength(3);
     expect(novaForzaHomeContent.featuredProducts).toHaveLength(4);
-    expect(novaForzaHomeContent.testimonials).toHaveLength(3);
   });
 });

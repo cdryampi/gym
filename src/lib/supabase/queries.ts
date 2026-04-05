@@ -12,8 +12,11 @@ import { defaultSiteSettings } from "@/lib/data/default-content";
 import {
   defaultMarketingPlans,
   defaultMarketingScheduleRows,
+  defaultMarketingTestimonials,
   type MarketingPlan,
   type MarketingScheduleRow,
+  type MarketingTestimonial,
+  type MarketingTestimonialModerationStatus,
 } from "@/lib/data/marketing-content";
 import { hasSupabasePublicEnv, hasSupabaseServiceRole } from "@/lib/env";
 import { parseSeoKeywordsInput } from "@/lib/seo";
@@ -30,6 +33,7 @@ import type {
   DBCmsDocument,
   DBMarketingPlan,
   DBMarketingScheduleRow,
+  DBMarketingTestimonial,
   Json,
   Lead,
   LeadStatus,
@@ -49,6 +53,7 @@ export interface MarketingSnapshot {
   settings: SiteSettings;
   plans: MarketingPlan[];
   scheduleRows: MarketingScheduleRow[];
+  testimonials: MarketingTestimonial[];
   isFallback: boolean;
   warning: string | null;
 }
@@ -154,6 +159,63 @@ export function normalizeMarketingScheduleRows(
   return rows
     .map((row, index) => normalizeMarketingScheduleRow(row, index))
     .sort((left, right) => left.order - right.order);
+}
+
+export function normalizeMarketingTestimonial(
+  row: Partial<DBMarketingTestimonial> | null | undefined,
+): MarketingTestimonial | null {
+  if (!row?.id || !row.member_profile_id || !row.supabase_user_id) {
+    return null;
+  }
+
+  const moderationStatus = row.moderation_status;
+  const normalizedStatus: MarketingTestimonialModerationStatus =
+    moderationStatus === "approved" || moderationStatus === "rejected" || moderationStatus === "pending"
+      ? moderationStatus
+      : "pending";
+
+  const normalizedQuote = trimToNull(row.quote);
+  const normalizedName = trimToNull(row.author_name);
+  const normalizedDetail = trimToNull(row.author_detail);
+  const normalizedInitials = trimToNull(row.author_initials);
+
+  if (!normalizedQuote || !normalizedName || !normalizedDetail || !normalizedInitials) {
+    return null;
+  }
+
+  const rating = typeof row.rating === "number" && Number.isInteger(row.rating) ? row.rating : null;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    site_settings_id: row.site_settings_id ?? SETTINGS_ID,
+    member_profile_id: row.member_profile_id,
+    supabase_user_id: row.supabase_user_id,
+    quote: normalizedQuote,
+    rating,
+    author_name: normalizedName,
+    author_detail: normalizedDetail,
+    author_initials: normalizedInitials,
+    moderation_status: normalizedStatus,
+    approved_at: trimToNull(row.approved_at),
+    created_at: row.created_at ?? new Date(0).toISOString(),
+    updated_at: row.updated_at ?? new Date(0).toISOString(),
+  };
+}
+
+export function normalizeMarketingTestimonials(
+  rows: Partial<DBMarketingTestimonial>[] | null | undefined,
+): MarketingTestimonial[] {
+  if (!rows?.length) {
+    return defaultMarketingTestimonials.map((testimonial) => ({ ...testimonial }));
+  }
+
+  return rows
+    .map((row) => normalizeMarketingTestimonial(row))
+    .filter((testimonial): testimonial is MarketingTestimonial => Boolean(testimonial));
 }
 
 export function normalizeCmsDocument(
@@ -436,6 +498,7 @@ export const getMarketingSnapshot = cache(async (): Promise<MarketingSnapshot> =
       settings: defaultSiteSettings,
       plans: defaultMarketingPlans,
       scheduleRows: defaultMarketingScheduleRows,
+      testimonials: defaultMarketingTestimonials,
       isFallback: true,
       warning: "Supabase no esta configurado. Se muestran datos fallback.",
     };
@@ -443,27 +506,68 @@ export const getMarketingSnapshot = cache(async (): Promise<MarketingSnapshot> =
 
   try {
     const supabase = createSupabasePublicClient();
-    const [{ data: settings }, { data: plans }, { data: scheduleRows }] = await Promise.all([
-      supabase.from("site_settings").select("*").eq("id", SETTINGS_ID).maybeSingle(),
-      supabase.from("marketing_plans").select("*").eq("site_settings_id", SETTINGS_ID),
-      supabase
-        .from("marketing_schedule_rows")
-        .select("*")
-        .eq("site_settings_id", SETTINGS_ID),
-    ]);
+    
+    // Fetch settings first to see which site we are on, but don't force ID 1
+    const { data: settings, error: settingsError } = await supabase
+      .from("site_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    if (settingsError) {
+      console.error("Error fetching site_settings in getMarketingSnapshot:", settingsError);
+    }
+
+    const actualSettingsId = settings?.id;
+
+    const [ { data: plans, error: plansError }, { data: scheduleRows, error: scheduleError }, { data: testimonials, error: testimonialsError } ] =
+      await Promise.all([
+      // If we have a settings ID, use it. If not, fetch all (as per flexibility requirement)
+      actualSettingsId 
+        ? supabase.from("marketing_plans").select("*").eq("site_settings_id", actualSettingsId)
+        : supabase.from("marketing_plans").select("*"),
+      actualSettingsId
+        ? supabase.from("marketing_schedule_rows").select("*").eq("site_settings_id", actualSettingsId)
+        : supabase.from("marketing_schedule_rows").select("*"),
+      actualSettingsId
+        ? supabase
+            .from("marketing_testimonials")
+            .select("*")
+            .eq("site_settings_id", actualSettingsId)
+            .eq("moderation_status", "approved")
+            .order("approved_at", { ascending: false })
+            .order("updated_at", { ascending: false })
+            .limit(3)
+        : supabase
+            .from("marketing_testimonials")
+            .select("*")
+            .eq("moderation_status", "approved")
+            .order("approved_at", { ascending: false })
+            .order("updated_at", { ascending: false })
+            .limit(3),
+      ]);
+
+    if (plansError) console.error("Error fetching marketing_plans:", plansError);
+    if (scheduleError) console.error("Error fetching marketing_schedule_rows:", scheduleError);
+    if (testimonialsError) console.error("Error fetching marketing_testimonials:", testimonialsError);
+
+    const normalizedPlans = normalizeMarketingPlans(plans).filter((plan) => plan.is_active);
 
     return {
       settings: normalizeSiteSettings(settings),
-      plans: normalizeMarketingPlans(plans).filter((plan) => plan.is_active),
+      plans: normalizedPlans,
       scheduleRows: normalizeMarketingScheduleRows(scheduleRows).filter((row) => row.is_active),
+      testimonials: normalizeMarketingTestimonials(testimonials),
       isFallback: false,
       warning: null,
     };
-  } catch {
+  } catch (error) {
+    console.error("Excepcion capturada en getMarketingSnapshot:", error);
     return {
       settings: defaultSiteSettings,
       plans: defaultMarketingPlans,
       scheduleRows: defaultMarketingScheduleRows,
+      testimonials: defaultMarketingTestimonials,
       isFallback: true,
       warning: "No se pudieron cargar los datos reales de Supabase. Se muestra contenido fallback.",
     };
@@ -476,34 +580,62 @@ export async function getDashboardMarketingSnapshot(): Promise<DashboardMarketin
       settings: defaultSiteSettings,
       plans: defaultMarketingPlans,
       scheduleRows: defaultMarketingScheduleRows,
+      testimonials: defaultMarketingTestimonials,
       isFallback: true,
       warning: "Supabase no esta configurado. Marketing usa contenido fallback.",
     };
   }
 
   try {
-    const supabase = createSupabasePublicClient();
-    const [{ data: settings }, { data: plans }, { data: scheduleRows }] = await Promise.all([
-      supabase.from("site_settings").select("*").eq("id", SETTINGS_ID).maybeSingle(),
-      supabase.from("marketing_plans").select("*").eq("site_settings_id", SETTINGS_ID),
-      supabase
-        .from("marketing_schedule_rows")
-        .select("*")
-        .eq("site_settings_id", SETTINGS_ID),
+    const publicSupabase = createSupabasePublicClient();
+    
+    // Fetch settings first to see which site we are on, but don't force ID 1
+    const { data: settings } = await publicSupabase
+      .from("site_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    const actualSettingsId = settings?.id;
+
+    const [{ data: plans }, { data: scheduleRows }] = await Promise.all([
+      actualSettingsId
+        ? publicSupabase.from("marketing_plans").select("*").eq("site_settings_id", actualSettingsId)
+        : publicSupabase.from("marketing_plans").select("*"),
+      actualSettingsId
+        ? publicSupabase
+            .from("marketing_schedule_rows")
+            .select("*")
+            .eq("site_settings_id", actualSettingsId)
+        : publicSupabase.from("marketing_schedule_rows").select("*"),
     ]);
+
+    let testimonials: MarketingTestimonial[] = [];
+
+    if (hasSupabaseServiceRole()) {
+      const adminSupabase = createSupabaseAdminClient();
+      // For dashboard, we might want to list all testimonials or filter by actualSettingsId
+      testimonials = await listMarketingTestimonialsRecord(adminSupabase, {
+        moderationStatuses: ["pending", "approved", "rejected"],
+        siteSettingsId: actualSettingsId,
+      });
+    }
 
     return {
       settings: normalizeSiteSettings(settings),
       plans: normalizeMarketingPlans(plans),
       scheduleRows: normalizeMarketingScheduleRows(scheduleRows),
+      testimonials,
       isFallback: false,
       warning: null,
     };
-  } catch {
+  } catch (error) {
+    console.error("Error en getDashboardMarketingSnapshot:", error);
     return {
       settings: defaultSiteSettings,
       plans: defaultMarketingPlans,
       scheduleRows: defaultMarketingScheduleRows,
+      testimonials: defaultMarketingTestimonials,
       isFallback: true,
       warning: "No se pudo cargar el marketing real. Se muestra contenido fallback.",
     };
@@ -528,6 +660,7 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       settings: defaultSiteSettings,
       plans: defaultMarketingPlans,
       scheduleRows: defaultMarketingScheduleRows,
+      testimonials: defaultMarketingTestimonials,
       leads: [],
       isFallback: true,
       warning: "Supabase no esta configurado. El dashboard usa contenido fallback.",
@@ -540,13 +673,18 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
     { data: settings, error: settingsError },
     { data: plans, error: plansError },
     { data: scheduleRows, error: scheduleRowsError },
+    { data: testimonials, error: testimonialsError },
   ] = await Promise.all([
-    publicSupabase.from("site_settings").select("*").eq("id", SETTINGS_ID).maybeSingle(),
-    publicSupabase.from("marketing_plans").select("*").eq("site_settings_id", SETTINGS_ID),
+    publicSupabase.from("site_settings").select("*").limit(1).maybeSingle(),
+    publicSupabase.from("marketing_plans").select("*"), // Fetch all for dashboard flexibility
+    publicSupabase.from("marketing_schedule_rows").select("*"),
     publicSupabase
-      .from("marketing_schedule_rows")
+      .from("marketing_testimonials")
       .select("*")
-      .eq("site_settings_id", SETTINGS_ID),
+      .eq("moderation_status", "approved")
+      .order("approved_at", { ascending: false })
+      .order("updated_at", { ascending: false })
+      .limit(3),
   ]);
 
   const warnings: string[] = [];
@@ -557,6 +695,10 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
 
   if (plansError || scheduleRowsError) {
     warnings.push("No se pudo cargar parte del contenido comercial editable.");
+  }
+
+  if (testimonialsError) {
+    warnings.push("No se pudieron cargar las reseñas aprobadas de marketing.");
   }
 
   if (!hasSupabaseServiceRole()) {
@@ -572,6 +714,9 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
       scheduleRows: scheduleRowsError
         ? defaultMarketingScheduleRows
         : normalizeMarketingScheduleRows(scheduleRows),
+      testimonials: testimonialsError
+        ? defaultMarketingTestimonials
+        : normalizeMarketingTestimonials(testimonials),
       leads: [],
       isFallback: true,
       warning: warnings.join(" "),
@@ -594,10 +739,152 @@ export async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
     scheduleRows: scheduleRowsError
       ? defaultMarketingScheduleRows
       : normalizeMarketingScheduleRows(scheduleRows),
+    testimonials: testimonialsError
+      ? defaultMarketingTestimonials
+      : normalizeMarketingTestimonials(testimonials),
     leads: leadsError ? [] : normalizeLeads(leads),
     isFallback: warnings.length > 0,
     warning: warnings.length > 0 ? warnings.join(" ") : null,
   };
+}
+
+export async function listMarketingTestimonialsRecord(
+  supabase: GymSupabaseClient,
+  options?: {
+    limit?: number;
+    moderationStatuses?: MarketingTestimonialModerationStatus[];
+    userId?: string;
+    siteSettingsId?: string | number;
+  },
+) {
+  let query = supabase.from("marketing_testimonials").select("*");
+
+  // Use the provided ID, or the default check if it's meant to be site-specific
+  if (options?.siteSettingsId !== undefined && options.siteSettingsId !== null) {
+    const siteSettingsId =
+      typeof options.siteSettingsId === "string"
+        ? Number(options.siteSettingsId)
+        : options.siteSettingsId;
+
+    query = query.eq("site_settings_id", siteSettingsId);
+  }
+
+  query = query
+    .order("approved_at", { ascending: false })
+    .order("updated_at", { ascending: false });
+
+  if (options?.moderationStatuses?.length === 1) {
+    query = query.eq("moderation_status", options.moderationStatuses[0]);
+  } else if (options?.moderationStatuses?.length) {
+    query = query.in("moderation_status", options.moderationStatuses);
+  }
+
+  if (options?.userId) {
+    query = query.eq("supabase_user_id", options.userId);
+  }
+
+  if (typeof options?.limit === "number") {
+    query = query.limit(options.limit);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "las resenas"));
+  }
+
+  return normalizeMarketingTestimonials(data);
+}
+
+export async function getMemberMarketingTestimonialRecord(
+  supabase: GymSupabaseClient,
+  userId: string,
+) {
+  // Try to get the settings id if not forced
+  const { data: settings } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
+  const actualSettingsId = settings?.id;
+
+  let query = supabase.from("marketing_testimonials").select("*").eq("supabase_user_id", userId);
+
+  if (actualSettingsId) {
+    query = query.eq("site_settings_id", actualSettingsId);
+  }
+
+  const { data, error } = await query.maybeSingle();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "tu resena"));
+  }
+
+  return normalizeMarketingTestimonial(data);
+}
+
+export async function upsertMemberMarketingTestimonialRecord(
+  supabase: GymSupabaseClient,
+  values: Database["public"]["Tables"]["marketing_testimonials"]["Insert"],
+) {
+  // Ensure we use a valid site_settings_id
+  const { data: settings } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
+  const actualSettingsId = settings?.id ?? SETTINGS_ID;
+
+  const payload: Database["public"]["Tables"]["marketing_testimonials"]["Insert"] = {
+    ...values,
+    site_settings_id: actualSettingsId,
+    approved_at: null,
+    moderation_status: "pending",
+    updated_at: new Date().toISOString(),
+  };
+
+  const { data, error } = await supabase
+    .from("marketing_testimonials")
+    .upsert(payload, { onConflict: "supabase_user_id" })
+    .select("*")
+    .single();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "tu resena"));
+  }
+
+  const normalized = normalizeMarketingTestimonial(data);
+
+  if (!normalized) {
+    throw new Error("La resena guardada quedo en un estado invalido.");
+  }
+
+  return normalized;
+}
+
+export async function moderateMarketingTestimonialRecord(
+  supabase: GymSupabaseClient,
+  id: string,
+  moderationStatus: Extract<MarketingTestimonialModerationStatus, "approved" | "rejected">,
+) {
+  const { data, error } = await supabase
+    .from("marketing_testimonials")
+    .update({
+      approved_at: moderationStatus === "approved" ? new Date().toISOString() : null,
+      moderation_status: moderationStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(mapSupabaseError(error, "la resena"));
+  }
+
+  if (!data) {
+    throw new Error("La resena que intentas moderar ya no existe.");
+  }
+
+  const normalized = normalizeMarketingTestimonial(data);
+
+  if (!normalized) {
+    throw new Error("La resena moderada quedo en un estado invalido.");
+  }
+
+  return normalized;
 }
 
 function toCmsSnapshot(
@@ -716,11 +1003,15 @@ export async function getMarketingPlansRecord(
   supabase: GymSupabaseClient,
   options?: { includeInactive?: boolean },
 ) {
-  let query = supabase
-    .from("marketing_plans")
-    .select("*")
-    .eq("site_settings_id", SETTINGS_ID)
-    .order("order", { ascending: true });
+  // Attempt to get the site settings id to filter correctly if possible
+  const { data: settings } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
+  const actualSettingsId = settings?.id;
+
+  let query = supabase.from("marketing_plans").select("*").order("order", { ascending: true });
+
+  if (actualSettingsId) {
+    query = query.eq("site_settings_id", actualSettingsId);
+  }
 
   if (!options?.includeInactive) {
     query = query.eq("is_active", true);
@@ -739,11 +1030,15 @@ export async function getMarketingScheduleRowsRecord(
   supabase: GymSupabaseClient,
   options?: { includeInactive?: boolean },
 ) {
-  let query = supabase
-    .from("marketing_schedule_rows")
-    .select("*")
-    .eq("site_settings_id", SETTINGS_ID)
-    .order("order", { ascending: true });
+  // Attempt to get the site settings id to filter correctly if possible
+  const { data: settings } = await supabase.from("site_settings").select("id").limit(1).maybeSingle();
+  const actualSettingsId = settings?.id;
+
+  let query = supabase.from("marketing_schedule_rows").select("*").order("order", { ascending: true });
+
+  if (actualSettingsId) {
+    query = query.eq("site_settings_id", actualSettingsId);
+  }
 
   if (!options?.includeInactive) {
     query = query.eq("is_active", true);

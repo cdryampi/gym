@@ -8,12 +8,15 @@ import {
   Activity,
   History,
   ExternalLink,
-  Lock
+  Lock,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 
 import MemberAccountSettings from "@/components/auth/MemberAccountSettings";
+import MemberTestimonialForm from "@/components/auth/MemberTestimonialForm";
 import AuthFeedbackDialog from "@/components/auth/AuthFeedbackDialog";
+import { MemberSignOutButtonWithRedirect } from "@/components/auth/MemberSignOutButton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { requireMemberUser } from "@/lib/auth";
@@ -24,7 +27,10 @@ import {
   pickupRequestStatusLabels,
 } from "@/lib/cart/pickup-request";
 import { getCurrentCartSnapshot } from "@/lib/cart/server";
-import { getMemberAccountViewModel } from "@/lib/data/member-account";
+import {
+  getAuthenticatedMemberTestimonial,
+  getMemberAccountViewModel,
+} from "@/lib/data/member-account";
 import { ensureMemberProfileForUser } from "@/lib/data/gym-management";
 import { getMemberPickupRequestsHistory } from "@/lib/data/pickup-requests";
 import {
@@ -33,7 +39,10 @@ import {
 } from "@/lib/member-account";
 import DashboardNotice from "@/components/admin/DashboardNotice";
 import { cn } from "@/lib/utils";
-import type { MemberAccountViewModel } from "@/lib/data/member-account";
+import type {
+  MemberAccountViewModel,
+  MemberMarketingTestimonialViewModel,
+} from "@/lib/data/member-account";
 import type { Cart, PickupRequestDetail } from "@/lib/cart/types";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +75,7 @@ export default async function MemberAccountPage() {
     phone: null
   };
   let activeCart: Cart | null = null;
+  let testimonial: MemberMarketingTestimonialViewModel | null = null;
   let pickupHistory = { pickupRequests: [] as PickupRequestDetail[], warning: null as string | null };
   let loadError: string | null = null;
 
@@ -77,25 +87,33 @@ export default async function MemberAccountPage() {
       loadError = getSafeErrorMessage(e, "No se pudo sincronizar la ficha base del socio.");
     }
 
-    const [accResult, cartResult, historyResult] = await Promise.allSettled([
+    const [accResult, cartResult, historyResult, testimonialResult] = await Promise.allSettled([
       getMemberAccountViewModel(user),
       getCurrentCartSnapshot(),
       getMemberPickupRequestsHistory({
         email: user.email,
         supabaseUserId: user.id,
-      })
+      }),
+      getAuthenticatedMemberTestimonial(),
     ]);
 
     if (accResult.status === "fulfilled") account = accResult.value;
     if (cartResult.status === "fulfilled") activeCart = cartResult.value;
     if (historyResult.status === "fulfilled") pickupHistory = historyResult.value;
+    if (testimonialResult.status === "fulfilled") testimonial = testimonialResult.value;
     
-    if (accResult.status === "rejected" || historyResult.status === "rejected") {
+    if (
+      accResult.status === "rejected" ||
+      historyResult.status === "rejected" ||
+      testimonialResult.status === "rejected"
+    ) {
        const rejectedReason =
          accResult.status === "rejected"
            ? accResult.reason
            : historyResult.status === "rejected"
              ? historyResult.reason
+             : testimonialResult.status === "rejected"
+               ? testimonialResult.reason
              : null;
        loadError = getSafeErrorMessage(
          rejectedReason,
@@ -134,6 +152,8 @@ export default async function MemberAccountPage() {
          </div>
          <div className="flex items-center gap-4">
             <Badge variant="success" className="bg-green-500/10 text-green-500 border-none font-black uppercase text-[8px] h-6 px-3">Sessión Activa</Badge>
+            <div className="h-6 w-px bg-white/10" />
+            <MemberSignOutButtonWithRedirect />
             <div className="h-6 w-px bg-white/10" />
             <Link href="/" className="text-[10px] font-black uppercase text-white/60 hover:text-white transition-colors flex items-center gap-2">
                Sitio Público <ExternalLink className="h-3 w-3" />
@@ -261,6 +281,18 @@ export default async function MemberAccountPage() {
                    <div className="bg-white border border-black/10 p-10 shadow-lg">
                       <MemberAccountSettings initialAccount={account} />
                    </div>
+                </section>
+
+                <section className="space-y-8">
+                   <div className="flex items-center gap-4 border-b border-black/10 pb-6">
+                      <div className="h-14 w-14 bg-[#111111] flex items-center justify-center">
+                         <Star className="h-7 w-7 text-[#d71920]" />
+                      </div>
+                      <h2 className="font-display text-4xl font-black uppercase tracking-tighter text-[#111111]">
+                        Resena de la Comunidad
+                      </h2>
+                   </div>
+                   <MemberTestimonialForm initialTestimonial={testimonial} />
                 </section>
 
                 {/* SECTION: E-COMMERCE */}

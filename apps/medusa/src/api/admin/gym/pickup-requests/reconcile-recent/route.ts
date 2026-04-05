@@ -42,7 +42,8 @@ export async function POST(
       select distinct
         o.id as order_id,
         oc.cart_id,
-        o.email
+        o.email,
+        o.created_at
       from "order" o
       inner join order_cart oc
         on oc.order_id = o.id
@@ -52,7 +53,7 @@ export async function POST(
       where o.deleted_at is null
         and pr.id is null
         and o.created_at >= now() - (? * interval '1 hour')
-        and (? is null or lower(o.email) = ?)
+        and (?::text is null or lower(o.email) = ?::text)
       order by o.created_at desc
       limit ?
     `,

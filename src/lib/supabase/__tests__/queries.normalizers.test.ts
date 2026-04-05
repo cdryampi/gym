@@ -7,7 +7,7 @@ import {
   normalizeSiteSettings,
 } from "@/lib/supabase/queries";
 
-describe("supabase queries helpers", () => {
+describe("supabase queries normalizers", () => {
   it("normalizes site settings with fallback values", () => {
     const settings = normalizeSiteSettings({
       site_name: "  ",

@@ -147,6 +147,9 @@ export default function GymInfoForm({ settings, disabledReason }: GymInfoFormPro
                 <FormControl>
                   <Input placeholder="https://wa.me/..." {...field} />
                 </FormControl>
+                <p className="text-xs leading-5 text-[#5f6368]">
+                  Este enlace alimenta el boton flotante de WhatsApp que se muestra en la portada.
+                </p>
                 <FormMessage />
               </FormItem>
             )}

@@ -33,13 +33,6 @@ export interface FeaturedProduct {
   imageUrl: string;
 }
 
-export interface Testimonial {
-  quote: string;
-  name: string;
-  detail: string;
-  initials: string;
-}
-
 export const novaForzaHomeContent = {
   navItems: [
     { href: "/#inicio", label: "Inicio" },
@@ -117,29 +110,6 @@ export const novaForzaHomeContent = {
       imageUrl: "/images/products/product-7.png",
     },
   ] satisfies FeaturedProduct[],
-  testimonials: [
-    {
-      quote:
-        "El mejor ambiente en Lima para entrenar pesado. Los entrenadores realmente saben lo que hacen y no es el tipico gimnasio comercial donde nadie te ayuda.",
-      name: "Miguel Alva",
-      detail: "Socio desde 2022",
-      initials: "MA",
-    },
-    {
-      quote:
-        "Gracias a la asesoria nutricional y el plan Elite, logre bajar 10kg en 4 meses y ganar masa muscular. La infraestructura es impecable.",
-      name: "Sofia Carrillo",
-      detail: "Socio desde 2023",
-      initials: "SC",
-    },
-    {
-      quote:
-        "La limpieza y el orden en la zona de pesas es lo que mas valoro. Maquinas de primer nivel que no encuentras en otros lados de la ciudad.",
-      name: "Renzo Paredes",
-      detail: "Socio desde 2021",
-      initials: "RP",
-    },
-  ] satisfies Testimonial[],
   contact: {
     address: "Av. Javier Prado Este 1234, San Isidro, Lima, Peru",
     whatsappLabel: "WhatsApp de atencion",

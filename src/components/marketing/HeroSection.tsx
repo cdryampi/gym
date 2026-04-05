@@ -44,8 +44,8 @@ export default function HeroSection({ settings }: { settings: SiteSettings }) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,_rgba(215,25,32,0.08)_0%,_transparent_50%)]" />
 
       <div className="section-shell relative z-10 flex min-h-screen flex-col justify-center py-24">
-        <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
-          <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+        <div className="grid gap-16 lg:grid-cols-12 lg:items-center">
+          <div className="flex flex-col items-center text-center lg:col-span-7 lg:items-start lg:text-left">
             <div className="animate-slide-up flex items-center gap-3 reveal-1 [animation-fill-mode:forwards]">
               <span className="h-2 w-2 rounded-full bg-accent" />
               <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-accent">
@@ -53,9 +53,9 @@ export default function HeroSection({ settings }: { settings: SiteSettings }) {
               </p>
             </div>
 
-            <h2 className="animate-slide-up mt-8 font-display text-[52px] font-extrabold uppercase italic leading-[1] tracking-tight reveal-2 sm:text-[72px] lg:text-[100px] [animation-fill-mode:forwards]">
+            <h1 className="animate-slide-up mt-8 font-display text-[40px] font-extrabold uppercase italic leading-[0.95] tracking-tight reveal-2 sm:text-[56px] lg:text-[82px] [animation-fill-mode:forwards]">
               {renderTitleLines([...titleParts.left, ...titleParts.right], true)}
-            </h2>
+            </h1>
 
             <p className="animate-slide-up mt-10 max-w-xl text-[16px] leading-relaxed text-white/60 reveal-4 sm:text-[18px] [animation-fill-mode:forwards]">
               {settings.hero_description}
@@ -89,11 +89,11 @@ export default function HeroSection({ settings }: { settings: SiteSettings }) {
             </div>
           </div>
 
-          <div className="relative">
-            <div className="animate-slide-up relative mx-auto w-full max-w-[420px] reveal-2 [animation-fill-mode:forwards]">
+          <div className="relative lg:col-span-5">
+            <div className="animate-slide-up relative mx-auto w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] reveal-2 [animation-fill-mode:forwards]">
               <div className="pointer-events-none absolute inset-0 -z-10 bg-accent/20 blur-[120px]" />
 
-              <div className="relative aspect-[4/5] overflow-hidden border border-white/10">
+              <div className="relative aspect-[9/16] overflow-hidden rounded-[2.5rem] border-[6px] border-[#1a1a1a] shadow-2xl shadow-accent/20">
                 <Image
                   src={FALLBACK_IMAGE}
                   alt="Nova Forza Hero"
@@ -112,8 +112,6 @@ export default function HeroSection({ settings }: { settings: SiteSettings }) {
                 >
                   <source src={heroVideoUrl} type="video/mp4" />
                 </video>
-
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#090909_0%,transparent_20%,transparent_80%,#090909_100%)]" />
               </div>
             </div>
 

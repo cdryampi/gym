@@ -13,6 +13,56 @@ import {
   type MedusaStoreOrder,
 } from "./medusa-shared";
 
+type BrowserCartApiPayload = {
+  cart?: ReturnType<typeof mapMedusaCart>;
+  error?: string;
+};
+
+function isBrowserRuntime() {
+  return typeof window !== "undefined";
+}
+
+async function readBrowserCartApiResponse(response: Response) {
+  return (await response.json().catch(() => null)) as BrowserCartApiPayload | null;
+}
+
+async function callBrowserCartApi(
+  input:
+    | { method: "GET"; cartId: string }
+    | {
+        method: "POST";
+        body:
+          | { action: "create"; email?: string | null }
+          | { action: "add-item"; cartId: string; variantId: string; quantity: number }
+          | { action: "update-item"; cartId: string; lineItemId: string; quantity: number }
+          | { action: "delete-item"; cartId: string; lineItemId: string }
+          | { action: "update-email"; cartId: string; email: string };
+      },
+) {
+  const response =
+    input.method === "GET"
+      ? await fetch(`/api/cart/store?cartId=${encodeURIComponent(input.cartId)}`, {
+          method: "GET",
+          credentials: "same-origin",
+        })
+      : await fetch("/api/cart/store", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(input.body),
+        });
+
+  const payload = await readBrowserCartApiResponse(response);
+
+  if (!response.ok || !payload?.cart) {
+    throw new Error(payload?.error ?? "No se pudo completar la operacion del carrito.");
+  }
+
+  return payload.cart;
+}
+
 function getRequiredMedusaRegionId() {
   const config = getMedusaStorefrontConfig();
 
@@ -34,7 +84,18 @@ async function retrieveRawCart(cartId: string) {
 }
 
 export async function createCart(email?: string | null) {
+  if (isBrowserRuntime()) {
+    return callBrowserCartApi({
+      method: "POST",
+      body: {
+        action: "create",
+        email,
+      },
+    });
+  }
+
   const sdk = getMedusaSdk();
+  const config = getMedusaStorefrontConfig();
 
   try {
     const { cart } = await sdk.store.cart.create(
@@ -49,12 +110,20 @@ export async function createCart(email?: string | null) {
 
     return mapMedusaCart(cart as MedusaCart);
   } catch (error) {
-    throw new Error(`No se pudo crear el carrito: ${toCartError(error, "fallo desconocido")}`);
+    throw new Error(`No se pudo crear el carrito en ${config.backendUrl}: ${toCartError(error, "fallo desconocido")}`);
   }
 }
 
 export async function retrieveCart(cartId: string) {
+  if (isBrowserRuntime()) {
+    return callBrowserCartApi({
+      method: "GET",
+      cartId,
+    });
+  }
+
   const sdk = getMedusaSdk();
+  const config = getMedusaStorefrontConfig();
 
   try {
     const { cart } = await sdk.store.cart.retrieve(cartId, {
@@ -62,11 +131,23 @@ export async function retrieveCart(cartId: string) {
     });
     return mapMedusaCart(cart as MedusaCart);
   } catch (error) {
-    throw new Error(`No se pudo cargar el carrito: ${toCartError(error, "fallo desconocido")}`);
+    throw new Error(`No se pudo cargar el carrito ${cartId} desde ${config.backendUrl}: ${toCartError(error, "fallo desconocido")}`);
   }
 }
 
 export async function addCartLineItem(cartId: string, variantId: string, quantity: number) {
+  if (isBrowserRuntime()) {
+    return callBrowserCartApi({
+      method: "POST",
+      body: {
+        action: "add-item",
+        cartId,
+        variantId,
+        quantity,
+      },
+    });
+  }
+
   const sdk = getMedusaSdk();
 
   try {
@@ -88,6 +169,18 @@ export async function addCartLineItem(cartId: string, variantId: string, quantit
 }
 
 export async function updateCartLineItem(cartId: string, lineItemId: string, quantity: number) {
+  if (isBrowserRuntime()) {
+    return callBrowserCartApi({
+      method: "POST",
+      body: {
+        action: "update-item",
+        cartId,
+        lineItemId,
+        quantity,
+      },
+    });
+  }
+
   const sdk = getMedusaSdk();
 
   try {
@@ -111,6 +204,17 @@ export async function updateCartLineItem(cartId: string, lineItemId: string, qua
 }
 
 export async function deleteCartLineItem(cartId: string, lineItemId: string) {
+  if (isBrowserRuntime()) {
+    return callBrowserCartApi({
+      method: "POST",
+      body: {
+        action: "delete-item",
+        cartId,
+        lineItemId,
+      },
+    });
+  }
+
   const sdk = getMedusaSdk();
 
   try {
@@ -124,6 +228,17 @@ export async function deleteCartLineItem(cartId: string, lineItemId: string) {
 }
 
 export async function updateCartEmail(cartId: string, email: string) {
+  if (isBrowserRuntime()) {
+    return callBrowserCartApi({
+      method: "POST",
+      body: {
+        action: "update-email",
+        cartId,
+        email,
+      },
+    });
+  }
+
   const sdk = getMedusaSdk();
 
   try {

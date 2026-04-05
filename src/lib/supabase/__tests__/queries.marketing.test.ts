@@ -3,10 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 import {
   defaultMarketingPlans,
   defaultMarketingScheduleRows,
+  defaultMarketingTestimonials,
 } from "@/lib/data/marketing-content";
 import {
   normalizeMarketingPlans,
   normalizeMarketingScheduleRows,
+  normalizeMarketingTestimonials,
   saveMarketingContentRecord,
 } from "@/lib/supabase/queries";
 import type { MarketingContentValues } from "@/lib/validators/marketing";
@@ -76,6 +78,33 @@ describe("normalizeMarketingScheduleRows", () => {
 
     expect(rows.map((row) => row.label)).toEqual(["Manana", "Noche"]);
     expect(normalizeMarketingScheduleRows(null)).toHaveLength(defaultMarketingScheduleRows.length);
+  });
+});
+
+describe("normalizeMarketingTestimonials", () => {
+  it("keeps testimonials normalized and ordered by query output", () => {
+    const testimonials = normalizeMarketingTestimonials([
+      {
+        id: "testimonial-1",
+        site_settings_id: 1,
+        member_profile_id: "member-1",
+        supabase_user_id: "user-1",
+        quote: "El mejor lugar para entrenar con constancia.",
+        rating: 5,
+        author_name: "Titan Uno",
+        author_detail: "Socio desde 2024",
+        author_initials: "TU",
+        moderation_status: "approved",
+        approved_at: "2026-04-04T12:00:00.000Z",
+        created_at: new Date(0).toISOString(),
+        updated_at: new Date(0).toISOString(),
+      },
+    ]);
+
+    expect(testimonials).toHaveLength(1);
+    expect(testimonials[0]?.author_name).toBe("Titan Uno");
+    expect(testimonials[0]?.rating).toBe(5);
+    expect(normalizeMarketingTestimonials(null)).toEqual(defaultMarketingTestimonials);
   });
 });
 

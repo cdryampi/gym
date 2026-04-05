@@ -196,15 +196,15 @@ describe("medusa store admin repository mappers", () => {
 
     expect(payload.images).toEqual([
       {
-        url: "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/product-images/straps.png",
+        url: "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/straps.png",
       },
       {
-        url: "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/product-images/nova-guantes.png",
+        url: "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/nova-guantes.png",
       },
     ]);
     expect(payload.metadata.storefront_images).toEqual([
-      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/product-images/straps.png",
-      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/product-images/nova-guantes.png",
+      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/straps.png",
+      "https://nbjkfyjeewprnxxibhwz.supabase.co/storage/v1/object/public/medusa-media/nova-guantes.png",
     ]);
     expect(payload.metadata.paypal_price_usd).toBe(4.75);
   });

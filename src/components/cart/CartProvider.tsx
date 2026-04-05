@@ -90,7 +90,28 @@ export function CartProvider({
   const [isBusy, setIsBusy] = useState(false);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const lastSyncedSignature = useRef<string | null>(null);
+  const abandonedCartIdsRef = useRef<Set<string>>(new Set());
   const completeCheckoutInFlightRef = useRef(false);
+
+  function isRecoverableCartFlowMessage(message: string | null | undefined) {
+    if (!message) {
+      return false;
+    }
+
+    const normalized = message.toLowerCase();
+
+    return (
+      isMissingCartMessage(message) ||
+      normalized.includes("failed to fetch") ||
+      normalized.includes("fetch failed") ||
+      normalized.includes("networkerror") ||
+      normalized.includes("network request failed") ||
+      normalized.includes("internal server error") ||
+      normalized.includes("unknown error occurred") ||
+      normalized.includes("no se pudo vincular el carrito") ||
+      normalized.includes("no se pudo recuperar el carrito activo del socio")
+    );
+  }
 
   function commitCart(nextCart: Cart | null) {
     setCart(nextCart);
@@ -103,7 +124,11 @@ export function CartProvider({
     clearCartIdCookie();
   }
 
-  function invalidateBrokenCart(message?: string | null) {
+  function invalidateBrokenCart(message?: string | null, brokenId?: string | null) {
+    if (brokenId) {
+      abandonedCartIdsRef.current.add(brokenId);
+    }
+
     commitCart(null);
     setLastSubmittedPickupRequest(null);
     setPickupEmailWarning(null);
@@ -124,6 +149,12 @@ export function CartProvider({
       return;
     }
 
+    if (abandonedCartIdsRef.current.has(cartId)) {
+      commitCart(null);
+      setIsReady(true);
+      return;
+    }
+
     try {
       const nextCart = await retrieveCart(cartId);
 
@@ -137,11 +168,13 @@ export function CartProvider({
       setError(null);
       setNotice(null);
     } catch (refreshError) {
-      invalidateBrokenCart(
-        isMissingCartMessage(getErrorMessage(refreshError, ""))
-          ? STALE_CART_MESSAGE
-          : getErrorMessage(refreshError, "No se pudo cargar el carrito."),
-      );
+      const message = getErrorMessage(refreshError, "");
+
+      if (isMissingCartMessage(message)) {
+        invalidateBrokenCart(null, cartId);
+      } else {
+        invalidateBrokenCart(getErrorMessage(refreshError, "No se pudo cargar el carrito."), cartId);
+      }
     } finally {
       setIsReady(true);
     }
@@ -153,8 +186,9 @@ export function CartProvider({
 
     if (!response.ok) {
       if (isMissingCartMessage(payload?.error ?? null)) {
-        invalidateBrokenCart(STALE_CART_MESSAGE);
+        invalidateBrokenCart(STALE_CART_MESSAGE, targetCartId);
       }
+
       throw new Error(payload?.error ?? "No se pudo vincular el carrito a la cuenta.");
     }
 
@@ -162,6 +196,10 @@ export function CartProvider({
     setNotice(null);
 
     if (payload?.cart) {
+      if (abandonedCartIdsRef.current.has(payload.cart.id)) {
+        return null;
+      }
+
       commitCart(payload.cart);
       return payload.cart;
     }
@@ -169,15 +207,48 @@ export function CartProvider({
     return null;
   }
 
-  async function ensureCart() {
-    if (cart?.id) {
+  async function ensureCart(options?: { forceFresh?: boolean }) {
+    if (!options?.forceFresh && cart?.id) {
       return cart.id;
     }
 
     setLastSubmittedPickupRequest(null);
     setPickupEmailWarning(null);
+
+    if (memberEmail) {
+      try {
+        const recoveredCart = await syncCartWithMember(null);
+
+        if (recoveredCart?.id) {
+          commitCart(recoveredCart);
+          return recoveredCart.id;
+        }
+      } catch (syncError) {
+        const message = getErrorMessage(syncError, "");
+
+        if (!isRecoverableCartFlowMessage(message)) {
+          throw syncError;
+        }
+      }
+    }
+
     const nextCart = await createCart(memberEmail);
     commitCart(nextCart);
+
+    if (memberEmail && !nextCart.customerId) {
+      try {
+        const syncedCart = await syncCartWithMember(nextCart.id);
+        commitCart(syncedCart ?? nextCart);
+        return (syncedCart ?? nextCart).id;
+      } catch (syncError) {
+        const message = getErrorMessage(syncError, "");
+
+        if (!isRecoverableCartFlowMessage(message)) {
+          throw syncError;
+        }
+      }
+    }
+
     return nextCart.id;
   }
 
@@ -208,6 +279,7 @@ export function CartProvider({
       );
 
       if (isMissingCartMessage(message)) {
+        invalidateBrokenCart(null);
         return;
       }
 
@@ -253,7 +325,7 @@ export function CartProvider({
     try {
       await action();
     } catch (actionError) {
-      const message = getErrorMessage(actionError, "La operación del carrito no se pudo completar.");
+      const message = getErrorMessage(actionError, "La operacion del carrito no se pudo completar.");
 
       if (isMissingCartMessage(message)) {
         invalidateBrokenCart(STALE_CART_MESSAGE);
@@ -270,7 +342,22 @@ export function CartProvider({
     await runBusyAction(async () => {
       setLastSubmittedPickupRequest(null);
       setPickupEmailWarning(null);
-      let cartId = await ensureCart();
+
+      let cartId: string;
+
+      try {
+        cartId = await ensureCart();
+      } catch (ensureError) {
+        const message = getErrorMessage(ensureError, "");
+
+        if (isRecoverableCartFlowMessage(message)) {
+          invalidateBrokenCart(null, cart?.id);
+          cartId = await ensureCart({ forceFresh: true });
+        } else {
+          throw ensureError;
+        }
+      }
+
       let nextCart: Cart;
 
       try {
@@ -278,21 +365,28 @@ export function CartProvider({
       } catch (addError) {
         const message = getErrorMessage(addError, "No se pudo anadir el producto.");
 
-        if (!isMissingCartMessage(message)) {
+        if (!isRecoverableCartFlowMessage(message)) {
           throw addError;
         }
 
-        const replacementCart = await createCart(memberEmail);
-        commitCart(replacementCart);
-        cartId = replacementCart.id;
+        invalidateBrokenCart(null, cartId);
+        cartId = await ensureCart({ forceFresh: true });
         nextCart = await addCartLineItem(cartId, input.variantId, input.quantity);
       }
 
       commitCart(nextCart);
 
       if (memberEmail && !nextCart.customerId) {
-        const syncedCart = await syncCartWithMember(nextCart.id);
-        commitCart(syncedCart ?? nextCart);
+        try {
+          const syncedCart = await syncCartWithMember(nextCart.id);
+          commitCart(syncedCart ?? nextCart);
+        } catch (syncError) {
+          const message = getErrorMessage(syncError, "");
+
+          if (!isRecoverableCartFlowMessage(message)) {
+            throw syncError;
+          }
+        }
       }
 
       startTransition(() => {
@@ -345,9 +439,9 @@ export function CartProvider({
       return null;
     }
 
-      setIsBusy(true);
-      setError(null);
-      setNotice(null);
+    setIsBusy(true);
+    setError(null);
+    setNotice(null);
 
     try {
       const { response, payload } = await postJson<CartApiPayload>(

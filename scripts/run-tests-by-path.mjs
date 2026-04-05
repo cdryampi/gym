@@ -52,9 +52,21 @@ function findSiblingTests(filePath, extensions) {
   const directory = path.dirname(filePath);
   const basename = path.basename(filePath, path.extname(filePath));
   const directCandidates = extensions.map((extension) => path.join(directory, `${basename}${extension}`));
-  const nestedCandidates = extensions.map((extension) =>
-    path.join(directory, "__tests__", `${basename}${extension}`),
-  );
+  const testsDirectory = path.join(directory, "__tests__");
+  const nestedCandidates = fs.existsSync(testsDirectory)
+    ? fs
+        .readdirSync(testsDirectory, { withFileTypes: true })
+        .filter((entry) => entry.isFile())
+        .map((entry) => path.join(testsDirectory, entry.name))
+        .filter((candidate) => {
+          if (!isTestFile(candidate, extensions)) {
+            return false;
+          }
+
+          const candidateBasename = path.basename(candidate, path.extname(candidate));
+          return candidateBasename === basename || candidateBasename.startsWith(`${basename}.`);
+        })
+    : [];
 
   return [...directCandidates, ...nestedCandidates].filter((candidate) => fs.existsSync(candidate));
 }

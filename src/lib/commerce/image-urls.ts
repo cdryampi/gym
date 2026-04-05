@@ -2,7 +2,10 @@ import { SITE_URL } from "@/lib/seo";
 
 const LOCALHOST_HOSTS = new Set(["localhost", "127.0.0.1"]);
 const DEFAULT_PRODUCTS_PATH = "/images/products";
-export const PRODUCT_IMAGES_BUCKET = "product-images";
+export const PRODUCT_IMAGES_BUCKET =
+  process.env.NEXT_PUBLIC_COMMERCE_MEDIA_BUCKET ??
+  process.env.COMMERCE_MEDIA_BUCKET ??
+  "medusa-media";
 const DEFAULT_PRODUCTS_BUCKET = PRODUCT_IMAGES_BUCKET;
 
 function trimUrl(value: string | null | undefined) {

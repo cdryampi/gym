@@ -8,7 +8,7 @@ const marketingPlanFeatureSchema = z.object({
 });
 
 const marketingPlanSchema = z.object({
-  id: z.string().uuid("El identificador del plan no es valido."),
+  id: z.string().min(1, "El identificador es obligatorio."),
   title: z.string().trim().min(2, "El nombre del plan es obligatorio.").max(80, "Maximo 80 caracteres."),
   description: optionalShortText,
   price_label: z.string().trim().min(1, "El precio visible es obligatorio.").max(40, "Maximo 40 caracteres."),
@@ -21,7 +21,7 @@ const marketingPlanSchema = z.object({
 });
 
 const marketingScheduleRowSchema = z.object({
-  id: z.string().uuid("El identificador del horario no es valido."),
+  id: z.string().min(1, "El identificador es obligatorio."),
   label: z.string().trim().min(2, "El titulo del horario es obligatorio.").max(80, "Maximo 80 caracteres."),
   description: optionalShortText,
   opens_at: z.string().trim().min(2, "La hora de apertura es obligatoria.").max(40, "Maximo 40 caracteres."),

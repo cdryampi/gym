@@ -32,6 +32,24 @@ export interface MarketingScheduleRow {
   updated_at: string;
 }
 
+export type MarketingTestimonialModerationStatus = "pending" | "approved" | "rejected";
+
+export interface MarketingTestimonial {
+  id: string;
+  site_settings_id: number;
+  member_profile_id: string;
+  supabase_user_id: string;
+  quote: string;
+  rating: number;
+  author_name: string;
+  author_detail: string;
+  author_initials: string;
+  moderation_status: MarketingTestimonialModerationStatus;
+  approved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 const nowIso = new Date(0).toISOString();
 
 export const defaultMarketingPlans: MarketingPlan[] = [
@@ -134,3 +152,5 @@ export const defaultMarketingScheduleRows: MarketingScheduleRow[] = [
     updated_at: nowIso,
   },
 ];
+
+export const defaultMarketingTestimonials: MarketingTestimonial[] = [];
