@@ -381,6 +381,20 @@ async function cleanupDeletedMemberAuthReferences(client: GymAdminClient, userId
   }
 }
 
+async function deleteMemberAuthUserIfAllowed(client: GymAdminClient, member: MemberDeleteCandidate) {
+  const auth = getFirebaseAdminAuth();
+  const authCandidate = await resolveMemberAuthDeleteCandidate(auth, member);
+
+  if (!authCandidate || (await hasProtectedMemberAuthRole(authCandidate.uid))) {
+    return;
+  }
+
+  // Primero liberamos Firebase para asegurar que el re-registro sea posible
+  await auth.deleteUser(authCandidate.uid);
+  // Luego limpiamos referencias cruzadas en Supabase vinculadas al UID de Firebase
+  await cleanupDeletedMemberAuthReferences(client, authCandidate.uid);
+}
+
 async function cleanupMemberOperationalData(client: GymAdminClient, memberId: string) {
   const { error: planError } = await client
     .from("member_plan_snapshots")
@@ -1465,6 +1479,8 @@ export async function archiveMemberProfile(memberId: string) {
     throw new Error("Socio no encontrado.");
   }
 
+  await deleteMemberAuthUserIfAllowed(client, member as MemberDeleteCandidate);
+
   // Archive: change status to former, unlink auth user, keep all history
   const { error: updateError } = await client
     .from("member_profiles")
@@ -1493,15 +1509,7 @@ export async function deleteMemberProfile(memberId: string) {
   }
 
   if (member) {
-    const auth = getFirebaseAdminAuth();
-    const authCandidate = await resolveMemberAuthDeleteCandidate(auth, member as MemberDeleteCandidate);
-
-    if (authCandidate && !(await hasProtectedMemberAuthRole(authCandidate.uid))) {
-      // Primero liberamos Firebase para asegurar que el re-registro sea posible
-      await auth.deleteUser(authCandidate.uid);
-      // Luego limpiamos referencias cruzadas en Supabase vinculadas al UID de Firebase
-      await cleanupDeletedMemberAuthReferences(client, authCandidate.uid);
-    }
+    await deleteMemberAuthUserIfAllowed(client, member as MemberDeleteCandidate);
 
     // Limpieza de datos operativos de la ficha (Planes, rutinas, etc)
     await cleanupMemberOperationalData(client, member.id);
