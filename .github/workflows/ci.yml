@@ -148,8 +148,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect Medusa changes
+        id: medusa_changes
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+
+          if git diff --quiet "$BASE_SHA" HEAD -- apps/medusa docker-compose.dokploy.yml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Setup Node
+        if: steps.medusa_changes.outputs.changed == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -157,13 +176,17 @@ jobs:
           cache-dependency-path: apps/medusa/package-lock.json
 
       - name: Install dependencies
+        if: steps.medusa_changes.outputs.changed == 'true'
         run: npm ci --legacy-peer-deps
 
       - name: Security Audit (Medusa)
+        if: steps.medusa_changes.outputs.changed == 'true'
         run: npm audit --audit-level=critical
 
       - name: Build
+        if: steps.medusa_changes.outputs.changed == 'true'
         run: npm run build
 
       - name: Build Medusa Docker image
+        if: steps.medusa_changes.outputs.changed == 'true'
         run: docker build -t gym-medusa-ci .
