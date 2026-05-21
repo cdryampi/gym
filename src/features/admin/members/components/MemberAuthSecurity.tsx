@@ -48,9 +48,9 @@ export function MemberAuthSecurity({ authOptions }: Readonly<MemberAuthSecurityP
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Select onValueChange={field.onChange} value={field.value ?? "none"}>
+            <Select disabled onValueChange={field.onChange} value={field.value ?? "none"}>
               <FormControl>
-                <SelectTrigger className="h-12 bg-black/[0.02] border-black/5 rounded-xl px-4 font-bold text-[#111111] focus:ring-0 focus:border-[#111111] transition-all">
+                <SelectTrigger className="h-12 cursor-not-allowed rounded-xl border-black/5 bg-black/[0.04] px-4 font-bold text-[#7a7f87] opacity-70 focus:border-black/5 focus:ring-0">
                   <SelectValue placeholder="Sin vinculación activa" />
                 </SelectTrigger>
               </FormControl>
@@ -64,7 +64,7 @@ export function MemberAuthSecurity({ authOptions }: Readonly<MemberAuthSecurityP
               </SelectContent>
             </Select>
             <p className="text-[10px] font-medium italic opacity-70 text-[#5f6368]">
-               Vital para habilitar el acceso a rutinas en tiempo real.
+              Gestion bloqueada desde ficha. El acceso digital se vincula por registro/importacion.
             </p>
             <FormMessage className="text-[9px] font-black uppercase text-[#d71920]" />
           </FormItem>

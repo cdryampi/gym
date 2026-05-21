@@ -4,11 +4,11 @@ import {
   Activity,
   CalendarClock,
   ChevronRight,
-  ClipboardCheck,
   ClipboardList,
   Database,
   DoorOpen,
   Dumbbell,
+  FileSpreadsheet,
   FileText,
   Globe,
   LayoutGrid,
@@ -104,6 +104,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { href: "/dashboard/miembros#listado", label: "Listado", icon: ClipboardList },
       { href: "/dashboard/miembros/nuevo", label: "Nuevo socio", icon: Users },
+      { href: "/dashboard/miembros/importar", label: "Importar", icon: FileSpreadsheet },
     ],
   },
   {

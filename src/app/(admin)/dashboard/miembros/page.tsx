@@ -1,4 +1,4 @@
-import { Activity, AlertCircle, Download, Dumbbell, Search, ShieldCheck, TrendingUp, UserPlus, Users } from "lucide-react";
+import { Activity, AlertCircle, Download, Dumbbell, FileSpreadsheet, Search, ShieldCheck, TrendingUp, UserPlus, Users } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -37,6 +37,13 @@ export default async function DashboardMembersPage({
           className="pb-0"
         />
         <div className="flex flex-col gap-4 sm:flex-row">
+          <Link
+            href="/dashboard/miembros/importar"
+            className="bg-white text-[#111111] border border-black/10 px-10 h-14 flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[11px] hover:bg-[#111111] hover:text-white transition-all duration-500 shadow-2xl shadow-black/10 rounded-2xl"
+          >
+            <FileSpreadsheet className="size-4" />
+            Importar
+          </Link>
           <Link
             href="/dashboard/miembros/nuevo"
             className="bg-[#111111] text-white px-10 h-14 flex items-center gap-3 font-black uppercase tracking-[0.2em] text-[11px] hover:bg-[#d71920] transition-all duration-500 shadow-2xl shadow-black/10 rounded-2xl"
