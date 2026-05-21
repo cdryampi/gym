@@ -87,10 +87,6 @@ export function CartProvider({
   const abandonedCartIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
-    setResolvedMemberEmail(memberEmail);
-  }, [memberEmail]);
-
-  useEffect(() => {
     let active = true;
 
     try {
@@ -123,7 +119,11 @@ export function CartProvider({
         unsubscribe?.();
       };
     } catch {
-      setResolvedMemberEmail(memberEmail);
+      queueMicrotask(() => {
+        if (active) {
+          setResolvedMemberEmail(memberEmail);
+        }
+      });
     }
 
     return () => {
@@ -328,7 +328,9 @@ export function CartProvider({
   });
 
   useEffect(() => {
-    hydrateCart();
+    queueMicrotask(() => {
+      hydrateCart();
+    });
   }, []);
 
   useEffect(() => {
@@ -350,11 +352,15 @@ export function CartProvider({
     lastSyncedSignature.current = signature;
 
     if (cartId) {
-      syncMemberCart(cartId);
+      queueMicrotask(() => {
+        syncMemberCart(cartId);
+      });
       return;
     }
 
-    recoverMemberCart();
+    queueMicrotask(() => {
+      recoverMemberCart();
+    });
   }, [isReady, resolvedMemberEmail, cart?.id]);
 
   async function runBusyAction(action: () => Promise<void>) {
