@@ -1,0 +1,3 @@
+email,first_name,last_name,phone,membership_plan,membership_start_date,membership_end_date,status,document_id,birth_date,address,emergency_contact_name,emergency_contact_phone,notes,send_welcome_email
+socio.nuevo1@example.com,Juan,Perez,987654321,mensual,2026-05-01,2026-05-31,active,12345678,1990-05-15,"Av. Larco 123, Miraflores",Maria Perez,987654322,"Socio importado en lote",false
+socio.nuevo2@example.com,Ana,Gomez,987654323,mensual,2026-05-10,,active,87654321,1995-10-20,"Calle Lima 456, San Isidro",Carlos Gomez,987654324,"Dejar end_date vacía para auto-calcular",false

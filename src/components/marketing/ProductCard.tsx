@@ -39,7 +39,7 @@ export default function ProductCard({ product }: Readonly<ProductCardProps>) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center p-8 text-center bg-black/5">
-            <span className="font-display text-[10px] uppercase tracking-[0.3em] text-black/20">
+            <span className="font-display text-[10px] uppercase tracking-[0.3em] text-neutral-500">
               Imagen no disp.
             </span>
           </div>
@@ -60,7 +60,7 @@ export default function ProductCard({ product }: Readonly<ProductCardProps>) {
         <div className="space-y-4">
           <div className="flex items-center gap-3">
              <div className="h-1 w-1 bg-[#d71920]" />
-             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#7a7f87]">
+             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#575C66]">
                {productCategoryLabels[product.category]}
              </p>
           </div>
@@ -83,8 +83,8 @@ export default function ProductCard({ product }: Readonly<ProductCardProps>) {
 
         <div className="mt-auto pt-8 border-t border-black/5 flex items-center justify-between">
           <div className="flex flex-col">
-             <p className="text-[9px] font-black uppercase tracking-widest text-black/20 mb-1">Tags</p>
-             <p className="text-[10px] font-bold uppercase tracking-tight text-[#7a7f87]">
+             <p className="text-[9px] font-black uppercase tracking-widest text-neutral-500 mb-1">Tags</p>
+             <p className="text-[10px] font-bold uppercase tracking-tight text-[#575C66]">
                {product.tags.slice(0, 1).join("") || "General"}
              </p>
           </div>

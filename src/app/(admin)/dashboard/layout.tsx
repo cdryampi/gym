@@ -42,6 +42,10 @@ export default async function DashboardLayout({
     redirect(`${ADMIN_LOGIN_PATH}?next=/dashboard&error=admin-only`);
   }
 
+  if (accessState.accessMode === null) {
+    redirect("/mi-cuenta");
+  }
+
   const user = accessState.user;
 
   return (

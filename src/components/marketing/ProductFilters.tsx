@@ -43,11 +43,11 @@ function FilterLink({
       <div className="flex items-center gap-3">
         <div className={cn(
           "h-1.5 w-1.5 rounded-none transition-all",
-          active ? "bg-[#d71920] scale-125" : "bg-black/10 group-hover:bg-[#d71920]"
+          active ? "bg-[#d71920] scale-125" : "bg-black/20 group-hover:bg-[#d71920]"
         )} />
         <span className={cn(
           "text-[11px] font-black uppercase tracking-widest",
-          active ? "text-white" : "text-[#7a7f87] group-hover:text-[#111111]"
+          active ? "text-white" : "text-[#575C66] group-hover:text-[#111111]"
         )}>
           {label}
         </span>
@@ -55,14 +55,14 @@ function FilterLink({
       {typeof count === "number" ? (
         <span className={cn(
           "text-[10px] font-bold font-mono",
-          active ? "text-white/40" : "text-black/20"
+          active ? "text-white/50" : "text-black/50"
         )}>
           {count.toString().padStart(2, '0')}
         </span>
       ) : (
         <ChevronRight className={cn(
           "h-3 w-3 transition-transform",
-          active ? "text-white/40 translate-x-1" : "text-black/10 group-hover:translate-x-1"
+          active ? "text-white/50 translate-x-1" : "text-black/40 group-hover:translate-x-1"
         )} />
       )}
     </Link>
@@ -142,7 +142,7 @@ export default function ProductFilters({
       )}
 
       <div className="space-y-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#7a7f87] px-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#575C66] px-1">
           Categoría
         </p>
         <div className="grid gap-2">
@@ -165,7 +165,7 @@ export default function ProductFilters({
       </div>
 
       <div className="space-y-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#7a7f87] px-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#575C66] px-1">
           Disponibilidad
         </p>
         <div className="grid gap-2">
@@ -186,7 +186,7 @@ export default function ProductFilters({
       </div>
 
       <div className="space-y-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#7a7f87] px-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#575C66] px-1">
           Selección Especial
         </p>
         <div className="grid gap-2">
@@ -200,7 +200,7 @@ export default function ProductFilters({
 
       <div className="pt-6 border-t border-black/5">
         <div className="bg-[#fbfbf8] p-6 border border-black/5">
-           <p className="text-[10px] font-bold text-[#7a7f87] leading-relaxed uppercase tracking-wider">
+           <p className="text-[10px] font-bold text-[#575C66] leading-relaxed uppercase tracking-wider">
               Recogida local disponible en todos los productos. Consulta disponibilidad en el club.
            </p>
         </div>

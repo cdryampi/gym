@@ -22,11 +22,15 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-vi.mock("@/components/cart/ProductPurchasePanel", () => ({
-  default: ({ previewMode }: { previewMode?: boolean }) => (
-    <div>{previewMode ? "Reserva disponible en storefront" : "Anadir a la reserva"}</div>
-  ),
-}));
+vi.mock("@/features/checkout", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/features/checkout")>();
+  return {
+    ...original,
+    ProductPurchasePanel: ({ previewMode }: { previewMode?: boolean }) => (
+      <div>{previewMode ? "Reserva disponible en storefront" : "Añadir a la reserva"}</div>
+    ),
+  };
+});
 
 const product: Product = {
   id: "prod-medusa",
@@ -99,7 +103,7 @@ describe("ProductDetail", () => {
     expect(screen.getByText("Beneficios")).toBeInTheDocument();
     expect(screen.getByText("Como usar")).toBeInTheDocument();
     expect(screen.getByText("Especificaciones")).toBeInTheDocument();
-    expect(screen.getByText("Anadir a la reserva")).toBeInTheDocument();
+    expect(screen.getByText("Añadir a la reserva")).toBeInTheDocument();
   });
 
   it("switches to preview mode without rendering the live purchase CTA", () => {
@@ -111,6 +115,6 @@ describe("ProductDetail", () => {
 
     expect(screen.getByText("Preview ficha PDP")).toBeInTheDocument();
     expect(screen.getByText("Reserva disponible en storefront")).toBeInTheDocument();
-    expect(screen.queryByText("Anadir a la reserva")).not.toBeInTheDocument();
+    expect(screen.queryByText("Añadir a la reserva")).not.toBeInTheDocument();
   });
 });

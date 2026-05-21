@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Loader2, Trash2, Upload } from "lucide-react";
 import { useState } from "react";
 
-import { normalizeCommerceImageUrl, PRODUCT_IMAGES_BUCKET } from "@/lib/commerce/image-urls";
+import { normalizeCommerceImageUrl } from "@/lib/commerce/image-urls";
 import { uploadAdminMedia } from "@/lib/media/admin-upload";
 import { cn } from "@/lib/utils";
 
