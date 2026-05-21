@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 
 import { updateDashboardPickupRequestStatus } from "@/app/(admin)/dashboard/tienda/actions";
 import { Button } from "@/components/ui/button";
@@ -56,11 +56,8 @@ export default function PickupRequestStatusControl({
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    setSelectedStatus(status);
-  }, [status]);
-
   const quickActions = useMemo(() => quickActionMap[status] ?? [], [status]);
+  const displayedStatus = isPending ? selectedStatus : status;
 
   function applyStatus(nextStatus: PickupRequestStatus) {
     if (nextStatus === status) {
@@ -68,7 +65,7 @@ export default function PickupRequestStatusControl({
       return;
     }
 
-    const previousStatus = selectedStatus;
+    const previousStatus = displayedStatus;
     setSelectedStatus(nextStatus);
     setError(null);
     setFeedback("Guardando estado...");
@@ -133,7 +130,7 @@ export default function PickupRequestStatusControl({
             <select
               id={`pickup-request-status-${pickupRequestId}`}
               className="h-11 w-full rounded-none border border-black/10 bg-white px-4 text-[13px] font-bold text-[#111111] outline-none transition-colors focus:border-black/20"
-              value={selectedStatus}
+              value={displayedStatus}
               disabled={isPending}
               onChange={(event) => applyStatus(event.target.value as PickupRequestStatus)}
             >
