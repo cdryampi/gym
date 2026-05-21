@@ -100,10 +100,10 @@ export default async function DashboardMembersPage({
               className="bg-white border-black/5 shadow-xl shadow-black/[0.02]"
             >
               <div className="flex items-end justify-between">
-                <p className="text-4xl font-black text-amber-600 tracking-tighter">
+                <p className="text-4xl font-black text-amber-800 dark:text-amber-400 tracking-tighter">
                   {withoutRoutine.length}
                 </p>
-                <div className="size-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                <div className="size-10 rounded-xl bg-amber-50 dark:bg-amber-950/20 flex items-center justify-center text-amber-800 dark:text-amber-400">
                   <Dumbbell className="size-5" />
                 </div>
               </div>

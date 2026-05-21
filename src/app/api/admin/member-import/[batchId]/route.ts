@@ -22,7 +22,16 @@ export async function GET(
       );
     }
 
-    const supabase = createSupabaseAdminClient() as any;
+    const supabase = createSupabaseAdminClient() as unknown as {
+      from: (table: string) => {
+        select: (cols?: string) => {
+          eq: (col: string, val: string | number) => {
+            maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: Error | null }>;
+            order: (col: string, opts: { ascending: boolean }) => Promise<{ data: Record<string, unknown>[] | null; error: Error | null }>;
+          };
+        };
+      };
+    };
 
     // 1. Fetch batch metadata
     const { data: batch, error: batchError } = await supabase
@@ -53,10 +62,23 @@ export async function GET(
       throw rowsError;
     }
 
+    interface ImportRowRecord {
+      id: string;
+      row_number: number;
+      email: string;
+      status: string;
+      errors?: string[];
+      warnings?: string[];
+      firebase_uid?: string;
+      member_profile_id?: string;
+      membership_request_id?: string;
+      raw_row: Record<string, string>;
+    }
+
     // Combine them into a single response payload
     const result = {
       ...batch,
-      rows: (rows || []).map((r: any) => ({
+      rows: ((rows as unknown as ImportRowRecord[]) || []).map((r) => ({
         id: r.id,
         rowNumber: r.row_number,
         email: r.email,

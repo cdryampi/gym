@@ -125,12 +125,6 @@ function InteractiveProductPurchasePanel({
     );
   }, [selectedOptionValue, variants]);
 
-  // Reset errors/success on user changes
-  useEffect(() => {
-    setPurchaseError(null);
-    setIsSuccess(false);
-  }, [quantity, selectedOptionValue, selectedVariant]);
-
   // Handle auto-reset of success state after 3 seconds
   useEffect(() => {
     if (!isSuccess) return;
@@ -196,6 +190,8 @@ function InteractiveProductPurchasePanel({
                   onClick={() => {
                     setSelectedOptionValue(value);
                     setSelectionError(null);
+                    setPurchaseError(null);
+                    setIsSuccess(false);
                   }}
                 >
                   {value}
@@ -217,7 +213,11 @@ function InteractiveProductPurchasePanel({
               aria-label="Reducir cantidad"
               className="flex h-full w-14 items-center justify-center text-[#111111] transition-colors hover:bg-[#fbfbf8] disabled:opacity-20"
               disabled={isBusy || quantity <= 1}
-              onClick={() => setQuantity((current) => Math.max(1, current - 1))}
+              onClick={() => {
+                setQuantity((current) => Math.max(1, current - 1));
+                setPurchaseError(null);
+                setIsSuccess(false);
+              }}
             >
               <Minus className="h-4 w-4" />
             </button>
@@ -229,7 +229,11 @@ function InteractiveProductPurchasePanel({
               aria-label="Aumentar cantidad"
               className="flex h-full w-14 items-center justify-center text-[#111111] transition-colors hover:bg-[#fbfbf8] disabled:opacity-20"
               disabled={isBusy || quantity >= maxQuantity}
-              onClick={() => setQuantity((current) => Math.min(maxQuantity, current + 1))}
+              onClick={() => {
+                setQuantity((current) => Math.min(maxQuantity, current + 1));
+                setPurchaseError(null);
+                setIsSuccess(false);
+              }}
             >
               <Plus className="h-4 w-4" />
             </button>

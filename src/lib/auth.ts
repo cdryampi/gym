@@ -231,11 +231,11 @@ export async function requireAuthenticatedUser(redirectTo = "/acceso") {
 }
 
 
-export async function requireAdminUser(_redirectTo = `${ADMIN_LOGIN_PATH}?error=admin-only`) {
+export async function requireAdminUser(redirectTo = `${ADMIN_LOGIN_PATH}?error=admin-only`) {
   const accessState = await getDashboardAccessState();
 
   if (!accessState.user || !accessState.accessMode) {
-    redirect(`${ADMIN_LOGIN_PATH}?reason=unauthenticated`);
+    redirect(redirectTo);
   }
 
   return accessState.user;

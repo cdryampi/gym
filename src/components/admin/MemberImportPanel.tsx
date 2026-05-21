@@ -9,7 +9,6 @@ import {
   XCircle,
   History,
   Info,
-  ArrowRight,
   Eye,
   Calendar,
   FileDown,
@@ -73,7 +72,7 @@ const STATUS_META = {
   skipped: {
     icon: AlertTriangle,
     label: "Omitido",
-    className: "border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800/30",
+    className: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800/30",
   },
   failed: {
     icon: XCircle,
@@ -93,35 +92,7 @@ export default function MemberImportPanel() {
   const [history, setHistory] = useState<MemberImportBatchResult[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [selectedBatch, setSelectedBatch] = useState<MemberImportBatchResult | null>(null);
-  const [loadingBatchDetail, setLoadingBatchDetail] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-
-  // Clean raw file content when file changes
-  useEffect(() => {
-    if (!file) {
-      setFileContent("");
-      setValidationResult(null);
-      setExecutionResult(null);
-      setError(null);
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setFileContent(e.target?.result as string || "");
-    };
-    reader.readAsText(file, "UTF-8");
-    setValidationResult(null);
-    setExecutionResult(null);
-    setError(null);
-  }, [file]);
-
-  // Load history when tab changes
-  useEffect(() => {
-    if (activeTab === "history") {
-      fetchHistory();
-    }
-  }, [activeTab]);
 
   const fetchHistory = async () => {
     setLoadingHistory(true);
@@ -132,12 +103,28 @@ export default function MemberImportPanel() {
       }
       const data = await res.json();
       setHistory(data || []);
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
     } finally {
       setLoadingHistory(false);
     }
   };
+
+  // Load history when tab changes
+  useEffect(() => {
+    let active = true;
+    if (activeTab === "history") {
+      const timer = setTimeout(() => {
+        if (active) {
+          void fetchHistory();
+        }
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
+    }
+  }, [activeTab]);
 
   const handleValidate = async () => {
     if (!file || !fileContent) {
@@ -163,8 +150,8 @@ export default function MemberImportPanel() {
       }
 
       setValidationResult(data);
-    } catch (err: any) {
-      setError(err.message || "Error inesperado durante la validación.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado durante la validación.");
     } finally {
       setLoading(false);
     }
@@ -195,15 +182,15 @@ export default function MemberImportPanel() {
       setExecutionResult(data);
       setValidationResult(null); // Clear validation to show execution
       setFile(null); // Clear file input
-    } catch (err: any) {
-      setError(err.message || "Error inesperado durante la importación.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error inesperado durante la importación.");
     } finally {
       setLoading(false);
     }
   };
 
   const loadBatchDetail = async (batchId: string) => {
-    setLoadingBatchDetail(true);
+    setError(null);
     try {
       const res = await fetch(`/api/admin/member-import/${batchId}`);
       if (!res.ok) {
@@ -211,10 +198,8 @@ export default function MemberImportPanel() {
       }
       const data = await res.json();
       setSelectedBatch(data);
-    } catch (err: any) {
-      setError(err.message || "Error al cargar detalles del lote.");
-    } finally {
-      setLoadingBatchDetail(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cargar detalles del lote.");
     }
   };
 
@@ -315,12 +300,12 @@ export default function MemberImportPanel() {
             </div>
 
             {/* Custom Drag & Drop Zone */}
-            <label className="group flex min-h-44 cursor-pointer flex-col items-center justify-center gap-3 border border-dashed border-black/15 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01] p-6 text-center transition-colors hover:border-[#d71920]/40 hover:bg-red-50/20 dark:hover:bg-red-950/5">
+            <label className="group flex min-h-44 cursor-pointer flex-col items-center justify-center gap-3 border border-dashed border-black/15 dark:border-white/10 bg-black/[0.01] dark:bg-white/[0.01] p-6 text-center transition-all duration-300 hover:border-[#d71920]/75 hover:bg-[#d71920]/[0.02] dark:hover:bg-[#d71920]/[0.02] rounded-lg shadow-sm hover:shadow-md">
               <Upload className="size-8 text-[#d71920] group-hover:scale-110 transition-transform" />
               <span className="text-xs font-black uppercase tracking-[0.16em] text-[#111111] dark:text-white">
                 {file ? file.name : "Seleccionar Archivo CSV"}
               </span>
-              <span className="text-[10px] font-bold leading-5 text-[#7a7f87]">
+              <span className="text-[10px] font-bold leading-5 text-neutral-500 dark:text-neutral-400">
                 Delimitado por coma o punto y coma. Codificación UTF-8.
               </span>
               <input
@@ -328,7 +313,20 @@ export default function MemberImportPanel() {
                 type="file"
                 accept=".csv"
                 onChange={(event) => {
-                  setFile(event.target.files?.[0] ?? null);
+                  const selectedFile = event.target.files?.[0] ?? null;
+                  setFile(selectedFile);
+                  if (selectedFile) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      setFileContent((e.target?.result as string) || "");
+                    };
+                    reader.readAsText(selectedFile, "UTF-8");
+                  } else {
+                    setFileContent("");
+                  }
+                  setValidationResult(null);
+                  setExecutionResult(null);
+                  setError(null);
                 }}
               />
             </label>
@@ -460,13 +458,13 @@ export default function MemberImportPanel() {
                 {displayResult ? (
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <Search className="absolute left-3 top-2.5 size-3.5 text-[#7a7f87]" />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#7a7f87]" />
                       <input
                         type="text"
                         placeholder="Buscar..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="h-8.5 pl-8.5 pr-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded text-xs focus:outline-none focus:border-[#d71920] w-48 font-medium text-[#111111] dark:text-white"
+                        className="h-9 pl-9 pr-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded text-xs focus:outline-none focus:border-[#d71920] w-48 font-medium text-[#111111] dark:text-white"
                       />
                     </div>
                     <Badge variant={executionResult ? "success" : "warning"}>
@@ -497,7 +495,7 @@ export default function MemberImportPanel() {
                       return (
                         <tr
                           key={entry.rowNumber}
-                          className="hover:bg-black/[0.01] dark:hover:bg-white/[0.01]"
+                          className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                         >
                           <td className="px-4 py-3.5 text-xs font-black text-[#111111] dark:text-white">
                             {entry.rowNumber}
@@ -516,7 +514,7 @@ export default function MemberImportPanel() {
                           <td className="px-4 py-3.5 text-xs font-black text-[#111111] dark:text-white">
                             {entry.firstName} {entry.lastName}
                           </td>
-                          <td className="px-4 py-3.5 text-xs font-medium text-[#7a7f87] dark:text-[#a0a5ad]">
+                          <td className="px-4 py-3.5 text-xs font-medium text-neutral-600 dark:text-[#a0a5ad]">
                             {entry.email}
                           </td>
                           <td className="px-4 py-3.5 text-xs">
@@ -528,13 +526,13 @@ export default function MemberImportPanel() {
                                   </p>
                                 ))}
                                 {entry.warnings.map((warn, i) => (
-                                  <p key={i} className="text-amber-600 dark:text-amber-400 font-semibold">
+                                  <p key={i} className="text-amber-800 dark:text-amber-400 font-semibold">
                                     • {warn}
                                   </p>
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-[#7a7f87] font-semibold">
+                              <span className="text-neutral-600 dark:text-[#a0a5ad] font-semibold">
                                 {entry.status === "created"
                                   ? "Listo para registrar ficha y Firebase Auth"
                                   : entry.status === "updated"
@@ -577,7 +575,7 @@ export default function MemberImportPanel() {
                     onClick={() => setSelectedBatch(null)}
                     variant="outline"
                     size="sm"
-                    className="h-8.5 uppercase text-[9px] tracking-[0.15em] font-black"
+                    className="h-9 uppercase text-[9px] tracking-[0.15em] font-black"
                   >
                     ← Volver
                   </Button>
@@ -592,13 +590,13 @@ export default function MemberImportPanel() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <Search className="absolute left-3 top-2.5 size-3.5 text-[#7a7f87]" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-[#7a7f87]" />
                     <input
                       type="text"
                       placeholder="Buscar en registros..."
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="h-8.5 pl-8.5 pr-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded text-xs focus:outline-none focus:border-[#d71920] w-52 font-medium text-[#111111] dark:text-white"
+                      className="h-9 pl-9 pr-4 border border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.02] rounded text-xs focus:outline-none focus:border-[#d71920] w-52 font-medium text-[#111111] dark:text-white"
                     />
                   </div>
                   <Badge variant="success">Ejecutado con Éxito</Badge>
@@ -663,7 +661,7 @@ export default function MemberImportPanel() {
                         return (
                           <tr
                             key={entry.rowNumber}
-                            className="hover:bg-black/[0.01] dark:hover:bg-white/[0.01]"
+                            className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors"
                           >
                             <td className="px-4 py-3.5 text-xs font-black text-[#111111] dark:text-white">
                               {entry.rowNumber}
@@ -682,7 +680,7 @@ export default function MemberImportPanel() {
                             <td className="px-4 py-3.5 text-xs font-black text-[#111111] dark:text-white">
                               {entry.firstName} {entry.lastName}
                             </td>
-                            <td className="px-4 py-3.5 text-xs font-medium text-[#7a7f87] dark:text-[#a0a5ad]">
+                            <td className="px-4 py-3.5 text-xs font-medium text-neutral-600 dark:text-[#a0a5ad]">
                               {entry.email}
                             </td>
                             <td className="px-4 py-3.5 text-xs">
@@ -694,13 +692,13 @@ export default function MemberImportPanel() {
                                     </p>
                                   ))}
                                   {entry.warnings.map((warn, i) => (
-                                    <p key={i} className="text-amber-600 dark:text-amber-400 font-semibold">
+                                    <p key={i} className="text-amber-800 dark:text-amber-400 font-semibold">
                                       • {warn}
                                     </p>
                                   ))}
                                 </div>
                               ) : (
-                                <span className="text-[#7a7f87] font-semibold">
+                                <span className="text-neutral-600 dark:text-[#a0a5ad] font-semibold">
                                   {entry.status === "created"
                                     ? "Ficha y Firebase Auth registrados de forma exitosa"
                                     : entry.status === "updated"
@@ -745,7 +743,7 @@ export default function MemberImportPanel() {
                   disabled={loadingHistory}
                   variant="outline"
                   size="sm"
-                  className="h-8.5 uppercase text-[9px] tracking-[0.15em] font-black"
+                  className="h-9 uppercase text-[9px] tracking-[0.15em] font-black"
                 >
                   <RefreshCw className={cn("size-3", loadingHistory && "animate-spin")} />
                   Refrescar Historial
@@ -768,7 +766,7 @@ export default function MemberImportPanel() {
                     {history.map((batch) => (
                       <tr
                         key={batch.id}
-                        className="hover:bg-black/[0.01] dark:hover:bg-white/[0.01] text-xs font-bold text-[#111111] dark:text-white"
+                        className="hover:bg-black/[0.02] dark:hover:bg-white/[0.02] transition-colors text-xs font-bold text-[#111111] dark:text-white"
                       >
                         <td className="px-5 py-4 whitespace-nowrap text-[#7a7f87] dark:text-[#a0a5ad] font-semibold">
                           <span className="flex items-center gap-1.5">
@@ -802,7 +800,7 @@ export default function MemberImportPanel() {
                             onClick={() => loadBatchDetail(batch.id!)}
                             variant="secondary"
                             size="sm"
-                            className="h-8 uppercase text-[9px] tracking-[0.15em] font-black"
+                            className="h-9 uppercase text-[9px] tracking-[0.15em] font-black"
                           >
                             <Eye className="size-3" />
                             Ver Lote
