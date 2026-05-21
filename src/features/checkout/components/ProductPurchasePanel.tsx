@@ -1,7 +1,7 @@
 "use client";
 
 import { Minus, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useCart } from "../hooks/use-cart";
 import PublicInlineAlert from "@/components/public/PublicInlineAlert";
@@ -97,12 +97,14 @@ function PreviewProductPurchasePanel({
 function InteractiveProductPurchasePanel({
   product,
 }: Readonly<Pick<ProductPurchasePanelProps, "product">>) {
-  const { addItem, isBusy, error } = useCart();
+  const { addItem, isBusy } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [selectedOptionValue, setSelectedOptionValue] = useState<string | null>(
     resolveInitialOptionValue(product),
   );
   const [selectionError, setSelectionError] = useState<string | null>(null);
+  const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
   const primaryOption = product.options?.[0];
   const variants = useMemo(() => product.variants ?? [], [product.variants]);
   const hasMultipleRealVariants = variants.length > 1;
@@ -123,6 +125,21 @@ function InteractiveProductPurchasePanel({
     );
   }, [selectedOptionValue, variants]);
 
+  // Reset errors/success on user changes
+  useEffect(() => {
+    setPurchaseError(null);
+    setIsSuccess(false);
+  }, [quantity, selectedOptionValue, selectedVariant]);
+
+  // Handle auto-reset of success state after 3 seconds
+  useEffect(() => {
+    if (!isSuccess) return;
+    const timer = setTimeout(() => {
+      setIsSuccess(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isSuccess]);
+
   const isUnavailable =
     product.stock_status === "out_of_stock" || product.stock_status === "coming_soon";
   const maxQuantity =
@@ -137,10 +154,20 @@ function InteractiveProductPurchasePanel({
     }
 
     setSelectionError(null);
-    await addItem({
+    setPurchaseError(null);
+    setIsSuccess(false);
+
+    const result = await addItem({
       variantId: selectedVariant.id,
       quantity,
     });
+
+    if (result) {
+      const isAuthError = /autenticado|auth|unauthenticated|login/i.test(result);
+      setPurchaseError(isAuthError ? "Tu sesión ha caducado. Inicia sesión para continuar." : result);
+    } else {
+      setIsSuccess(true);
+    }
   }
 
   return (
@@ -210,22 +237,36 @@ function InteractiveProductPurchasePanel({
 
           <Button
             type="button"
-            className="h-14 flex-1 rounded-none bg-[#d71920] px-12 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-xl transition-all hover:bg-[#111111] sm:flex-none"
-            disabled={isBusy || isUnavailable || (hasMultipleRealVariants && !selectedVariant)}
+            className={cn(
+              "h-14 flex-1 rounded-none px-12 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-xl transition-all sm:flex-none",
+              isSuccess
+                ? "bg-emerald-600 hover:bg-emerald-600 cursor-default"
+                : "bg-[#d71920] hover:bg-[#111111]"
+            )}
+            disabled={isBusy || isUnavailable || (hasMultipleRealVariants && !selectedVariant) || isSuccess}
             onClick={() => {
               void handleAddToCart();
             }}
           >
-            {isUnavailable ? "AGOTADO" : isBusy ? "PROCESANDO..." : "Anadir a la reserva"}
+            {isUnavailable ? "AGOTADO" : isBusy ? "PROCESANDO..." : isSuccess ? "¡AÑADIDO!" : "Añadir a la reserva"}
           </Button>
         </div>
       </div>
 
-      {(selectionError || error) && (
+      {isSuccess && (
+        <PublicInlineAlert
+          tone="success"
+          title="Producto añadido"
+          message="Se ha añadido correctamente a tu reserva."
+          compact
+        />
+      )}
+
+      {(selectionError || purchaseError) && (
         <PublicInlineAlert
           tone="error"
-          title="No pudimos anadir este producto"
-          message={selectionError || error || "Se produjo un error inesperado."}
+          title="No pudimos añadir este producto"
+          message={selectionError || purchaseError || "Se produjo un error inesperado."}
           compact
         />
       )}

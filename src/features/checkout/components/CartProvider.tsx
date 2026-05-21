@@ -43,7 +43,7 @@ export interface CartContextValue {
   setDrawerOpen: (open: boolean) => void;
   clearSubmittedPickupRequest: () => void;
   refreshCart: () => Promise<void>;
-  addItem: (input: { variantId: string; quantity: number }) => Promise<void>;
+  addItem: (input: { variantId: string; quantity: number }) => Promise<string | null>;
   updateItemQuantity: (lineItemId: string, quantity: number) => Promise<void>;
   removeItem: (lineItemId: string) => Promise<void>;
   saveEmail: (email: string) => Promise<void>;
@@ -363,29 +363,31 @@ export function CartProvider({
     });
   }, [isReady, resolvedMemberEmail, cart?.id]);
 
-  async function runBusyAction(action: () => Promise<void>) {
+  async function runBusyAction(action: () => Promise<void>): Promise<string | null> {
     setIsBusy(true);
     setError(null);
     setNotice(null);
 
     try {
       await action();
+      return null;
     } catch (actionError) {
       const message = getErrorMessage(actionError, "La operacion del carrito no se pudo completar.");
 
       if (isMissingCartMessage(message)) {
         invalidateBrokenCart(STALE_CART_MESSAGE);
-        return;
+        return STALE_CART_MESSAGE;
       }
 
       setError(message);
+      return message;
     } finally {
       setIsBusy(false);
     }
   }
 
-  async function addItem(input: { variantId: string; quantity: number }) {
-    await runBusyAction(async () => {
+  async function addItem(input: { variantId: string; quantity: number }): Promise<string | null> {
+    return runBusyAction(async () => {
       setLastSubmittedPickupRequest(null);
       setLastSubmittedWhatsAppUrl(null);
       setPickupEmailWarning(null);
