@@ -200,7 +200,7 @@ export default function MemberAuthForm({ mode }: Readonly<MemberAuthFormProps>) 
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="tu@email.com" autoComplete="email" {...field} />
+                    <Input type="email" placeholder="tu@email.com" autoComplete="email" required {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -218,6 +218,7 @@ export default function MemberAuthForm({ mode }: Readonly<MemberAuthFormProps>) 
                       type="password"
                       placeholder="Minimo 6 caracteres"
                       autoComplete={isRegister ? "new-password" : "current-password"}
+                      required
                       {...field}
                     />
                   </FormControl>
@@ -238,6 +239,7 @@ export default function MemberAuthForm({ mode }: Readonly<MemberAuthFormProps>) 
                         type="password"
                         placeholder="Vuelve a escribir tu contrasena"
                         autoComplete="new-password"
+                        required
                         {...field}
                       />
                     </FormControl>

@@ -121,7 +121,13 @@ export default function LoginForm() {
                   <FormItem>
                     <FormLabel>Email o usuario</FormLabel>
                     <FormControl>
-                      <Input type="text" placeholder="admin@gym-local.test o admin" {...field} />
+                      <Input
+                        type="text"
+                        placeholder="admin@gym-local.test o admin"
+                        autoComplete="username"
+                        required
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -134,7 +140,13 @@ export default function LoginForm() {
                   <FormItem>
                     <FormLabel>Contrasena</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="********" {...field} />
+                      <Input
+                        type="password"
+                        placeholder="********"
+                        autoComplete="current-password"
+                        required
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
