@@ -1,8 +1,8 @@
-import { ArrowRight, Mail, MapPin, Phone } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import NewsletterForm from "@/components/marketing/NewsletterForm";
 import type { SiteSettings } from "@/lib/supabase/database.types";
 
 interface SiteFooterProps {
@@ -60,18 +60,7 @@ export default function SiteFooter({
           </div>
 
           <div className="w-full lg:w-auto">
-            <div className="flex flex-col gap-4 sm:flex-row">
-              <input
-                type="email"
-                placeholder="TU EMAIL"
-                className="h-16 w-full border border-white/10 bg-white/5 px-8 text-xs font-bold tracking-widest outline-none transition-all focus:border-primary/50 focus:bg-white/10 lg:w-80 rounded-[var(--radius-base)]"
-                required
-              />
-              <Button className="h-16 bg-white text-black hover:bg-primary hover:text-white px-10 rounded-[var(--radius-base)] font-black uppercase tracking-widest text-[10px]">
-                Suscribirme
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
+            <NewsletterForm />
             <p className="mt-4 text-center text-[9px] font-bold uppercase tracking-widest text-white/20 lg:text-left">
               Al suscribirte, aceptas nuestra politica de privacidad.
             </p>

@@ -107,6 +107,8 @@ export default function LeadForm() {
           className="h-12 xs:h-14 bg-[#f8f8f6]"
           aria-invalid={Boolean(nameError)}
           aria-describedby={nameError ? `${formId}-name-error` : undefined}
+          autoComplete="name"
+          required
           {...register("name")}
         />
         {nameError ? (
@@ -131,6 +133,8 @@ export default function LeadForm() {
             className="h-12 xs:h-14 bg-[#f8f8f6]"
             aria-invalid={Boolean(emailError)}
             aria-describedby={emailError ? `${formId}-email-error` : undefined}
+            autoComplete="email"
+            required
             {...register("email")}
           />
           {emailError ? (
@@ -154,6 +158,7 @@ export default function LeadForm() {
             className="h-12 xs:h-14 bg-[#f8f8f6]"
             aria-invalid={Boolean(phoneError)}
             aria-describedby={phoneError ? `${formId}-phone-error` : undefined}
+            autoComplete="tel"
             {...register("phone")}
           />
           {phoneError ? (
@@ -177,6 +182,7 @@ export default function LeadForm() {
           className="min-h-[100px] xs:min-h-[120px] resize-none bg-[#f8f8f6]"
           aria-invalid={Boolean(messageError)}
           aria-describedby={messageError ? `${formId}-message-error` : undefined}
+          required
           {...register("message")}
         />
         {messageError ? (
