@@ -9,6 +9,7 @@ import {
   getDashboardMemberDetail,
   updateMemberProfile,
   archiveMemberProfile,
+  deleteMemberProfile,
 } from "@/lib/data/gym-management";
 import { getFirebaseAdminAuth } from "@/lib/firebase/server";
 import { sendFirebasePasswordResetEmail } from "@/lib/firebase/email-actions";
@@ -68,6 +69,21 @@ export async function archiveMemberAction(memberId: string) {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Error desconocido al archivar socio",
+    };
+  }
+}
+
+export async function deleteMemberAction(memberId: string) {
+  try {
+    await requireAdminUser();
+    await deleteMemberProfile(memberId);
+    revalidateMembers();
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting member:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Error desconocido al eliminar socio",
     };
   }
 }

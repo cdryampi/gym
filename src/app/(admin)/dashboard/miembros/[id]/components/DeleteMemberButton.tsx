@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import { deleteMemberAction } from "@/app/(admin)/dashboard/miembros/actions";
 import { Button } from "@/components/ui/button";
-import { archiveMemberAction } from "@/app/(admin)/dashboard/miembros/actions";
 
 interface DeleteMemberButtonProps {
   memberId: string;
@@ -14,46 +14,46 @@ interface DeleteMemberButtonProps {
 
 export default function DeleteMemberButton({ memberId, memberName }: DeleteMemberButtonProps) {
   const router = useRouter();
-  const [isArchiving, setIsArchiving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  async function handleArchive() {
+  async function handleDelete() {
     const confirmed = window.confirm(
-      `¿Estas seguro de que deseas archivar la ficha de "${memberName}"?\n\nEsta accion archivara la ficha y conservara el historial de pagos, membresias y asistencias. El socio pasara a estado "Ex-socio" y ya no aparecera en el listado activo.`
+      `Estas seguro de que deseas eliminar la ficha de "${memberName}"?\n\nEsta accion elimina la ficha operativa y, si tiene usuario vinculado no protegido, tambien elimina el usuario de Firebase para poder crearlo de nuevo.`,
     );
 
     if (!confirmed) return;
 
     const secondConfirmed = window.confirm(
-      `Confirmacion final: ¿archivar "${memberName}"?\n\nEsta accion no elimina datos, pero el socio quedara oculto del listado activo.`
+      `Confirmacion final: eliminar "${memberName}"?\n\nEsta accion no se puede deshacer.`,
     );
 
     if (!secondConfirmed) return;
 
-    setIsArchiving(true);
+    setIsDeleting(true);
     try {
-      const result = await archiveMemberAction(memberId);
+      const result = await deleteMemberAction(memberId);
       if (result.success) {
-        toast.success("Ficha archivada correctamente.");
+        toast.success("Ficha eliminada correctamente.");
         router.push("/dashboard/miembros");
         router.refresh();
       } else {
-        toast.error(result.error ?? "No se pudo archivar la ficha.");
+        toast.error(result.error ?? "No se pudo eliminar la ficha.");
       }
     } catch {
-      toast.error("Error inesperado al archivar la ficha.");
+      toast.error("Error inesperado al eliminar la ficha.");
     } finally {
-      setIsArchiving(false);
+      setIsDeleting(false);
     }
   }
 
   return (
     <Button
       variant="outline"
-      disabled={isArchiving}
-      onClick={handleArchive}
+      disabled={isDeleting}
+      onClick={handleDelete}
       className="h-12 px-6 font-black uppercase text-[10px] tracking-widest border-2 border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800 transition-all"
     >
-      {isArchiving ? "Archivando..." : "Archivar Ficha"}
+      {isDeleting ? "Eliminando..." : "Eliminar Ficha"}
     </Button>
   );
 }

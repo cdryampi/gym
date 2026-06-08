@@ -29,7 +29,7 @@
     "security:audit": "pnpm audit --audit-level=high",
     "security:secrets": "node scripts/security-check.mjs",
     "security:env": "node scripts/security-check.mjs",
-    "security:all": "npm run security:audit && npm run security:secrets",
+    "security:all": "pnpm run security:audit && pnpm run security:secrets",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:integration": "vitest run",
@@ -114,5 +114,10 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "tmp": "0.2.6"
+    }
   }
 }

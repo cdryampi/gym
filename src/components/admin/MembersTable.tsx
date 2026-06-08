@@ -17,7 +17,7 @@ import {
 import Link from "next/link";
 import { toast } from "sonner";
 
-import { archiveMemberAction } from "@/app/(admin)/dashboard/miembros/actions";
+import { deleteMemberAction } from "@/app/(admin)/dashboard/miembros/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -136,7 +136,7 @@ export default function MembersTable({ initialMembers }: MembersTableProps) {
     });
   }, [districtSearch, genderFilter, optimisticMembers, searchTerm, showCompletedOnly]);
 
-  function handleArchiveConfirm() {
+  function handleDeleteConfirm() {
     if (!memberToDelete) {
       return;
     }
@@ -146,18 +146,18 @@ export default function MembersTable({ initialMembers }: MembersTableProps) {
 
     startTransition(async () => {
       try {
-        const result = await archiveMemberAction(id);
+        const result = await deleteMemberAction(id);
 
         if (!result?.success) {
-          toast.error(result?.error ?? "Error al archivar la ficha del socio.");
+          toast.error(result?.error ?? "Error al eliminar la ficha del socio.");
           return;
         }
 
         deleteOptimisticMember(id);
-        toast.success("Socio archivado. Historial conservado.");
+        toast.success("Socio eliminado. Usuario Firebase liberado si no era cuenta protegida.");
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Error al archivar la ficha del socio.",
+          error instanceof Error ? error.message : "Error al eliminar la ficha del socio.",
         );
       }
     });
@@ -168,9 +168,9 @@ export default function MembersTable({ initialMembers }: MembersTableProps) {
       <DeleteConfirmDialog
         isOpen={!!memberToDelete}
         onClose={() => setMemberToDelete(null)}
-        onConfirm={handleArchiveConfirm}
-        title="Archivar ficha operativa"
-        description={`Esta accion archivara la ficha de ${memberToDelete?.fullName || ""} y conservara el historial de pagos, membresias y asistencias. El socio pasara a estado "Ex-socio" y ya no aparecera en el listado activo.`}
+        onConfirm={handleDeleteConfirm}
+        title="Eliminar ficha operativa"
+        description={`Esta accion eliminara la ficha de ${memberToDelete?.fullName || ""} y, si tiene usuario vinculado no protegido, tambien eliminara el usuario de Firebase para poder crearlo de nuevo.`}
       />
 
       <div className="grid gap-3 border-b border-black/5 bg-black/[0.015] p-4 sm:grid-cols-[1.4fr_0.8fr_0.8fr_auto]">

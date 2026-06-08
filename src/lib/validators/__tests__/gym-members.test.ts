@@ -1,5 +1,8 @@
-// Covers dashboard member form validation, including legacy Excel master fields.
-import { memberFormSchema } from "@/lib/validators/gym-members";
+// Covers dashboard member form validation, including legacy Excel/CSV master fields.
+import {
+  mapMemberCsvRowToFormValues,
+  memberFormSchema,
+} from "@/lib/validators/gym-members";
 
 const validMemberFormPayload = {
   externalCode: "000123",
@@ -116,5 +119,58 @@ describe("memberFormSchema", () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.profileCompleted).toBe(false);
+  });
+});
+
+describe("mapMemberCsvRowToFormValues", () => {
+  it("maps a valid snake_case CSV row into member form values", () => {
+    const values = mapMemberCsvRowToFormValues({
+      email: "  lucia@example.com ",
+      first_name: " Lucia ",
+      last_name: " Vega ",
+      membership_plan: "Plan mensual",
+      membership_start_date: "2026-06-01",
+      status: "active",
+    });
+
+    expect(values).toMatchObject({
+      email: "lucia@example.com",
+      fullName: "Lucia Vega",
+      joinDate: "2026-06-01",
+      planLabel: "Plan mensual",
+      planStartedAt: "2026-06-01",
+      status: "active",
+    });
+
+    expect(memberFormSchema.safeParse(values).success).toBe(true);
+  });
+
+  it("maps inactive CSV status to archived member and cancelled plan state", () => {
+    const values = mapMemberCsvRowToFormValues({
+      email: "marco@example.com",
+      first_name: "Marco",
+      last_name: "Rios",
+      membership_plan: "Plan anual",
+      membership_start_date: "2026-01-15",
+      status: "inactive",
+    });
+
+    expect(values).toMatchObject({
+      planStatus: "cancelled",
+      status: "former",
+    });
+  });
+
+  it("keeps the CSV status error scoped to accepted CSV values", () => {
+    expect(() =>
+      mapMemberCsvRowToFormValues({
+        email: "ana@example.com",
+        first_name: "Ana",
+        last_name: "Lopez",
+        membership_plan: "Plan mensual",
+        membership_start_date: "2026-06-01",
+        status: "paused",
+      }),
+    ).toThrow("El estado debe ser: active, inactive o frozen");
   });
 });
