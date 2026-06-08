@@ -20,6 +20,8 @@ import MemberFinanceTab from "./components/MemberFinanceTab";
 import MemberProfileTab from "./components/MemberProfileTab";
 import MemberProgressTab from "./components/MemberProgressTab";
 import MemberTrainingTab from "./components/MemberTrainingTab";
+import GrantMemberWebAccessButton from "./components/GrantMemberWebAccessButton";
+import SendMemberPasswordResetButton from "./components/SendMemberPasswordResetButton";
 
 export default async function DashboardMemberDetailPage({
   params,
@@ -74,6 +76,11 @@ export default async function DashboardMemberDetailPage({
         </div>
 
         <div className="flex items-center gap-3">
+          {member.linkedUserId ? (
+            <SendMemberPasswordResetButton memberId={id} />
+          ) : (
+            <GrantMemberWebAccessButton memberId={id} />
+          )}
           <DeleteMemberButton memberId={id} memberName={member.fullName} />
           <Button
             disabled

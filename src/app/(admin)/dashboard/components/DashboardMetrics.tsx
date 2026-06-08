@@ -44,8 +44,8 @@ export default async function DashboardMetrics() {
       label: "Congelados",
       value: metrics.frozenMembers,
       icon: Clock,
-      color: "text-amber-600",
-      bg: "bg-amber-50",
+      color: "text-amber-800 dark:text-amber-400",
+      bg: "bg-amber-50 dark:bg-amber-950/20",
     },
   ];
 

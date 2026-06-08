@@ -8,9 +8,6 @@ import { Button } from "@/components/ui/button";
 import { uploadAdminMedia } from "@/lib/media/admin-upload";
 import { cn } from "@/lib/utils";
 
-const TEAM_IMAGES_BUCKET = "medusa-media";
-const TEAM_IMAGES_PREFIX = "marketing/team";
-
 interface MarketingTeamImageUploadProps {
   value: string;
   onChange: (value: string) => void;

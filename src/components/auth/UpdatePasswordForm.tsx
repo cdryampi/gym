@@ -144,6 +144,7 @@ export default function UpdatePasswordForm() {
                         type="password"
                         placeholder="Minimo 6 caracteres"
                         autoComplete="new-password"
+                        required
                         {...field}
                       />
                     </FormControl>
@@ -163,6 +164,7 @@ export default function UpdatePasswordForm() {
                         type="password"
                         placeholder="Vuelve a escribir tu contrasena"
                         autoComplete="new-password"
+                        required
                         {...field}
                       />
                     </FormControl>

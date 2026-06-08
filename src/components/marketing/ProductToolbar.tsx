@@ -60,7 +60,7 @@ export default function ProductToolbar({
         <div className="shrink-0 space-y-1">
           <div className="flex items-center gap-3">
              <div className="h-1.5 w-1.5 rounded-none bg-[#d71920]" />
-             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/40">
+             <p className="text-[10px] font-black uppercase tracking-[0.4em] text-white/70">
                Explorador de Catálogo
              </p>
           </div>
@@ -68,8 +68,8 @@ export default function ProductToolbar({
             <h3 className="text-xl font-display font-black uppercase tracking-tight text-white italic">
               {resultsCount} {resultsCount === 1 ? "Artículo" : "Artículos"}
             </h3>
-            <span className="text-white/20 text-xs">/</span>
-            <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">
+            <span className="text-white/40 text-xs">/</span>
+            <p className="text-[10px] font-bold text-white/70 uppercase tracking-widest">
               {filters.query ? `Resultados para "${filters.query}"` : "Disponibles en Sala"}
             </p>
             {isPending && (
@@ -80,13 +80,13 @@ export default function ProductToolbar({
 
         <div className="grid flex-1 gap-4 sm:grid-cols-[1fr,240px] xl:max-w-3xl">
           <div className="relative group/search">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/20 group-focus-within/search:text-[#d71920] transition-colors" />
+            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60 group-focus-within/search:text-[#d71920] transition-colors" />
             <input
               type="search"
               value={localQuery}
               onChange={(e) => setLocalQuery(e.target.value)}
               placeholder="Buscar productos, marcas o categorías..."
-              className="h-14 w-full border border-white/10 bg-white/5 pl-12 pr-6 text-sm text-white outline-none transition-all focus:border-white/20 focus:bg-white/10 placeholder:text-white/20"
+              className="h-14 w-full border border-white/10 bg-white/5 pl-12 pr-6 text-sm text-white outline-none transition-all focus:border-white/20 focus:bg-white/10 placeholder:text-white/60"
             />
           </div>
 
