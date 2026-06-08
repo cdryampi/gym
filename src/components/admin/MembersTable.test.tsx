@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import MembersTable from "@/components/admin/MembersTable";
 
 const tableMocks = vi.hoisted(() => ({
-  archiveMemberAction: vi.fn(),
+  deleteMemberAction: vi.fn(),
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
 }));
@@ -28,7 +28,7 @@ vi.mock("sonner", () => ({
 }));
 
 vi.mock("@/app/(admin)/dashboard/miembros/actions", () => ({
-  archiveMemberAction: (...args: unknown[]) => tableMocks.archiveMemberAction(...args),
+  deleteMemberAction: (...args: unknown[]) => tableMocks.deleteMemberAction(...args),
 }));
 
 vi.mock("@/features/admin/components/shared/delete-confirm-dialog", () => ({
@@ -84,24 +84,24 @@ const members = [
 
 describe("MembersTable", () => {
   beforeEach(() => {
-    tableMocks.archiveMemberAction.mockReset();
+    tableMocks.deleteMemberAction.mockReset();
     tableMocks.toastError.mockReset();
     tableMocks.toastSuccess.mockReset();
   });
 
-  it("opens archive confirmation and removes member optimistically on confirm", async () => {
-    tableMocks.archiveMemberAction.mockResolvedValue({ success: true });
+  it("opens delete confirmation and removes member optimistically on confirm", async () => {
+    tableMocks.deleteMemberAction.mockResolvedValue({ success: true });
     const user = userEvent.setup();
 
     render(<MembersTable initialMembers={members} />);
 
     await user.click(screen.getByRole("button", { name: /Eliminar socio Socio Titan/i }));
-    expect(screen.getByText(/archivara la ficha de Socio Titan/i)).toBeInTheDocument();
+    expect(screen.getByText(/eliminara la ficha de Socio Titan/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: /Confirmar borrado/i }));
 
     await waitFor(() => {
-      expect(tableMocks.archiveMemberAction).toHaveBeenCalledWith("member-1");
+      expect(tableMocks.deleteMemberAction).toHaveBeenCalledWith("member-1");
     });
     await waitFor(() => {
       expect(tableMocks.toastSuccess).toHaveBeenCalled();
@@ -109,9 +109,9 @@ describe("MembersTable", () => {
   });
 
   it("surfaces structured action failures through toast", async () => {
-    tableMocks.archiveMemberAction.mockResolvedValue({
+    tableMocks.deleteMemberAction.mockResolvedValue({
       success: false,
-      error: "No se pudo archivar",
+      error: "No se pudo eliminar",
     });
     const user = userEvent.setup();
 
@@ -121,13 +121,13 @@ describe("MembersTable", () => {
     await user.click(screen.getByRole("button", { name: /Confirmar borrado/i }));
 
     await waitFor(() => {
-      expect(tableMocks.toastError).toHaveBeenCalledWith("No se pudo archivar");
+      expect(tableMocks.toastError).toHaveBeenCalledWith("No se pudo eliminar");
     });
     expect(tableMocks.toastSuccess).not.toHaveBeenCalled();
   });
 
   it("surfaces thrown action errors through toast", async () => {
-    tableMocks.archiveMemberAction.mockRejectedValue(new Error("No se pudo archivar"));
+    tableMocks.deleteMemberAction.mockRejectedValue(new Error("No se pudo eliminar"));
     const user = userEvent.setup();
 
     render(<MembersTable initialMembers={members} />);
@@ -136,7 +136,7 @@ describe("MembersTable", () => {
     await user.click(screen.getByRole("button", { name: /Confirmar borrado/i }));
 
     await waitFor(() => {
-      expect(tableMocks.toastError).toHaveBeenCalledWith("No se pudo archivar");
+      expect(tableMocks.toastError).toHaveBeenCalledWith("No se pudo eliminar");
     });
   });
 });

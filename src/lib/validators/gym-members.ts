@@ -66,6 +66,68 @@ export const memberFormSchema = CreateMemberInputSchema.extend({
 
 export type MemberFormValues = z.input<typeof memberFormSchema>;
 
+const csvStatusMap = {
+  active: "active",
+  frozen: "frozen",
+  inactive: "former",
+} as const satisfies Record<string, z.infer<typeof dashboardMemberStatusSchema>>;
+
+const memberCsvRowSchema = z.object({
+  first_name: z.string().trim().min(1, "El nombre es obligatorio."),
+  last_name: z.string().trim().min(1, "El apellido es obligatorio."),
+  email: z.string().trim().email("Formato de email invalido."),
+  phone: nullableTrimmedString(40).optional(),
+  membership_plan: z.string().trim().min(2, "El plan de membresia es obligatorio."),
+  membership_start_date: z
+    .string()
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha debe usar formato YYYY-MM-DD."),
+  status: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((status): status is keyof typeof csvStatusMap => status in csvStatusMap, {
+      message: "El estado debe ser: active, inactive o frozen",
+    }),
+  branch_name: nullableTrimmedString(120).optional(),
+  external_code: nullableTrimmedString(50).optional(),
+  notes: nullableTrimmedString(1000).optional(),
+});
+
+export type MemberCsvRow = z.input<typeof memberCsvRowSchema>;
+
+export function mapMemberCsvRowToFormValues(row: MemberCsvRow): MemberFormValues {
+  const parsed = memberCsvRowSchema.parse(row);
+  const firstName = parsed.first_name.trim();
+  const lastName = parsed.last_name.trim();
+
+  return {
+    address: null,
+    birthDate: null,
+    branchName: parsed.branch_name ?? null,
+    districtOrUrbanization: null,
+    email: parsed.email,
+    externalCode: parsed.external_code ?? undefined,
+    fullName: `${firstName} ${lastName}`.trim(),
+    gender: null,
+    joinDate: parsed.membership_start_date,
+    legacyNotes: null,
+    linkedUserId: null,
+    notes: parsed.notes ?? null,
+    occupation: null,
+    phone: parsed.phone ?? null,
+    planEndsAt: null,
+    planLabel: parsed.membership_plan,
+    planNotes: null,
+    planStartedAt: parsed.membership_start_date,
+    planStatus: parsed.status === "inactive" ? "cancelled" : "active",
+    preferredSchedule: null,
+    profileCompleted: false,
+    status: csvStatusMap[parsed.status],
+    trainerUserId: null,
+  };
+}
+
 export const memberStatusUpdateSchema = z.object({
   status: MemberStatusSchema,
 });
