@@ -41,6 +41,12 @@ export default function MembershipPlansCatalog({
   whatsappUrl,
 }: Readonly<MembershipPlansCatalogProps>) {
   const { isAuthenticated } = usePublicAuthState();
+  const catalogGridClass =
+    membershipPlans.length === 1
+      ? "mx-auto grid max-w-xl grid-cols-1 gap-4"
+      : membershipPlans.length === 2
+        ? "mx-auto grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-2"
+        : "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3";
 
   if (membershipPlans.length === 0) {
     return (
@@ -69,11 +75,11 @@ export default function MembershipPlansCatalog({
           Elige Tu Plan
         </h2>
         <p className="mx-auto mt-4 max-w-2xl text-xs sm:text-sm leading-6 sm:leading-7 text-white/65 px-2 sm:px-0">
-          Mismo formato de pricing de siempre, pero ahora conectado al flujo real de membresias.
+          Membresias disponibles para solicitar desde la web y vincular a tu cuenta del club.
         </p>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 lg:items-stretch">
+      <div className={catalogGridClass}>
         {membershipPlans.map((plan) => {
           const whatsappPlanUrl = buildMembershipWhatsAppUrl(whatsappUrl, plan);
 
@@ -83,17 +89,11 @@ export default function MembershipPlansCatalog({
               className={[
                 "relative flex flex-col p-6 sm:p-8 lg:p-12 transition-all duration-500 overflow-hidden",
                 plan.is_featured
-                  ? "z-10 bg-white text-foreground shadow-2xl lg:scale-105 featured-card"
+                  ? "z-10 bg-white text-foreground shadow-2xl featured-card"
                   : "border border-white/5 bg-white/5 text-white hover:bg-white/10",
               ].join(" ")}
               style={{ borderRadius: "var(--radius-base)" }}
             >
-              {plan.is_featured ? (
-                <div className="absolute top-0 right-0 bg-primary px-4 py-1 sm:px-6 sm:py-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-white">
-                  Destacado
-                </div>
-              ) : null}
-
               <div className="mb-8 sm:mb-10">
                 <h3
                   className={[

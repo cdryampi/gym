@@ -529,7 +529,8 @@ const listPublicMembershipPlansCached = publicDataCache(
       .select("*")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: true })
-      .eq("is_active", true);
+      .eq("is_active", true)
+      .eq("is_featured", true);
 
     if (error) {
       throw new Error(error.message);

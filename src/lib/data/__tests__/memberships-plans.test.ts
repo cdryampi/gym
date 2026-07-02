@@ -37,19 +37,21 @@ function createMembershipPlansClientMock() {
     ],
     error: null,
   };
-  const maybeEq = vi.fn(async () => ({
-    ...result,
-  }));
+  const filters: Array<[string, unknown]> = [];
 
   const query = {
     order: vi.fn(() => query),
-    eq: maybeEq,
+    eq: vi.fn((column: string, value: unknown) => {
+      filters.push([column, value]);
+      return query;
+    }),
     ...result,
     then: undefined,
   };
 
   return {
-    maybeEq,
+    filters,
+    query,
     client: {
       from: vi.fn(() => ({
         select: vi.fn(() => query),
@@ -75,7 +77,12 @@ describe("listMembershipPlans", () => {
     expect(plans).toHaveLength(1);
     expect(supabaseServerMocks.createSupabasePublicClient).toHaveBeenCalledTimes(1);
     expect(supabaseServerMocks.createSupabaseAdminClient).not.toHaveBeenCalled();
-    expect(publicClientMock.maybeEq).toHaveBeenCalledWith("is_active", true);
+    expect(publicClientMock.query.eq).toHaveBeenCalledWith("is_active", true);
+    expect(publicClientMock.query.eq).toHaveBeenCalledWith("is_featured", true);
+    expect(publicClientMock.filters).toEqual([
+      ["is_active", true],
+      ["is_featured", true],
+    ]);
   });
 
   it("keeps the admin client for non-filtered dashboard reads", async () => {
@@ -88,6 +95,6 @@ describe("listMembershipPlans", () => {
     expect(plans).toHaveLength(1);
     expect(supabaseServerMocks.createSupabaseAdminClient).toHaveBeenCalledTimes(1);
     expect(supabaseServerMocks.createSupabasePublicClient).not.toHaveBeenCalled();
-    expect(adminClientMock.maybeEq).not.toHaveBeenCalled();
+    expect(adminClientMock.query.eq).not.toHaveBeenCalled();
   });
 });
