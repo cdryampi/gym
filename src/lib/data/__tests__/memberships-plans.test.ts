@@ -45,6 +45,10 @@ function createMembershipPlansClientMock() {
       filters.push([column, value]);
       return query;
     }),
+    gt: vi.fn((column: string, value: unknown) => {
+      filters.push([column, value]);
+      return query;
+    }),
     ...result,
     then: undefined,
   };
@@ -78,10 +82,10 @@ describe("listMembershipPlans", () => {
     expect(supabaseServerMocks.createSupabasePublicClient).toHaveBeenCalledTimes(1);
     expect(supabaseServerMocks.createSupabaseAdminClient).not.toHaveBeenCalled();
     expect(publicClientMock.query.eq).toHaveBeenCalledWith("is_active", true);
-    expect(publicClientMock.query.eq).toHaveBeenCalledWith("is_featured", true);
+    expect(publicClientMock.query.gt).toHaveBeenCalledWith("price_amount", 0);
     expect(publicClientMock.filters).toEqual([
       ["is_active", true],
-      ["is_featured", true],
+      ["price_amount", 0],
     ]);
   });
 
