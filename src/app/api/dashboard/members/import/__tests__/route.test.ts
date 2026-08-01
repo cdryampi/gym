@@ -5,7 +5,7 @@ const routeMocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
   getFirebaseAdminAuth: vi.fn(),
   hasFirebaseAdminEnv: vi.fn(),
-  hasSupabaseServiceRole: vi.fn(),
+  hasSupabaseSecretKey: vi.fn(),
   requireRoles: vi.fn(),
   runMemberImport: vi.fn(),
 }));
@@ -23,7 +23,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
   return {
     ...actual,
     hasFirebaseAdminEnv: routeMocks.hasFirebaseAdminEnv,
-    hasSupabaseServiceRole: routeMocks.hasSupabaseServiceRole,
+    hasSupabaseSecretKey: routeMocks.hasSupabaseSecretKey,
   };
 });
 
@@ -59,7 +59,7 @@ describe("POST /api/dashboard/members/import", () => {
     vi.clearAllMocks();
     delete process.env.FIREBASE_MEMBER_IMPORT_DEFAULT_PASSWORD;
     routeMocks.hasFirebaseAdminEnv.mockReturnValue(true);
-    routeMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    routeMocks.hasSupabaseSecretKey.mockReturnValue(true);
     routeMocks.requireRoles.mockResolvedValue({
       success: true,
       user: { id: "admin-1" },

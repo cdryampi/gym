@@ -60,6 +60,7 @@ apps/medusa/src/scripts/temp/
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # supabase temp
 supabase/.temp/

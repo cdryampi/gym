@@ -318,7 +318,6 @@ async function syncProducts(
             {
               ...basePayload,
               id: match.id,
-              options: productOptions,
               variants: [{ ...variantPayload, id: existingVariantId }],
             },
           ],

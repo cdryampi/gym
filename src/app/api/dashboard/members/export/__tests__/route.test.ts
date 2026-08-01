@@ -3,7 +3,7 @@ import { NextRequest } from "next/server";
 
 const routeMocks = vi.hoisted(() => ({
   createSupabaseAdminClient: vi.fn(),
-  hasSupabaseServiceRole: vi.fn(),
+  hasSupabaseSecretKey: vi.fn(),
   requireRoles: vi.fn(),
 }));
 
@@ -19,7 +19,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/env")>();
   return {
     ...actual,
-    hasSupabaseServiceRole: routeMocks.hasSupabaseServiceRole,
+    hasSupabaseSecretKey: routeMocks.hasSupabaseSecretKey,
   };
 });
 
@@ -111,7 +111,7 @@ describe("GET /api/dashboard/members/export", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    routeMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    routeMocks.hasSupabaseSecretKey.mockReturnValue(true);
     routeMocks.requireRoles.mockResolvedValue({
       success: true,
       user: { id: "admin-1" },
@@ -144,14 +144,14 @@ describe("GET /api/dashboard/members/export", () => {
   });
 
   it("returns 503 when service role env is missing", async () => {
-    routeMocks.hasSupabaseServiceRole.mockReturnValue(false);
+    routeMocks.hasSupabaseSecretKey.mockReturnValue(false);
 
     const { GET } = await import("../route");
     const response = await GET(buildRequest());
 
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({
-      error: "Configura SUPABASE_SERVICE_ROLE_KEY para exportar socios.",
+      error: "Configura SUPABASE_SECRET_KEY para exportar socios.",
     });
   });
 

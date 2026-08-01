@@ -5,9 +5,9 @@ const mocks = vi.hoisted(() => ({
   from: vi.fn(),
   requireAdminUser: vi.fn(),
   getDashboardAccessState: vi.fn(),
-  getServerSupabaseEnv: vi.fn().mockReturnValue({ serviceRoleKey: "test-key" }),
+  getServerSupabaseEnv: vi.fn().mockReturnValue({ secretKey: "test-key" }),
   hasFirebaseAdminEnv: vi.fn().mockReturnValue(true),
-  hasSupabaseServiceRole: vi.fn().mockReturnValue(true),
+  hasSupabaseSecretKey: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock("next/headers", () => ({
@@ -29,7 +29,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
     ...actual,
     getServerSupabaseEnv: mocks.getServerSupabaseEnv,
     hasFirebaseAdminEnv: mocks.hasFirebaseAdminEnv,
-    hasSupabaseServiceRole: mocks.hasSupabaseServiceRole,
+    hasSupabaseSecretKey: mocks.hasSupabaseSecretKey,
   };
 });
 

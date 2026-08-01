@@ -5,8 +5,8 @@ const routeMocks = vi.hoisted(() => ({
   requireAdminUser: vi.fn(),
   getDashboardAccessState: vi.fn(),
   exportLeadsToCsv: vi.fn(),
-  hasSupabaseServiceRole: vi.fn().mockReturnValue(true),
-  getServerSupabaseEnv: vi.fn().mockReturnValue({ url: "https://test.supabase.co", serviceRoleKey: "key" }),
+  hasSupabaseSecretKey: vi.fn().mockReturnValue(true),
+  getServerSupabaseEnv: vi.fn().mockReturnValue({ url: "https://test.supabase.co", secretKey: "key" }),
   getPublicSupabaseEnv: vi.fn().mockReturnValue({ url: "https://test.supabase.co", anonKey: "key" }),
 }));
 
@@ -27,7 +27,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/env")>();
   return {
     ...actual,
-    hasSupabaseServiceRole: routeMocks.hasSupabaseServiceRole,
+    hasSupabaseSecretKey: routeMocks.hasSupabaseSecretKey,
     getServerSupabaseEnv: routeMocks.getServerSupabaseEnv,
     getPublicSupabaseEnv: routeMocks.getPublicSupabaseEnv,
   };

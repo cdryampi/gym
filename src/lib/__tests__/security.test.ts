@@ -8,7 +8,7 @@ import {
 // Mock de variables de entorno para que no fallen los clientes
 vi.mock("../env", () => ({
   getPublicSupabaseEnv: () => ({ url: "https://xyz.supabase.co", anonKey: "anon-key" }),
-  getServerSupabaseEnv: () => ({ url: "https://xyz.supabase.co", serviceRoleKey: "service-key" }),
+  getServerSupabaseEnv: () => ({ url: "https://xyz.supabase.co", secretKey: "service-key" }),
 }));
 
 // Mock de Firebase Bearer Header para simular diferentes usuarios

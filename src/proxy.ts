@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
-import { getServerSupabaseEnv, hasSupabaseServiceRole, hasLocalAdminEnv } from "@/lib/env";
+import { getServerSupabaseEnv, hasSupabaseSecretKey, hasLocalAdminEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 import { verifyFirebaseSessionToken } from "@/lib/firebase/server";
 import { buildNonceContentSecurityPolicy } from "@/lib/security/csp";
@@ -73,17 +73,17 @@ async function verifyFirebaseUserId(idToken: string | null) {
 }
 
 async function getModuleState(name: ModuleName) {
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     return true;
   }
 
-  const { url, serviceRoleKey } = getServerSupabaseEnv();
+  const { url, secretKey } = getServerSupabaseEnv();
 
-  if (!serviceRoleKey) {
+  if (!secretKey) {
     return true;
   }
 
-  const client = createClient<Database>(url, serviceRoleKey, {
+  const client = createClient<Database>(url, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -114,17 +114,17 @@ async function getModuleState(name: ModuleName) {
 }
 
 async function isSuperadminRequest(userId: string | null) {
-  if (!userId || !hasSupabaseServiceRole()) {
+  if (!userId || !hasSupabaseSecretKey()) {
     return false;
   }
 
-  const { url, serviceRoleKey } = getServerSupabaseEnv();
+  const { url, secretKey } = getServerSupabaseEnv();
 
-  if (!serviceRoleKey) {
+  if (!secretKey) {
     return false;
   }
 
-  const client = createClient<Database>(url, serviceRoleKey, {
+  const client = createClient<Database>(url, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

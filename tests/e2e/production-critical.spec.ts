@@ -58,4 +58,50 @@ test.describe("production critical public flows", () => {
     await expect(page.getByText(/Carrito vacio/i)).toBeVisible();
     await expect(page.getByRole("link", { name: /Ir a la tienda/i })).toBeVisible();
   });
+
+  test("adds an available Medusa product to the pickup reservation", async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.goto("/tienda");
+
+    const productLinks = page.getByRole("link", { name: "Ver mas" });
+    await expect(productLinks.first()).toBeVisible();
+    const productHrefs = await productLinks
+      .evaluateAll((links) =>
+        links
+          .map((link) => link.getAttribute("href"))
+          .filter((href): href is string => Boolean(href)),
+      );
+
+    expect(productHrefs.length).toBeGreaterThan(0);
+
+    let addedProduct = false;
+
+    for (const productHref of productHrefs.slice(0, 6)) {
+      await page.goto(productHref);
+      const addButton = page.getByRole("button", { name: /A.adir a la reserva/i });
+
+      if (!(await addButton.isVisible()) || (await addButton.isDisabled())) {
+        const optionButton = page
+          .locator('[data-component="product-detail"] button:not([aria-label])')
+          .filter({ hasNotText: /A.adir a la reserva|AGOTADO|PROCESANDO/i })
+          .first();
+
+        if (await optionButton.isVisible()) {
+          await optionButton.click();
+        }
+      }
+
+      if (await addButton.isEnabled()) {
+        await addButton.click();
+        await expect(page.getByText(/Producto a.adido/i)).toBeVisible({ timeout: 45_000 });
+        addedProduct = true;
+        break;
+      }
+    }
+
+    expect(addedProduct).toBeTruthy();
+    await page.goto("/carrito");
+    await expect(page.getByText(/Carrito vacio/i)).toHaveCount(0);
+    await expect(page.getByText(/recogida|reserva/i).first()).toBeVisible();
+  });
 });

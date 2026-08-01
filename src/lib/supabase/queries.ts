@@ -30,7 +30,7 @@ import {
   type TrainingZone,
   type TrainingZoneIcon,
 } from "@/data/training-zones";
-import { hasSupabasePublicEnv, hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabasePublicEnv, hasSupabaseSecretKey } from "@/lib/env";
 import { parseSeoKeywordsInput } from "@/lib/seo";
 import { resolveTopbarVariant, toIsoDateTimeOrNull } from "@/lib/topbar";
 import type { ContactFormValues } from "@/lib/validators/contact";
@@ -807,7 +807,7 @@ export const getDashboardMarketingSnapshot = cache(
 
     let testimonials: MarketingTestimonial[] = [];
 
-    if (hasSupabaseServiceRole()) {
+    if (hasSupabaseSecretKey()) {
       const adminSupabase = createSupabaseAdminClient();
       // For dashboard, we might want to list all testimonials or filter by actualSettingsId
       testimonials = await listMarketingTestimonialsRecord(adminSupabase, {
@@ -911,13 +911,13 @@ export const getDashboardSnapshot = cache(async function getDashboardSnapshot():
     warnings.push("No se pudieron cargar las zonas de entrenamiento.");
   }
 
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     warnings.push(
-      "Configura SUPABASE_SERVICE_ROLE_KEY para leer contactos reales y operar el dashboard interno.",
+      "Configura SUPABASE_SECRET_KEY para leer contactos reales y operar el dashboard interno.",
     );
   }
 
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     return {
       settings: settingsError ? defaultSiteSettings : normalizeSiteSettings(settings),
       plans: plansError ? defaultMarketingPlans : normalizeMarketingPlans(plans),
@@ -1176,10 +1176,10 @@ export async function getDashboardCmsSnapshot(): Promise<CmsSnapshot> {
     });
   }
 
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     return toCmsSnapshot(fallbackDocuments, {
       isFallback: true,
-      warning: "Configura SUPABASE_SERVICE_ROLE_KEY para editar contenido legal y de sistema.",
+      warning: "Configura SUPABASE_SECRET_KEY para editar contenido legal y de sistema.",
     });
   }
 

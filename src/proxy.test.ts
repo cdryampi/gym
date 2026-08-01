@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const proxyMocks = vi.hoisted(() => ({
   createClient: vi.fn(),
   getServerSupabaseEnv: vi.fn(),
-  hasSupabaseServiceRole: vi.fn(),
+  hasSupabaseSecretKey: vi.fn(),
   verifyFirebaseSessionToken: vi.fn(),
 }));
 
@@ -14,7 +14,7 @@ vi.mock("@supabase/supabase-js", () => ({
 
 vi.mock("@/lib/env", () => ({
   getServerSupabaseEnv: proxyMocks.getServerSupabaseEnv,
-  hasSupabaseServiceRole: proxyMocks.hasSupabaseServiceRole,
+  hasSupabaseSecretKey: proxyMocks.hasSupabaseSecretKey,
   hasLocalAdminEnv: vi.fn().mockReturnValue(false),
 }));
 
@@ -67,14 +67,14 @@ describe("proxy security hardening", () => {
     vi.stubEnv("NODE_ENV", "production");
     proxyMocks.createClient.mockReset();
     proxyMocks.getServerSupabaseEnv.mockReset();
-    proxyMocks.hasSupabaseServiceRole.mockReset();
+    proxyMocks.hasSupabaseSecretKey.mockReset();
     proxyMocks.verifyFirebaseSessionToken.mockReset();
     
     proxyMocks.getServerSupabaseEnv.mockReturnValue({
       url: "https://supabase.test",
-      serviceRoleKey: "service-role",
+      secretKey: "service-role",
     });
-    proxyMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    proxyMocks.hasSupabaseSecretKey.mockReturnValue(true);
     proxyMocks.verifyFirebaseSessionToken.mockImplementation(async (token) => {
       if (token.startsWith("valid-token-")) {
         return { uid: token.replace("valid-token-", "") };

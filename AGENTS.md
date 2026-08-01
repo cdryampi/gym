@@ -166,7 +166,7 @@ Variables esperadas:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 
 Opcionales para acceso local:
 
@@ -218,7 +218,7 @@ Dashboard tienda:
 
 - `STORE_ADMIN_PROVIDER=medusa`
 - `MEDUSA_ADMIN_API_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 
 Configuracion recomendada en esta fase:
 
@@ -248,7 +248,7 @@ Reglas:
 - la persistencia de IDs puente en Supabase es obligatoria para considerar valida la operacion
 - no meter fallback silencioso en admin cuando Medusa falle
 - el dashboard propio sigue siendo la unica UI de gestion del proyecto
-- si falta `MEDUSA_ADMIN_API_KEY` o `SUPABASE_SERVICE_ROLE_KEY`, la escritura debe bloquearse
+- si falta `MEDUSA_ADMIN_API_KEY` o `SUPABASE_SECRET_KEY`, la escritura debe bloquearse
 - no escribir catalogo operativo directamente en tablas legacy de Supabase
 
 ### Mapping y metadata
@@ -378,7 +378,7 @@ Documento de referencia rapida:
 
 Ese script:
 
-- lee `store_categories` y `products` desde Supabase con `SUPABASE_SERVICE_ROLE_KEY`
+- lee `store_categories` y `products` desde Supabase con `SUPABASE_SECRET_KEY`
 - hace upsert en Medusa por `slug` / `handle`
 - escribe de vuelta solo `medusa_category_id` y `medusa_product_id`
 

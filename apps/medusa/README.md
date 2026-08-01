@@ -62,7 +62,7 @@ Variables minimas para produccion:
 ```env
 PORT=9000
 DATABASE_URL=postgresql://...
-MEDUSA_DB_INSECURE_SSL=true
+MEDUSA_DB_INSECURE_SSL=false
 STORE_CORS=https://nuovaforzagym.com,http://localhost:3000,http://localhost:3001
 ADMIN_CORS=https://nuovaforzagym.com,http://localhost:3000,http://localhost:3001
 AUTH_CORS=https://nuovaforzagym.com,http://localhost:3000,http://localhost:3001
@@ -89,7 +89,7 @@ El script `seed:nova` crea una base minima alineada con la tienda actual:
 - stock location `Nova Forza Club`
 - categorias `Suplementos`, `Accesorios`, `Merchandising`
 - productos iniciales con metadata pensada para el storefront actual
-- subida automatica de las imagenes locales de `public/images/products` al bucket publico `medusa-media` de Supabase cuando existe `SUPABASE_SERVICE_ROLE_KEY`
+- subida automatica de las imagenes locales de `public/images/products` al bucket publico `medusa-media` de Supabase cuando existe `SUPABASE_SECRET_KEY`
 - URLs de imagen apuntando al bucket publico `medusa-media` de Supabase
 
 Ejecucion:
@@ -101,9 +101,9 @@ npm run medusa:seed:nova
 Para que el seed deje las imagenes realmente disponibles en storefront, ejecutalo con:
 
 - `NEXT_PUBLIC_SUPABASE_URL` o `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 
-Si falta `SUPABASE_SERVICE_ROLE_KEY`, el seed dejara las URLs publicas en Medusa pero avisara en logs que ha omitido la subida automatica al bucket.
+Si falta `SUPABASE_SECRET_KEY`, el seed dejara las URLs publicas en Medusa pero avisara en logs que ha omitido la subida automatica al bucket.
 
 Al terminar, Medusa deja dos datos clave en logs:
 
@@ -125,6 +125,8 @@ Guia operativa recomendada para Dokploy/VPS en:
 Notas de despliegue:
 
 - `gym.yampi.eu` queda reservado a Medusa HTTP; no sirve el frontend.
+- La imagen ejecuta `medusa db:migrate --all-or-nothing --execute-safe-links` antes de cada arranque de produccion; Dokploy debe mantener una sola replica durante la migracion.
+- En produccion, `MEDUSA_DB_INSECURE_SSL` debe permanecer en `false`.
 - Los previews de Vercel no requieren abrir CORS wildcard por defecto, porque el storefront actual consume Medusa mayormente desde el servidor Next.js o via rutas internas.
 
 ## Nota sobre Supabase

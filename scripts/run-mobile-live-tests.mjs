@@ -23,7 +23,7 @@ const result = spawnSync(
       ...process.env,
       NEXT_PUBLIC_SUPABASE_ANON_KEY: env.anonKey,
       NEXT_PUBLIC_SUPABASE_URL: env.apiUrl,
-      SUPABASE_SERVICE_ROLE_KEY: env.serviceRoleKey,
+      SUPABASE_SECRET_KEY: env.secretKey,
       TEST_MOBILE_DEMO_TRAINER_EMAIL: process.env.TEST_MOBILE_TRAINER_EMAIL ?? "entrenador@novaforza.com",
       TEST_MOBILE_DEMO_TRAINER_PASSWORD: process.env.TEST_MOBILE_TRAINER_PASSWORD ?? "Demo1234!",
       TEST_MOBILE_DEMO_USER_1_EMAIL: process.env.TEST_MOBILE_USER_1_EMAIL ?? "usuario1@novaforza.com",

@@ -8,7 +8,7 @@ import {
   parsePickupRequestFilters,
 } from "@/lib/data/pickup-request-dashboard";
 import { listPickupRequestManualPaymentSummaries } from "@/lib/data/pickup-requests";
-import { hasMedusaAdminEnv, hasSupabaseServiceRole } from "@/lib/env";
+import { hasMedusaAdminEnv, hasSupabaseSecretKey } from "@/lib/env";
 import { DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE } from "@/lib/user-roles";
 
 function buildCsvFilename() {
@@ -66,9 +66,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!hasSupabaseServiceRole()) {
+    if (!hasSupabaseSecretKey()) {
       return NextResponse.json(
-        { error: "Configura SUPABASE_SERVICE_ROLE_KEY para exportar pedidos pickup con sus cobros manuales." },
+        { error: "Configura SUPABASE_SECRET_KEY para exportar pedidos pickup con sus cobros manuales." },
         { status: 503 },
       );
     }

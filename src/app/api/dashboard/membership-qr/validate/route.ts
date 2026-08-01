@@ -124,13 +124,13 @@ export async function POST(request: Request) {
     if (!auth.success) return auth.errorResponse;
     const user = auth.user;
 
-    const { serviceRoleKey, url } = getServerSupabaseEnv();
+    const { secretKey, url } = getServerSupabaseEnv();
 
-    if (!serviceRoleKey) {
+    if (!secretKey) {
       return NextResponse.json(
         createMembershipQrErrorResponse({
           errorMessage:
-            "Falta SUPABASE_SERVICE_ROLE_KEY para conectar el dashboard con la validacion QR.",
+            "Falta SUPABASE_SECRET_KEY para conectar el dashboard con la validacion QR.",
         }),
         { status: 500 },
       );
@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       const functionResponse = await fetch(`${url}/functions/v1/membership-qr-validate`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: secretKey,
           "Content-Type": "application/json",
           "x-dashboard-user-email": userEmail,
           "x-dashboard-user-id": userId,

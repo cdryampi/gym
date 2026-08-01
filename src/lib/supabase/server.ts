@@ -35,13 +35,13 @@ export async function createSupabaseServerClient() {
 }
 
 export function createSupabaseAdminClient() {
-  const { url, serviceRoleKey } = getServerSupabaseEnv();
+  const { url, secretKey } = getServerSupabaseEnv();
 
-  if (!serviceRoleKey) {
-    throw new Error("Missing SUPABASE_SERVICE_ROLE_KEY for admin Supabase access.");
+  if (!secretKey) {
+    throw new Error("Missing SUPABASE_SECRET_KEY for admin Supabase access.");
   }
 
-  return createClient<Database>(url, serviceRoleKey, {
+  return createClient<Database>(url, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

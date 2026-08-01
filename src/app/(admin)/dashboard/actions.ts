@@ -8,7 +8,7 @@ import {
   revalidatePublicCacheTags,
   type PublicCacheTag,
 } from "@/lib/cache/public-cache";
-import { hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabaseSecretKey } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
   moderateMarketingTestimonialRecord,
@@ -41,9 +41,9 @@ import { themeConfigSchema, type ThemeConfig } from "@/lib/validators/theme";
 async function getAuthenticatedSupabase() {
   await requireAdminUser();
 
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     throw new Error(
-      "Configura SUPABASE_SERVICE_ROLE_KEY para gestionar datos reales del backoffice.",
+      "Configura SUPABASE_SECRET_KEY para gestionar datos reales del backoffice.",
     );
   }
 

@@ -50,7 +50,7 @@ export default async function DashboardLeadsPage({
     filters.sort !== DEFAULT_LEAD_FILTERS.sort;
 
   const disabledReason = isReadOnly
-    ? "Modo lectura: SUPABASE_SERVICE_ROLE_KEY no configurada."
+    ? "Modo lectura: SUPABASE_SECRET_KEY no configurada."
     : undefined;
 
   return (

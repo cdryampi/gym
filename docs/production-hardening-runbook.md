@@ -27,7 +27,7 @@ o secretos detectados. Los modulos criticos declarados en `vitest.config.ts` exi
 
 ## Orden de despliegue
 
-1. Publicar Medusa en Dokploy.
+1. Publicar Medusa en Dokploy con una sola replica. El contenedor ejecuta las migraciones Medusa de forma atomica antes de arrancar.
 2. Exigir `GET https://gym.yampi.eu/health` con 200 y cuerpo con `status=healthy` y
    `service=gym-medusa`.
 3. Verificar catalogo, enlace Medusa-Supabase y reserva pickup. No usar fallback legacy.
@@ -53,9 +53,10 @@ repetido o la mediana de latencia empeora mas del 20% respecto del baseline.
 
 - Medusa: redeploy de la revision estable anterior en Dokploy y confirmar `/health`.
 - Web: rollback/promote de la deployment estable anterior en Vercel.
-- Base de datos: este pack no introduce cambios de esquema. En futuras migraciones, usar solo
-  cambios aditivos/RLS con dry-run y SQL inverso preparado; nunca ejecutar cambios destructivos
-  durante el release.
+- Base de datos: el upgrade Medusa aplica sus migraciones oficiales con `--all-or-nothing` y
+  safe links antes del arranque. El rollback de aplicacion no revierte esas migraciones; confirmar
+  compatibilidad hacia atras antes del deploy. Las migraciones propias siguen limitadas a cambios
+  aditivos/RLS con dry-run y SQL inverso preparado.
 - Tras el rollback, repetir los smoke y conservar logs/metricas del incidente.
 
 ## Limpieza

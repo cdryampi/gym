@@ -47,18 +47,18 @@ async function run() {
 
   const supabaseUrl =
     getEnv("NEXT_PUBLIC_SUPABASE_URL") || getEnv("SUPABASE_URL") || "http://127.0.0.1:54321";
-  const serviceRoleKey = getEnv("SUPABASE_SERVICE_ROLE_KEY");
+  const secretKey = getEnv("SUPABASE_SECRET_KEY");
 
   logResult(
-    "SUPABASE_SERVICE_ROLE_KEY",
-    Boolean(serviceRoleKey),
-    serviceRoleKey ? "Configurada." : "Configura la service role para validar y diagnosticar QR.",
+    "SUPABASE_SECRET_KEY",
+    Boolean(secretKey),
+    secretKey ? "Configurada." : "Configura la service role para validar y diagnosticar QR.",
   );
   logResult("Supabase URL", true, supabaseUrl);
 
-  if (!serviceRoleKey) {
+  if (!secretKey) {
     console.log(
-      "\nSiguiente paso sugerido:\n- exporta SUPABASE_SERVICE_ROLE_KEY\n- ejecuta `npx supabase db push`\n- ejecuta `npx supabase functions serve membership-qr-validate` o despliegala",
+      "\nSiguiente paso sugerido:\n- exporta SUPABASE_SECRET_KEY\n- ejecuta `npx supabase db push`\n- ejecuta `npx supabase functions serve membership-qr-validate` o despliegala",
     );
     process.exitCode = 1;
     return;
@@ -67,7 +67,7 @@ async function run() {
   const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/functions/v1/membership-qr-validate`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${serviceRoleKey}`,
+      apikey: secretKey,
       "Content-Type": "application/json",
       "x-site-url": "https://novaforza.pe",
     },

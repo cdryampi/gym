@@ -32,7 +32,7 @@ Minimas:
 NODE_ENV=production
 PORT=9000
 DATABASE_URL=postgresql://...
-MEDUSA_DB_INSECURE_SSL=true
+MEDUSA_DB_INSECURE_SSL=false
 REDIS_URL=redis://redis:6379
 STORE_CORS=https://nuovaforzagym.com,http://localhost:3000,http://localhost:3001
 ADMIN_CORS=https://nuovaforzagym.com,http://localhost:3000,http://localhost:3001

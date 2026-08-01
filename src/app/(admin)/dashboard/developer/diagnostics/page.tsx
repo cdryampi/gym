@@ -14,7 +14,7 @@ import {
   hasPayPalEnv,
   hasSmtpEnv,
   hasSupabasePublicEnv,
-  hasSupabaseServiceRole,
+  hasSupabaseSecretKey,
 } from "@/lib/env";
 
 export default async function DiagnosticsPage() {
@@ -24,7 +24,7 @@ export default async function DiagnosticsPage() {
   const initialStatus = {
     supabase: {
       configured: hasSupabasePublicEnv(),
-      serviceRole: hasSupabaseServiceRole(),
+      serviceRole: hasSupabaseSecretKey(),
     },
     firebase: {
       public: hasFirebasePublicEnv(),

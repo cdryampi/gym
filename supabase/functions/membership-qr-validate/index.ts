@@ -46,36 +46,39 @@ function json(body: unknown, status = 200) {
   });
 }
 
-async function resolveAuthorizedAdminKey(supabaseUrl: string, authorizationHeader: string | null) {
-  const headerValue = authorizationHeader?.trim() ?? "";
+function resolveInjectedSecretKey() {
+  const directSecret = Deno.env.get("SUPABASE_SECRET_KEY")?.trim();
 
-  if (!headerValue.startsWith("Bearer ")) {
-    return null;
+  if (directSecret) {
+    return directSecret;
   }
 
-  const apiKey = headerValue.slice("Bearer ".length).trim();
+  const injectedSecrets = Deno.env.get("SUPABASE_SECRET_KEYS")?.trim();
 
-  if (!apiKey) {
-    return null;
+  if (!injectedSecrets) {
+    return "";
   }
 
-  const authProbe = createClient(supabaseUrl, apiKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
-    },
-  });
+  try {
+    const parsed = JSON.parse(injectedSecrets) as Record<string, unknown>;
+    return typeof parsed.default === "string" ? parsed.default.trim() : "";
+  } catch {
+    return "";
+  }
+}
 
-  const { error } = await authProbe.auth.admin.listUsers({
-    page: 1,
-    perPage: 1,
-  });
-
-  if (error) {
-    return null;
+function secretsMatch(received: string, expected: string) {
+  if (received.length !== expected.length) {
+    return false;
   }
 
-  return apiKey;
+  let difference = 0;
+
+  for (let index = 0; index < received.length; index += 1) {
+    difference |= received.charCodeAt(index) ^ expected.charCodeAt(index);
+  }
+
+  return difference === 0;
 }
 
 async function sha256(value: string) {
@@ -91,13 +94,13 @@ async function sha256(value: string) {
 
 Deno.serve(async (request) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  const secretKey = resolveInjectedSecretKey();
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl || !secretKey) {
     return json(
       createMembershipQrErrorResponse({
         errorMessage:
-          "Falta configurar SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY para validar QR.",
+          "Falta configurar SUPABASE_URL o SUPABASE_SECRET_KEY para validar QR.",
       }),
       500,
     );
@@ -113,12 +116,9 @@ Deno.serve(async (request) => {
     );
   }
 
-  const authorizedAdminKey = await resolveAuthorizedAdminKey(
-    supabaseUrl,
-    request.headers.get("Authorization"),
-  );
+  const callerKey = request.headers.get("apikey")?.trim() ?? "";
 
-  if (!authorizedAdminKey) {
+  if (!callerKey || !secretsMatch(callerKey, secretKey)) {
     return json(
       createMembershipQrErrorResponse({
         errorMessage: "Solo el dashboard autenticado puede invocar esta validacion QR.",
@@ -129,7 +129,7 @@ Deno.serve(async (request) => {
     );
   }
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  const supabase = createClient(supabaseUrl, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

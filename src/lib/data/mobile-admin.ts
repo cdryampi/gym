@@ -1,6 +1,6 @@
 import type { AuthUser as User } from "@/lib/auth-user";
 
-import { hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabaseSecretKey } from "@/lib/env";
 import { buildAuthUser } from "@/lib/auth-user";
 import { listAllFirebaseUsers } from "@/lib/firebase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -109,7 +109,7 @@ function sortUsersByCreatedAt(users: MobileAdminUser[]) {
 }
 
 export async function getMobileAdminSnapshot(): Promise<MobileAdminSnapshot> {
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     return {
       counts: {
         authUsers: 0,
@@ -121,7 +121,7 @@ export async function getMobileAdminSnapshot(): Promise<MobileAdminSnapshot> {
       trainerUsers: [],
       users: [],
       warnings: [
-        "Configura SUPABASE_SERVICE_ROLE_KEY para listar usuarios reales de la app mobile y sus roles persistentes.",
+        "Configura SUPABASE_SECRET_KEY para listar usuarios reales de la app mobile y sus roles persistentes.",
       ],
     };
   }

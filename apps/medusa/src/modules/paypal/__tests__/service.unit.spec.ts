@@ -111,7 +111,7 @@ describe("PayPalPaymentProviderService", () => {
       mockOrdersController.patchOrder.mockResolvedValue({ result: {} })
 
       const result = await service.updatePayment(input)
-      expect(result.data.charge_amount).toBe(2000)
+      expect(result.data?.charge_amount).toBe(2000)
     })
   })
 })

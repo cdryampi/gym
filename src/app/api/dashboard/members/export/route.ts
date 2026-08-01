@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { requireRoles, withApiErrorHandling } from "@/lib/api-utils";
-import { hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabaseSecretKey } from "@/lib/env";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE, TRAINER_ROLE } from "@/lib/user-roles";
 
@@ -74,9 +74,9 @@ export async function GET(request: Request) {
     const auth = await requireRoles([TRAINER_ROLE, DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE]);
     if (!auth.success) return auth.errorResponse;
 
-    if (!hasSupabaseServiceRole()) {
+    if (!hasSupabaseSecretKey()) {
       return NextResponse.json(
-        { error: "Configura SUPABASE_SERVICE_ROLE_KEY para exportar socios." },
+        { error: "Configura SUPABASE_SECRET_KEY para exportar socios." },
         { status: 503 }
       );
     }

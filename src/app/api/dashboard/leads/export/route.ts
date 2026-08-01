@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireRoles, withApiErrorHandling } from "@/lib/api-utils";
 import { filterAndSortLeads, parseLeadFilters, serializeLeadsToCsv } from "@/lib/data/leads";
-import { hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabaseSecretKey } from "@/lib/env";
 import { normalizeLeads } from "@/lib/supabase/queries";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE } from "@/lib/user-roles";
@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
     const auth = await requireRoles([DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE]);
     if (!auth.success) return auth.errorResponse;
 
-    if (!hasSupabaseServiceRole()) {
+    if (!hasSupabaseSecretKey()) {
       return NextResponse.json(
-        { error: "Configura SUPABASE_SERVICE_ROLE_KEY para exportar leads reales." },
+        { error: "Configura SUPABASE_SECRET_KEY para exportar leads reales." },
         { status: 503 },
       );
     }

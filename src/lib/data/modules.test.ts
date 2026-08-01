@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const modulesMocks = vi.hoisted(() => ({
   getDashboardAccessState: vi.fn(),
   requireSuperadminUser: vi.fn(),
-  hasSupabaseServiceRole: vi.fn(),
+  hasSupabaseSecretKey: vi.fn(),
   createSupabaseAdminClient: vi.fn(),
   createSupabaseServerClient: vi.fn(),
   revalidatePath: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock("@/lib/auth", async (importOriginal) => {
 });
 
 vi.mock("@/lib/env", () => ({
-  hasSupabaseServiceRole: modulesMocks.hasSupabaseServiceRole,
+  hasSupabaseSecretKey: modulesMocks.hasSupabaseSecretKey,
 }));
 
 vi.mock("@/lib/supabase/server", () => ({
@@ -63,7 +63,7 @@ describe("modules data service", () => {
   beforeEach(() => {
     modulesMocks.getDashboardAccessState.mockReset();
     modulesMocks.requireSuperadminUser.mockReset();
-    modulesMocks.hasSupabaseServiceRole.mockReset();
+    modulesMocks.hasSupabaseSecretKey.mockReset();
     modulesMocks.createSupabaseAdminClient.mockReset();
     modulesMocks.createSupabaseServerClient.mockReset();
     modulesMocks.revalidatePath.mockReset();
@@ -72,7 +72,7 @@ describe("modules data service", () => {
   });
 
   it("returns default-enabled modules merged with stored rows", async () => {
-    modulesMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    modulesMocks.hasSupabaseSecretKey.mockReturnValue(true);
     modulesMocks.createSupabaseAdminClient.mockReturnValue({
       from: vi.fn(() => ({
         select: vi.fn(async () => ({
@@ -104,7 +104,7 @@ describe("modules data service", () => {
   });
 
   it("bypasses disabled modules for superadmin access state", async () => {
-    modulesMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    modulesMocks.hasSupabaseSecretKey.mockReturnValue(true);
     modulesMocks.createSupabaseAdminClient.mockReturnValue({
       from: vi.fn(() => ({
         select: vi.fn(async () => ({
@@ -138,7 +138,7 @@ describe("modules data service", () => {
   });
 
   it("does not read session state when a public module is enabled", async () => {
-    modulesMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    modulesMocks.hasSupabaseSecretKey.mockReturnValue(true);
     modulesMocks.createSupabaseAdminClient.mockReturnValue({
       from: vi.fn(() => ({
         select: vi.fn(async () => ({
@@ -165,7 +165,7 @@ describe("modules data service", () => {
   });
 
   it("calls notFound for disabled modules when access is not superadmin", async () => {
-    modulesMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    modulesMocks.hasSupabaseSecretKey.mockReturnValue(true);
     modulesMocks.createSupabaseAdminClient.mockReturnValue({
       from: vi.fn(() => ({
         select: vi.fn(async () => ({
@@ -199,7 +199,7 @@ describe("modules data service", () => {
   });
 
   it("toggles a module and revalidates affected paths", async () => {
-    modulesMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    modulesMocks.hasSupabaseSecretKey.mockReturnValue(true);
     modulesMocks.requireSuperadminUser.mockResolvedValue({
       id: "root-1",
       email: "root@gym.test",

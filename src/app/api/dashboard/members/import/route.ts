@@ -7,7 +7,7 @@ import {
   type MemberImportMode,
   type MemberImportSupabaseClient,
 } from "@/lib/data/member-import";
-import { hasFirebaseAdminEnv, hasSupabaseServiceRole } from "@/lib/env";
+import { hasFirebaseAdminEnv, hasSupabaseSecretKey } from "@/lib/env";
 import { getFirebaseAdminAuth } from "@/lib/firebase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE } from "@/lib/user-roles";
@@ -43,9 +43,9 @@ export async function POST(request: Request) {
     }
 
     if (mode === "commit") {
-      if (!hasSupabaseServiceRole()) {
+      if (!hasSupabaseSecretKey()) {
         return NextResponse.json(
-          { error: "Configura SUPABASE_SERVICE_ROLE_KEY para importar socios." },
+          { error: "Configura SUPABASE_SECRET_KEY para importar socios." },
           { status: 503 },
         );
       }
