@@ -18,12 +18,12 @@ describe("Content Security Policy", () => {
     expect(buildNonceContentSecurityPolicy("dev-nonce", true)).toContain("'unsafe-eval'");
   });
 
-  it("builds a strict nonce policy for authenticated and checkout routes", () => {
+  it("keeps authenticated routes hydration-compatible without unsafe eval", () => {
     const policy = buildNonceContentSecurityPolicy("nonce-value");
 
-    expect(policy).toContain("'nonce-nonce-value'");
-    expect(policy).toContain("'strict-dynamic'");
-    expect(policy).not.toContain("'unsafe-inline' https://www.paypal.com");
+    expect(policy).toContain("script-src 'self' 'unsafe-inline'");
+    expect(policy).not.toContain("'nonce-nonce-value'");
+    expect(policy).not.toContain("'strict-dynamic'");
     expect(policy).not.toContain("'unsafe-eval'");
   });
 });

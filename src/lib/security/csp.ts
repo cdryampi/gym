@@ -40,17 +40,9 @@ export function buildStaticContentSecurityPolicy(isDevelopment = false) {
 }
 
 export function buildNonceContentSecurityPolicy(nonce: string, isDevelopment = false) {
-  const scripts = [
-    "'self'",
-    `'nonce-${nonce}'`,
-    "'strict-dynamic'",
-    ...(isDevelopment ? ["'unsafe-eval'"] : []),
-    ...PAYPAL_SCRIPT_SOURCES,
-    ...FIREBASE_SCRIPT_SOURCES,
-  ];
-
-  return serializeDirectives([
-    `script-src ${scripts.join(" ")}`,
-    ...COMMON_DIRECTIVES,
-  ]);
+  // Next.js 16 currently emits framework chunks and bootstrap scripts without
+  // the request nonce on these routes. Keep the nonce API isolated here, but
+  // use the hydration-compatible policy until every emitted script is nonced.
+  void nonce;
+  return buildStaticContentSecurityPolicy(isDevelopment);
 }
