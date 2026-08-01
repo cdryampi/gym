@@ -74,6 +74,6 @@ export async function loginViaUi(page: Page) {
   await page.getByLabel("Contrasena").fill(password);
   await page.getByRole("button", { name: "Iniciar Sesion" }).click();
 
-  await page.waitForURL("**/dashboard");
+  await page.waitForURL("**/dashboard", { waitUntil: "commit" });
   await expect(page.getByRole("heading", { name: "COMMAND CENTER" })).toBeVisible();
 }
