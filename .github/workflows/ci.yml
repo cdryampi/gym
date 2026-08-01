@@ -108,7 +108,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm run lint -- --max-warnings=0
+        run: pnpm exec eslint . --max-warnings=0
 
       - name: Typecheck
         run: pnpm run typecheck
@@ -163,6 +163,7 @@ jobs:
       - name: Detect Medusa changes
         id: medusa_changes
         shell: bash
+        working-directory: ${{ github.workspace }}
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
