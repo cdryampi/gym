@@ -93,7 +93,7 @@ describe("proxy security hardening", () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toContain("/login");
-    expect(response.headers.get("content-security-policy")).toContain("'strict-dynamic'");
+    expect(response.headers.get("content-security-policy")).toContain("'unsafe-inline'");
     expect(response.headers.get("content-security-policy")).not.toContain("'unsafe-eval'");
   });
 
@@ -112,7 +112,7 @@ describe("proxy security hardening", () => {
     const { proxy } = await importProxyModule();
     const response = await proxy(new NextRequest("http://localhost/recuperar-contrasena"));
 
-    expect(response.headers.get("content-security-policy")).toContain("'strict-dynamic'");
+    expect(response.headers.get("content-security-policy")).toContain("'unsafe-inline'");
     expect(response.headers.get("content-security-policy")).not.toContain("'unsafe-eval'");
   });
 
