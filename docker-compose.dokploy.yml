@@ -31,6 +31,18 @@ services:
       MEDUSA_COUNTRY_CODE: ${MEDUSA_COUNTRY_CODE:-PE}
     expose:
       - "9000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:9000/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 5
     networks:
       - dokploy-network
       - gym-internal
@@ -43,6 +55,11 @@ services:
     restart: unless-stopped
     expose:
       - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - gym-internal
 

@@ -96,3 +96,10 @@ Comprueba:
 2. `https://nuovaforzagym.com`
 3. `https://nuovaforzagym.com/tienda`
 4. login del dashboard y CRUD de producto
+# Healthcheck
+
+El contenedor expone `GET /health`. La respuesta saludable es HTTP 200 con
+`{ "status": "healthy", "service": "gym-medusa", "timestamp": "..." }` y no incluye
+credenciales ni detalles de infraestructura. `docker-compose.dokploy.yml` usa este endpoint
+como healthcheck; un despliegue no se considera listo hasta que responda 200.
+Si la consulta minima a PostgreSQL falla, responde 503 con `status=unhealthy` sin revelar el error.
