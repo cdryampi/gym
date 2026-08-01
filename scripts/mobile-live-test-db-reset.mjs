@@ -410,13 +410,13 @@ export async function resetMobileLiveTestDb() {
 
   const statusEnv = parseEnvBlock(runSupabaseCommand(["status", "-o", "env"], { capture: true }));
   const supabaseUrl = statusEnv.API_URL;
-  const serviceRoleKey = statusEnv.SERVICE_ROLE_KEY;
+  const secretKey = statusEnv.SERVICE_ROLE_KEY;
 
-  if (!supabaseUrl || !serviceRoleKey) {
+  if (!supabaseUrl || !secretKey) {
     throw new Error("No se pudieron resolver API_URL y SERVICE_ROLE_KEY desde supabase status.");
   }
 
-  const client = createClient(supabaseUrl, serviceRoleKey, {
+  const client = createClient(supabaseUrl, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,
@@ -430,7 +430,7 @@ export async function resetMobileLiveTestDb() {
     apiUrl: statusEnv.API_URL,
     anonKey: statusEnv.ANON_KEY,
     dbUrl: statusEnv.DB_URL,
-    serviceRoleKey: statusEnv.SERVICE_ROLE_KEY,
+    secretKey: statusEnv.SERVICE_ROLE_KEY,
   };
 }
 

@@ -18,7 +18,7 @@ vi.mock("@/lib/auth", async (importOriginal) => {
 
 // Mock de env
 vi.mock("@/lib/env", () => ({
-  hasSupabaseServiceRole: vi.fn().mockReturnValue(true),
+  hasSupabaseSecretKey: vi.fn().mockReturnValue(true),
 }));
 
 // Mock de Supabase

@@ -3,7 +3,12 @@ import { z } from "zod";
 
 import { sendFirebaseVerifyAndChangeEmail } from "@/lib/firebase/email-actions";
 import { sanitizeMemberRedirectPath } from "@/lib/member-auth-flow";
-import { requireFirebaseUser, validateBody, withApiErrorHandling } from "@/lib/api-utils";
+import {
+  requireFirebaseUser,
+  validateBody,
+  validateRequestOrigin,
+  withApiErrorHandling,
+} from "@/lib/api-utils";
 
 const EmailChangeSchema = z.object({
   email: z.string().trim().email(),
@@ -12,6 +17,9 @@ const EmailChangeSchema = z.object({
 
 export async function POST(request: Request) {
   return withApiErrorHandling(async (): Promise<NextResponse> => {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.success) return originCheck.errorResponse;
+
     const auth = await requireFirebaseUser();
     if (!auth.success) return auth.errorResponse;
     const { user } = auth;

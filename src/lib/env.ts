@@ -54,6 +54,7 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_PAYPAL_CLIENT_ID: optionalString(z.string().min(1)),
   NEXT_PUBLIC_SUPABASE_URL: optionalString(z.string().url()),
   SUPABASE_URL: optionalString(z.string().url()),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: optionalString(z.string().min(1)),
   NEXT_PUBLIC_SUPABASE_ANON_KEY: optionalString(z.string().min(1)),
 });
 
@@ -98,7 +99,7 @@ const serverEnvSchema = publicEnvSchema.extend({
   SMTP_PORT: optionalString(z.string().regex(/^\d+$/)),
   SMTP_SECURE: optionalEnum(["true", "false"]),
   SMTP_USER: optionalString(z.string().min(1)),
-  SUPABASE_SERVICE_ROLE_KEY: optionalString(z.string().min(1)),
+  SUPABASE_SECRET_KEY: optionalString(z.string().min(1)),
 });
 
 const publicEnv = publicEnvSchema.parse({
@@ -114,12 +115,14 @@ const publicEnv = publicEnvSchema.parse({
   NEXT_PUBLIC_PAYPAL_CLIENT_ID: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID,
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_URL: process.env.SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 });
 
 const serverEnv = serverEnvSchema.parse({
   NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
   SUPABASE_URL: process.env.SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   NEXT_PUBLIC_MEDUSA_REGION_ID: process.env.NEXT_PUBLIC_MEDUSA_REGION_ID,
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
@@ -162,7 +165,7 @@ const serverEnv = serverEnvSchema.parse({
   SMTP_PORT: process.env.SMTP_PORT,
   SMTP_SECURE: process.env.SMTP_SECURE,
   SMTP_USER: process.env.SMTP_USER,
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
+  SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
 });
 
 function resolvePublicSupabaseUrl() {
@@ -170,7 +173,10 @@ function resolvePublicSupabaseUrl() {
 }
 
 function resolvePublicSupabaseKey() {
-  return publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  return (
+    publicEnv.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    publicEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  );
 }
 
 function resolveMedusaBackendUrl() {
@@ -220,8 +226,8 @@ export function hasMedusaEnv() {
   return Boolean(resolveMedusaBackendUrl() && resolveMedusaPublishableKey());
 }
 
-export function hasSupabaseServiceRole() {
-  return Boolean(serverEnv.SUPABASE_SERVICE_ROLE_KEY);
+export function hasSupabaseSecretKey() {
+  return Boolean(serverEnv.SUPABASE_SECRET_KEY);
 }
 
 export function getCommerceProvider() {
@@ -270,7 +276,7 @@ export function getPublicSupabaseEnv() {
 
   if (!url || !anonKey) {
     throw new Error(
-      "Missing Supabase public environment variables. Set NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) and NEXT_PUBLIC_SUPABASE_ANON_KEY.",
+      "Missing Supabase public environment variables. Set NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (legacy fallback: NEXT_PUBLIC_SUPABASE_ANON_KEY).",
     );
   }
 
@@ -312,7 +318,7 @@ export function getFirebaseAdminEnv() {
 export function getServerSupabaseEnv() {
   return {
     ...getPublicSupabaseEnv(),
-    serviceRoleKey: serverEnv.SUPABASE_SERVICE_ROLE_KEY,
+    secretKey: serverEnv.SUPABASE_SECRET_KEY,
   };
 }
 

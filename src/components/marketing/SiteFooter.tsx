@@ -81,13 +81,15 @@ export default function SiteFooter({
         <div className="grid gap-16 border-t border-white/5 pt-20 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <Link href="/" className="inline-block" aria-label="Ir al inicio">
-              <Image
-                src="/images/logo/logo-trans.webp"
-                alt={`${settings.site_name} Logo`}
-                width={160}
-                height={60}
-                className="opacity-90"
-              />
+              <span className="relative block h-[60px] w-40">
+                <Image
+                  src="/images/logo/logo-trans.webp"
+                  alt={`${settings.site_name} Logo`}
+                  fill
+                  sizes="160px"
+                  className="object-contain opacity-90"
+                />
+              </span>
             </Link>
             <p className="mt-8 max-w-sm text-sm font-medium leading-8 text-white/40">
               {settings.site_name} es un gimnasio local orientado a fuerza, progreso real y una experiencia seria y cercana. 

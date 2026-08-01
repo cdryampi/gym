@@ -11,7 +11,7 @@
  *
  * Required env vars (loaded from .env.local automatically):
  *   SUPABASE_URL or NEXT_PUBLIC_SUPABASE_URL
- *   SUPABASE_SERVICE_ROLE_KEY
+ *   SUPABASE_SECRET_KEY
  */
 
 "use strict";
@@ -236,7 +236,7 @@ async function persistMedusaIds(supabase, syncResult) {
 async function main() {
   loadEnvFiles();
 
-  const supabase = createClient(resolveSupabaseUrl(), requireEnv("SUPABASE_SERVICE_ROLE_KEY"), {
+  const supabase = createClient(resolveSupabaseUrl(), requireEnv("SUPABASE_SECRET_KEY"), {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 

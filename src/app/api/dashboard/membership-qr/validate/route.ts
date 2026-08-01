@@ -15,7 +15,7 @@ import { SITE_URL } from "@/lib/seo";
 
 import type { AuthUser } from "@/lib/auth-user";
 import { type LocalAdminUser } from "@/lib/auth";
-import { requireRoles, withApiErrorHandling } from "@/lib/api-utils";
+import { requireRoles, validateRequestOrigin, withApiErrorHandling } from "@/lib/api-utils";
 import { DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE, TRAINER_ROLE } from "@/lib/user-roles";
 
 function resolveDashboardUserHeaders(user: AuthUser | LocalAdminUser) {
@@ -117,17 +117,20 @@ async function resolveMembershipQrFallback(scannedValue: string) {
 
 export async function POST(request: Request) {
   return withApiErrorHandling(async () => {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.success) return originCheck.errorResponse;
+
     const auth = await requireRoles([TRAINER_ROLE, DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE]);
     if (!auth.success) return auth.errorResponse;
     const user = auth.user;
 
-    const { serviceRoleKey, url } = getServerSupabaseEnv();
+    const { secretKey, url } = getServerSupabaseEnv();
 
-    if (!serviceRoleKey) {
+    if (!secretKey) {
       return NextResponse.json(
         createMembershipQrErrorResponse({
           errorMessage:
-            "Falta SUPABASE_SERVICE_ROLE_KEY para conectar el dashboard con la validacion QR.",
+            "Falta SUPABASE_SECRET_KEY para conectar el dashboard con la validacion QR.",
         }),
         { status: 500 },
       );
@@ -153,7 +156,7 @@ export async function POST(request: Request) {
       const functionResponse = await fetch(`${url}/functions/v1/membership-qr-validate`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${serviceRoleKey}`,
+          apikey: secretKey,
           "Content-Type": "application/json",
           "x-dashboard-user-email": userEmail,
           "x-dashboard-user-id": userId,

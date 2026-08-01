@@ -16,7 +16,7 @@ import {
 } from "@/lib/data/store";
 import { getDefaultCommerceCurrencyCode } from "@/lib/commerce/currency";
 import { normalizeCommerceImageUrls } from "@/lib/commerce/image-urls";
-import { hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabaseSecretKey } from "@/lib/env";
 import type { StoreAdminRuntimeRepository } from "@/lib/data/store-admin/repository";
 import { getMedusaAdminSdk } from "@/lib/medusa/admin-sdk";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
@@ -607,9 +607,9 @@ async function getDefaultSalesChannelId() {
 }
 
 function getSupabaseBridgeClient() {
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     throw new Error(
-      "Falta SUPABASE_SERVICE_ROLE_KEY para persistir los enlaces Medusa-Supabase del dashboard.",
+      "Falta SUPABASE_SECRET_KEY para persistir los enlaces Medusa-Supabase del dashboard.",
     );
   }
 

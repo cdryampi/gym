@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, Loader2, Save, Upload, Video } from "lucide-react";
 import { useState, useTransition } from "react";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 
 import { saveTrainingZone } from "@/app/(admin)/dashboard/actions";
 import AdminSurface from "@/components/admin/AdminSurface";
@@ -48,6 +48,10 @@ export default function TrainingZonesForm({
   });
 
   const { fields } = useFieldArray({
+    control: form.control,
+    name: "trainingZones",
+  });
+  const watchedZones = useWatch({
     control: form.control,
     name: "trainingZones",
   });
@@ -122,9 +126,9 @@ export default function TrainingZonesForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid gap-5">
           {fields.map((field, index) => {
-            const zoneTitle = form.watch(`trainingZones.${index}.title`);
-            const posterUrl = form.watch(`trainingZones.${index}.poster_url`);
-            const videoUrl = form.watch(`trainingZones.${index}.video_url`);
+            const zoneTitle = watchedZones[index]?.title;
+            const posterUrl = watchedZones[index]?.poster_url;
+            const videoUrl = watchedZones[index]?.video_url;
             const disabled = Boolean(disabledReason) || isBusy;
 
             return (

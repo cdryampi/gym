@@ -11,7 +11,7 @@ export default async function DashboardCmsPage() {
   const snapshot = await getDashboardCmsSnapshot();
   const { isReadOnly } = await getDashboardCapabilities();
   const disabledReason = isReadOnly
-    ? "Configura SUPABASE_SERVICE_ROLE_KEY para guardar contenido legal y de sistema."
+    ? "Configura SUPABASE_SECRET_KEY para guardar contenido legal y de sistema."
     : undefined;
 
   return (

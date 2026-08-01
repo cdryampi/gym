@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireRoles, withApiErrorHandling } from "@/lib/api-utils";
+import { requireRoles, validateRequestOrigin, withApiErrorHandling } from "@/lib/api-utils";
 import { validateCsvData } from "@/lib/admin/member-import/service";
 import { DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE, TRAINER_ROLE } from "@/lib/user-roles";
 
@@ -7,6 +7,9 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   return withApiErrorHandling(async () => {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.success) return originCheck.errorResponse;
+
     const auth = await requireRoles([DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE, TRAINER_ROLE]);
     if (!auth.success) return auth.errorResponse;
 

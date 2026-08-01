@@ -174,7 +174,7 @@ npm run sync:store:medusa
 
 El script:
 
-- lee `store_categories` y `products` desde Supabase con `SUPABASE_SERVICE_ROLE_KEY`
+- lee `store_categories` y `products` desde Supabase con `SUPABASE_SECRET_KEY`
 - hace upsert en Medusa por `slug`/`handle`
 - solo escribe de vuelta en Supabase los campos `medusa_category_id` y `medusa_product_id`
 

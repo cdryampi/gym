@@ -18,7 +18,7 @@ vi.mock("@/lib/auth", async (importOriginal) => {
 // Mock de env
 vi.mock("@/lib/env", () => ({
   hasSupabasePublicEnv: vi.fn().mockReturnValue(true),
-  hasSupabaseServiceRole: vi.fn().mockReturnValue(true),
+  hasSupabaseSecretKey: vi.fn().mockReturnValue(true),
   hasFirebasePublicEnv: vi.fn().mockReturnValue(true),
   hasFirebaseAdminEnv: vi.fn().mockReturnValue(true),
   hasMedusaEnv: vi.fn().mockReturnValue(true),
@@ -26,7 +26,7 @@ vi.mock("@/lib/env", () => ({
   hasSmtpEnv: vi.fn().mockReturnValue(true),
   hasPayPalEnv: vi.fn().mockReturnValue(true),
   getPayPalEnv: vi.fn().mockReturnValue({ environment: "sandbox" }),
-  getServerSupabaseEnv: vi.fn().mockReturnValue({ url: "https://test.supabase.co", serviceRoleKey: "test-key" }),
+  getServerSupabaseEnv: vi.fn().mockReturnValue({ url: "https://test.supabase.co", secretKey: "test-key" }),
 }));
 
 // Mock de Supabase
@@ -70,7 +70,7 @@ describe("Diagnostics Actions", () => {
     vi.clearAllMocks();
     const { 
       hasSupabasePublicEnv,
-      hasSupabaseServiceRole,
+      hasSupabaseSecretKey,
       hasFirebasePublicEnv,
       hasFirebaseAdminEnv,
       hasMedusaEnv,
@@ -80,7 +80,7 @@ describe("Diagnostics Actions", () => {
     } = await import("@/lib/env");
     
     vi.mocked(hasSupabasePublicEnv).mockReturnValue(true);
-    vi.mocked(hasSupabaseServiceRole).mockReturnValue(true);
+    vi.mocked(hasSupabaseSecretKey).mockReturnValue(true);
     vi.mocked(hasFirebasePublicEnv).mockReturnValue(true);
     vi.mocked(hasFirebaseAdminEnv).mockReturnValue(true);
     vi.mocked(hasMedusaEnv).mockReturnValue(true);
@@ -111,12 +111,12 @@ describe("Diagnostics Actions", () => {
     });
 
     it("debe retornar error cuando falta service role", async () => {
-      const { hasSupabaseServiceRole } = await import("@/lib/env");
-      vi.mocked(hasSupabaseServiceRole).mockReturnValue(false);
+      const { hasSupabaseSecretKey } = await import("@/lib/env");
+      vi.mocked(hasSupabaseSecretKey).mockReturnValue(false);
       
       const result = await checkSupabaseConnection();
       expect(result.success).toBe(false);
-      expect(result.message).toContain("Falta SUPABASE_SERVICE_ROLE_KEY");
+      expect(result.message).toContain("Falta SUPABASE_SECRET_KEY");
     });
 
     it("debe retornar error cuando falla la consulta", async () => {

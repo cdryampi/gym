@@ -4,7 +4,7 @@ import { z } from "zod";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import {
   hasSupabasePublicEnv,
-  hasSupabaseServiceRole,
+  hasSupabaseSecretKey,
   hasFirebasePublicEnv,
   hasFirebaseAdminEnv,
   hasMedusaEnv,
@@ -36,10 +36,10 @@ const MedusaListSchema = z.object({
 export async function checkSupabaseConnection(): Promise<DiagnosticResult> {
   await requireSuperadminUser();
   
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     return {
       success: false,
-      message: "Falta SUPABASE_SERVICE_ROLE_KEY.",
+      message: "Falta SUPABASE_SECRET_KEY.",
       timestamp: new Date().toISOString(),
     };
   }
@@ -173,7 +173,7 @@ export async function getServicesStatus() {
   return {
     supabase: {
       configured: hasSupabasePublicEnv(),
-      serviceRole: hasSupabaseServiceRole(),
+      serviceRole: hasSupabaseSecretKey(),
     },
     firebase: {
       public: hasFirebasePublicEnv(),

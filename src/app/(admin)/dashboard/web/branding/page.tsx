@@ -11,7 +11,7 @@ export default async function BrandingDashboardPage() {
   const { settings, warning } = await getDashboardData();
   const { isReadOnly } = await getDashboardCapabilities();
   const disabledReason = isReadOnly
-    ? "Modo lectura: SUPABASE_SERVICE_ROLE_KEY no configurada."
+    ? "Modo lectura: SUPABASE_SECRET_KEY no configurada."
     : undefined;
 
   return (

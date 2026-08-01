@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 
-import { requireRoles, withApiErrorHandling } from "@/lib/api-utils";
+import { requireRoles, validateRequestOrigin, withApiErrorHandling } from "@/lib/api-utils";
 import {
   runMemberImport,
   type MemberImportMode,
   type MemberImportSupabaseClient,
 } from "@/lib/data/member-import";
-import { hasFirebaseAdminEnv, hasSupabaseServiceRole } from "@/lib/env";
+import { hasFirebaseAdminEnv, hasSupabaseSecretKey } from "@/lib/env";
 import { getFirebaseAdminAuth } from "@/lib/firebase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE } from "@/lib/user-roles";
@@ -24,6 +24,9 @@ function getDefaultImportPassword() {
 
 export async function POST(request: Request) {
   return withApiErrorHandling(async () => {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.success) return originCheck.errorResponse;
+
     const auth = await requireRoles([DASHBOARD_ADMIN_ROLE, SUPERADMIN_ROLE]);
     if (!auth.success) return auth.errorResponse;
 
@@ -40,9 +43,9 @@ export async function POST(request: Request) {
     }
 
     if (mode === "commit") {
-      if (!hasSupabaseServiceRole()) {
+      if (!hasSupabaseSecretKey()) {
         return NextResponse.json(
-          { error: "Configura SUPABASE_SERVICE_ROLE_KEY para importar socios." },
+          { error: "Configura SUPABASE_SECRET_KEY para importar socios." },
           { status: 503 },
         );
       }

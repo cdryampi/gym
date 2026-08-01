@@ -12,7 +12,7 @@ import { isMissingCartMessage, STALE_CART_MESSAGE } from "@/lib/cart/runtime";
 import { getCurrentMemberUser } from "@/lib/auth";
 import { defaultSiteSettings } from "@/lib/data/default-content";
 import { createSupabasePublicClient } from "@/lib/supabase/server";
-import { withApiErrorHandling } from "@/lib/api-utils";
+import { validateRequestOrigin, withApiErrorHandling } from "@/lib/api-utils";
 
 function clearCartCookie(response: NextResponse) {
   response.cookies.set(GYM_CART_COOKIE, "", {
@@ -68,6 +68,9 @@ function buildWhatsAppUrl(baseUrl: string | null | undefined, identifier: string
 
 export async function POST(request: Request) {
   return withApiErrorHandling(async () => {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.success) return originCheck.errorResponse;
+
     const body = (await request.json().catch(() => ({}))) as {
       cartId?: string;
       email?: string;

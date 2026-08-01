@@ -10,6 +10,7 @@ const envKeysUnderTest = [
   "NEXT_PUBLIC_PAYPAL_CLIENT_ID",
   "NEXT_PUBLIC_SUPABASE_URL",
   "SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "ADMIN_PASSWORD",
   "ADMIN_USER",
@@ -48,7 +49,7 @@ const envKeysUnderTest = [
   "SMTP_PORT",
   "SMTP_SECURE",
   "SMTP_USER",
-  "SUPABASE_SERVICE_ROLE_KEY",
+  "SUPABASE_SECRET_KEY",
 ] as const;
 
 function buildCleanEnv() {
@@ -154,13 +155,31 @@ describe("env provider constraints", () => {
       NODE_ENV: "test",
       NEXT_PUBLIC_SUPABASE_URL: "https://nbjkfyjeewprnxxibhwz.supabase.co",
       NEXT_PUBLIC_SUPABASE_ANON_KEY: "TU_SUPABASE_ANON_KEY_ROTADA",
-      SUPABASE_SERVICE_ROLE_KEY: "TU_SUPABASE_SERVICE_ROLE_KEY_ROTADA",
+      SUPABASE_SECRET_KEY: "TU_SUPABASE_SECRET_KEY_ROTADA",
       MEDUSA_ADMIN_API_KEY: "TU_MEDUSA_ADMIN_API_KEY_ROTADA",
     });
 
     expect(env.hasSupabasePublicEnv()).toBe(false);
-    expect(env.hasSupabaseServiceRole()).toBe(false);
+    expect(env.hasSupabaseSecretKey()).toBe(false);
     expect(env.hasMedusaAdminEnv()).toBe(false);
+  });
+
+  it("prefers modern Supabase publishable and secret keys", async () => {
+    const env = await importEnvModule({
+      NODE_ENV: "test",
+      NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test_key",
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: "legacy-anon-key",
+      SUPABASE_SECRET_KEY: "sb_secret_test_key",
+    });
+
+    expect(env.hasSupabasePublicEnv()).toBe(true);
+    expect(env.hasSupabaseSecretKey()).toBe(true);
+    expect(env.getPublicSupabaseEnv()).toEqual({
+      url: "https://example.supabase.co",
+      anonKey: "sb_publishable_test_key",
+    });
+    expect(env.getServerSupabaseEnv().secretKey).toBe("sb_secret_test_key");
   });
 
   it("accepts a valid PayPal sandbox configuration", async () => {

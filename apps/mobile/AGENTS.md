@@ -92,7 +92,7 @@ El selector mock del cliente existe para revisar la UX sin depender del estado r
 
 - Auth mobile con `Supabase Auth`
 - Persistencia de sesión con `expo-secure-store`
-- Nunca usar `SUPABASE_SERVICE_ROLE_KEY` en cliente
+- Nunca usar `SUPABASE_SECRET_KEY` en cliente
 - El cliente mobile solo debe conocer:
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`

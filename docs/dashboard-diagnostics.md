@@ -13,7 +13,7 @@ Este documento describe la funcionalidad y el uso del panel de diagnóstico inte
 ### 1. Supabase
 - **Configuración**: Verifica si las variables públicas (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`) están presentes.
 - **Conectividad**: Realiza una consulta mínima (`head` request) a la tabla `user_roles` usando el `service_role` para validar permisos administrativos.
-- **Si falla**: Revisar que `SUPABASE_SERVICE_ROLE_KEY` sea correcto y que el proyecto en Supabase esté activo.
+- **Si falla**: Revisar que `SUPABASE_SECRET_KEY` sea correcto y que el proyecto en Supabase esté activo.
 
 ### 2. Firebase Admin
 - **Configuración**: Valida la presencia de `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL` y `FIREBASE_PRIVATE_KEY`.

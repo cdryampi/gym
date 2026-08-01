@@ -45,7 +45,7 @@ function getFirebaseAdmin() {
 function getSupabaseAdmin() {
   const url = process.env.SUPABASE_URL?.trim() || required("NEXT_PUBLIC_SUPABASE_URL");
 
-  return createClient(url, required("SUPABASE_SERVICE_ROLE_KEY"), {
+  return createClient(url, required("SUPABASE_SECRET_KEY"), {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

@@ -3,8 +3,8 @@ import { beforeEach, describe, expect, it, vi, afterEach } from "vitest";
 const mocks = vi.hoisted(() => ({
   requireAdminUser: vi.fn(),
   getDashboardAccessState: vi.fn(),
-  getServerSupabaseEnv: vi.fn().mockReturnValue({ serviceRoleKey: "test-key", url: "https://test.supabase.co" }),
-  hasSupabaseServiceRole: vi.fn().mockReturnValue(true),
+  getServerSupabaseEnv: vi.fn().mockReturnValue({ secretKey: "test-key", url: "https://test.supabase.co" }),
+  hasSupabaseSecretKey: vi.fn().mockReturnValue(true),
   getDashboardMembershipScanResultByToken: vi.fn(),
   parseMembershipQrScanToken: vi.fn(),
 }));
@@ -27,7 +27,7 @@ vi.mock("@/lib/env", async (importOriginal) => {
   return {
     ...actual,
     getServerSupabaseEnv: mocks.getServerSupabaseEnv,
-    hasSupabaseServiceRole: mocks.hasSupabaseServiceRole,
+    hasSupabaseSecretKey: mocks.hasSupabaseSecretKey,
   };
 });
 
@@ -43,7 +43,7 @@ describe("POST /api/dashboard/membership-qr/validate", () => {
     vi.clearAllMocks();
     global.fetch = vi.fn();
     vi.stubEnv("NODE_ENV", "test");
-    mocks.hasSupabaseServiceRole.mockReturnValue(true);
+    mocks.hasSupabaseSecretKey.mockReturnValue(true);
     mocks.getDashboardAccessState.mockResolvedValue({
       user: { id: "admin-1", email: "admin@test.com" },
       accessMode: "admin",
@@ -93,9 +93,23 @@ describe("POST /api/dashboard/membership-qr/validate", () => {
     } as unknown as Response);
 
     const response = await POST(
-      new Request("http://localhost", { method: "POST", body: JSON.stringify({ scannedValue: "token" }) })
+      new Request("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ scannedValue: "token" }),
+        headers: { host: "localhost", origin: "http://localhost" },
+      })
     );
     expect(response.status).toBe(200);
+    expect(fetch).toHaveBeenCalledWith(
+      "https://test.supabase.co/functions/v1/membership-qr-validate",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          apikey: "test-key",
+        }),
+      }),
+    );
+    const [, requestInit] = vi.mocked(fetch).mock.calls[0];
+    expect(requestInit?.headers).not.toHaveProperty("Authorization");
   });
 
   it("does not leak stack traces on internal errors", async () => {
@@ -105,7 +119,11 @@ describe("POST /api/dashboard/membership-qr/validate", () => {
     mocks.parseMembershipQrScanToken.mockImplementation(() => { throw new Error("Fallback failed"); });
 
     const response = await POST(
-      new Request("http://localhost", { method: "POST", body: JSON.stringify({ scannedValue: "token" }) })
+      new Request("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ scannedValue: "token" }),
+        headers: { host: "localhost", origin: "http://localhost" },
+      })
     );
 
     expect(response.status).toBe(503);

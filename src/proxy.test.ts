@@ -1,10 +1,10 @@
 import { NextRequest } from "next/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const proxyMocks = vi.hoisted(() => ({
   createClient: vi.fn(),
   getServerSupabaseEnv: vi.fn(),
-  hasSupabaseServiceRole: vi.fn(),
+  hasSupabaseSecretKey: vi.fn(),
   verifyFirebaseSessionToken: vi.fn(),
 }));
 
@@ -14,7 +14,7 @@ vi.mock("@supabase/supabase-js", () => ({
 
 vi.mock("@/lib/env", () => ({
   getServerSupabaseEnv: proxyMocks.getServerSupabaseEnv,
-  hasSupabaseServiceRole: proxyMocks.hasSupabaseServiceRole,
+  hasSupabaseSecretKey: proxyMocks.hasSupabaseSecretKey,
   hasLocalAdminEnv: vi.fn().mockReturnValue(false),
 }));
 
@@ -64,16 +64,17 @@ function createSupabaseProxyClient(input: {
 
 describe("proxy security hardening", () => {
   beforeEach(() => {
+    vi.stubEnv("NODE_ENV", "production");
     proxyMocks.createClient.mockReset();
     proxyMocks.getServerSupabaseEnv.mockReset();
-    proxyMocks.hasSupabaseServiceRole.mockReset();
+    proxyMocks.hasSupabaseSecretKey.mockReset();
     proxyMocks.verifyFirebaseSessionToken.mockReset();
     
     proxyMocks.getServerSupabaseEnv.mockReturnValue({
       url: "https://supabase.test",
-      serviceRoleKey: "service-role",
+      secretKey: "service-role",
     });
-    proxyMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    proxyMocks.hasSupabaseSecretKey.mockReturnValue(true);
     proxyMocks.verifyFirebaseSessionToken.mockImplementation(async (token) => {
       if (token.startsWith("valid-token-")) {
         return { uid: token.replace("valid-token-", "") };
@@ -82,12 +83,37 @@ describe("proxy security hardening", () => {
     });
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("redirects to login when no session is present on admin route", async () => {
     const { proxy } = await importProxyModule();
     const response = await proxy(new NextRequest("http://localhost/dashboard"));
 
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toContain("/login");
+    expect(response.headers.get("content-security-policy")).toContain("'strict-dynamic'");
+    expect(response.headers.get("content-security-policy")).not.toContain("'unsafe-eval'");
+  });
+
+  it("keeps cacheable public store routes on the static CSP", async () => {
+    proxyMocks.createClient.mockReturnValue(
+      createSupabaseProxyClient({ isModuleEnabled: true, isSuperadmin: false }),
+    );
+    const { proxy } = await importProxyModule();
+    const response = await proxy(new NextRequest("http://localhost/tienda/producto-test"));
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-security-policy")).toBeNull();
+  });
+
+  it("applies nonce CSP to the real password recovery route", async () => {
+    const { proxy } = await importProxyModule();
+    const response = await proxy(new NextRequest("http://localhost/recuperar-contrasena"));
+
+    expect(response.headers.get("content-security-policy")).toContain("'strict-dynamic'");
+    expect(response.headers.get("content-security-policy")).not.toContain("'unsafe-eval'");
   });
 
   it("redirects to login when an invalid/expired token is provided", async () => {

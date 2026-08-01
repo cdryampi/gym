@@ -427,7 +427,7 @@ async function uploadNovaForzaProductImages(
 ) {
   const supabaseUrl =
     process.env.NEXT_PUBLIC_SUPABASE_URL?.trim() || process.env.SUPABASE_URL?.trim() || "";
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() || "";
+  const secretKey = process.env.SUPABASE_SECRET_KEY?.trim() || "";
   const bucketName = "medusa-media";
 
   if (!supabaseUrl) {
@@ -436,9 +436,9 @@ async function uploadNovaForzaProductImages(
     );
   }
 
-  if (!serviceRoleKey) {
+  if (!secretKey) {
     logger.warn(
-      "[seed:nova] SUPABASE_SERVICE_ROLE_KEY missing. Skipping automatic upload of storefront images to Supabase Storage.",
+      "[seed:nova] SUPABASE_SECRET_KEY missing. Skipping automatic upload of storefront images to Supabase Storage.",
     );
     return;
   }
@@ -464,8 +464,7 @@ async function uploadNovaForzaProductImages(
     const response = await fetch(uploadUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${serviceRoleKey}`,
-        apikey: serviceRoleKey,
+        apikey: secretKey,
         "x-upsert": "true",
         "content-type": "image/webp",
       },

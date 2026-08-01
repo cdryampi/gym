@@ -8,6 +8,7 @@ import {
   updateCartEmail,
   updateCartLineItem,
 } from "@/lib/cart/medusa";
+import { validateRequestOrigin } from "@/lib/api-utils";
 
 type CartStoreAction =
   | {
@@ -61,6 +62,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const originCheck = validateRequestOrigin(request);
+  if (!originCheck.success) return originCheck.errorResponse;
+
   const body = (await request.json().catch(() => ({}))) as Partial<CartStoreAction>;
 
   try {

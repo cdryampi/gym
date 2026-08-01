@@ -52,7 +52,7 @@ Si cambias rutas o middlewares custom de Medusa, reinicia Medusa antes de seguir
 
 - `MEDUSA_BACKEND_URL`
 - `MEDUSA_ADMIN_API_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_SECRET_KEY`
 - `STORE_ADMIN_PROVIDER=medusa`
 
 ### Checkout PayPal
@@ -113,13 +113,13 @@ npm run sync:store:medusa
 Sintomas habituales:
 
 - warnings sobre `MEDUSA_ADMIN_API_KEY`
-- warnings sobre `SUPABASE_SERVICE_ROLE_KEY`
+- warnings sobre `SUPABASE_SECRET_KEY`
 - el dashboard carga pero no escribe cambios reales
 
 Comprobaciones:
 
 1. Revisa `MEDUSA_ADMIN_API_KEY` y `MEDUSA_BACKEND_URL`.
-2. Revisa `SUPABASE_SERVICE_ROLE_KEY`.
+2. Revisa `SUPABASE_SECRET_KEY`.
 3. Confirma que no estas intentando operar con `STORE_ADMIN_PROVIDER` distinto de `medusa`.
 
 Recuperacion:

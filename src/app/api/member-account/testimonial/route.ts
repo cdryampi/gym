@@ -4,7 +4,11 @@ import {
   getAuthenticatedMemberTestimonial,
   upsertAuthenticatedMemberTestimonial,
 } from "@/lib/data/member-account";
-import { requireFirebaseUser, withApiErrorHandling } from "@/lib/api-utils";
+import {
+  requireFirebaseUser,
+  validateRequestOrigin,
+  withApiErrorHandling,
+} from "@/lib/api-utils";
 
 export async function GET() {
   return withApiErrorHandling(async () => {
@@ -18,6 +22,9 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   return withApiErrorHandling(async () => {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.success) return originCheck.errorResponse;
+
     const auth = await requireFirebaseUser();
     if (!auth.success) return auth.errorResponse;
 

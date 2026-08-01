@@ -8,7 +8,7 @@ import {
   hasFirebaseAdminEnv,
   getLocalAdminEnv,
   hasLocalAdminEnv,
-  hasSupabaseServiceRole,
+  hasSupabaseSecretKey,
 } from "@/lib/env";
 import { 
   getFirebaseUserFromIdToken,
@@ -124,7 +124,7 @@ export async function getCurrentMemberUser() {
 const ADMIN_ALLOWED_EMAILS = process.env.ADMIN_ALLOWED_EMAILS?.split(",") || [];
 
 async function canBootstrapDashboardAccess(userEmail?: string | null) {
-  if (!hasSupabaseServiceRole()) {
+  if (!hasSupabaseSecretKey()) {
     return false;
   }
 
@@ -268,7 +268,7 @@ export async function requireDashboardAccessModes(
 
 export const getDashboardCapabilities = cache(async function getDashboardCapabilities() {
   const accessState = await getDashboardAccessState();
-  const canManageRealData = hasSupabaseServiceRole();
+  const canManageRealData = hasSupabaseSecretKey();
 
   return {
     canManageRealData,

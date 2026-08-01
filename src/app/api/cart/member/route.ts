@@ -10,7 +10,7 @@ import {
   resolveOrCreateMemberCommerceCustomer,
 } from "@/lib/cart/member-bridge";
 import { isMissingCartMessage, STALE_CART_MESSAGE } from "@/lib/cart/runtime";
-import { withApiErrorHandling, requireFirebaseUser } from "@/lib/api-utils";
+import { withApiErrorHandling, requireFirebaseUser, validateRequestOrigin } from "@/lib/api-utils";
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "No se pudo sincronizar el carrito del miembro.";
@@ -65,6 +65,9 @@ function clearCartCookie(response: NextResponse) {
 
 export async function POST(request: Request) {
   return withApiErrorHandling(async () => {
+    const originCheck = validateRequestOrigin(request);
+    if (!originCheck.success) return originCheck.errorResponse;
+
     const auth = await requireFirebaseUser();
     if (!auth.success) return auth.errorResponse;
     const { user } = auth;

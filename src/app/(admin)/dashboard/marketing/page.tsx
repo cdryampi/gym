@@ -11,7 +11,7 @@ export default async function DashboardMarketingPage() {
   const { settings, testimonials, warning } = await getDashboardMarketingData();
   const { isReadOnly } = await getDashboardCapabilities();
   const disabledReason = isReadOnly
-    ? "Configura SUPABASE_SERVICE_ROLE_KEY para guardar cambios reales."
+    ? "Configura SUPABASE_SECRET_KEY para guardar cambios reales."
     : undefined;
 
   return (

@@ -17,7 +17,7 @@ function getEnv() {
 
 const env = getEnv();
 const SUPABASE_URL = env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_SERVICE_KEY = env.SUPABASE_SECRET_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('Error: Faltan credenciales de Supabase en .env.local');

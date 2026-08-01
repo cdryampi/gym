@@ -3,7 +3,7 @@ import "server-only";
 import { revalidatePath } from "next/cache";
 
 import { PUBLIC_CACHE_TAGS, revalidatePublicCacheTags } from "@/lib/cache/public-cache";
-import { hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabaseSecretKey } from "@/lib/env";
 import {
   SYSTEM_MODULE_DEFINITION_MAP,
   type ModuleActionResponse,
@@ -65,8 +65,8 @@ export async function setSystemModuleState(
   name: SystemModuleName,
   nextEnabled: boolean,
 ): Promise<ModuleActionResponse> {
-  if (!hasSupabaseServiceRole()) {
-    throw new Error("Configura SUPABASE_SERVICE_ROLE_KEY para gestionar modulos reales.");
+  if (!hasSupabaseSecretKey()) {
+    throw new Error("Configura SUPABASE_SECRET_KEY para gestionar modulos reales.");
   }
 
   const definition = SYSTEM_MODULE_DEFINITION_MAP[name];

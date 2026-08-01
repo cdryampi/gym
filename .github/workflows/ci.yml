@@ -59,8 +59,9 @@ jobs:
       FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
       SUPABASE_URL: ${{ vars.SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
       MEDUSA_BACKEND_URL: ${{ vars.MEDUSA_BACKEND_URL }}
       NEXT_PUBLIC_MEDUSA_BACKEND_URL: ${{ vars.NEXT_PUBLIC_MEDUSA_BACKEND_URL }}
       MEDUSA_PUBLISHABLE_KEY: ${{ vars.MEDUSA_PUBLISHABLE_KEY }}
@@ -83,6 +84,8 @@ jobs:
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
       ADMIN_ALLOWED_EMAILS: ${{ vars.ADMIN_ALLOWED_EMAILS }}
+      ADMIN_USER: ${{ secrets.ADMIN_USER }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -105,13 +108,19 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm run lint
+        run: pnpm exec eslint . --max-warnings=0
 
       - name: Typecheck
         run: pnpm run typecheck
 
       - name: Test
-        run: pnpm run test
+        run: pnpm run test:coverage
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: pnpm run test:e2e:critical
 
       - name: Build
         run: pnpm run build
@@ -154,6 +163,7 @@ jobs:
       - name: Detect Medusa changes
         id: medusa_changes
         shell: bash
+        working-directory: ${{ github.workspace }}
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
@@ -181,7 +191,11 @@ jobs:
 
       - name: Security Audit (Medusa)
         if: steps.medusa_changes.outputs.changed == 'true'
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=high
+
+      - name: Unit tests
+        if: steps.medusa_changes.outputs.changed == 'true'
+        run: npm run test:unit
 
       - name: Build
         if: steps.medusa_changes.outputs.changed == 'true'

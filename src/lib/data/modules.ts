@@ -11,7 +11,7 @@ import {
   type SystemModuleStateMap,
 } from "@/lib/module-flags";
 import { getDashboardAccessState } from "@/lib/auth";
-import { hasSupabaseServiceRole } from "@/lib/env";
+import { hasSupabaseSecretKey } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 import { createSupabaseAdminClient, createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -33,7 +33,7 @@ function isSystemModulesSchemaError(error: unknown) {
 }
 
 async function fetchSystemModules(): Promise<SystemModuleRecord[]> {
-  if (hasSupabaseServiceRole()) {
+  if (hasSupabaseSecretKey()) {
     const client = createSupabaseAdminClient();
     const { data, error } = await client
       .from("system_modules")
@@ -66,7 +66,7 @@ const getSystemModulesCached = cache(async function getSystemModulesCached() {
       return [];
     }
 
-    if (!hasSupabaseServiceRole()) {
+    if (!hasSupabaseSecretKey()) {
       return [];
     }
 
@@ -123,12 +123,17 @@ export async function assertModuleEnabledOrNotFound(
   name: SystemModuleName,
   accessState?: Awaited<ReturnType<typeof getDashboardAccessState>>,
 ) {
-  const [activeModules, resolvedAccessState] = await Promise.all([
-    getActiveModules(),
-    accessState ? Promise.resolve(accessState) : getDashboardAccessState(),
-  ]);
+  const activeModules = await getActiveModules();
 
-  if (activeModules[name] || canBypassDisabledModules(resolvedAccessState.accessMode)) {
+  // Public routes stay cacheable while their module is enabled. Session lookup
+  // reads cookies, so only resolve it for the disabled-module superadmin bypass.
+  if (activeModules[name]) {
+    return;
+  }
+
+  const resolvedAccessState = accessState ?? await getDashboardAccessState();
+
+  if (canBypassDisabledModules(resolvedAccessState.accessMode)) {
     return;
   }
 

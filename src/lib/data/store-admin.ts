@@ -5,7 +5,7 @@ import type { CommerceSource } from "@/lib/commerce/types";
 import type { StoreCategory, StoreDashboardProduct } from "@/lib/data/store";
 import {
   hasMedusaAdminEnv,
-  hasSupabaseServiceRole,
+  hasSupabaseSecretKey,
 } from "@/lib/env";
 
 interface StoreAdminSnapshot {
@@ -32,8 +32,8 @@ export function getStoreAdminWriteDisabledReason() {
     return "Configura MEDUSA_ADMIN_API_KEY y MEDUSA_BACKEND_URL (o NEXT_PUBLIC_MEDUSA_BACKEND_URL) para guardar cambios reales en Medusa.";
   }
 
-  if (!hasSupabaseServiceRole()) {
-    return "Configura SUPABASE_SERVICE_ROLE_KEY para persistir los enlaces Medusa-Supabase del dashboard.";
+  if (!hasSupabaseSecretKey()) {
+    return "Configura SUPABASE_SECRET_KEY para persistir los enlaces Medusa-Supabase del dashboard.";
   }
 
   return undefined;

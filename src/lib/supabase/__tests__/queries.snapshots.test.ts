@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const hasSupabasePublicEnvMock = vi.fn();
-const hasSupabaseServiceRoleMock = vi.fn();
+const hasSupabaseSecretKeyMock = vi.fn();
 const createSupabasePublicClientMock = vi.fn();
 const createSupabaseAdminClientMock = vi.fn();
 
@@ -10,7 +10,7 @@ vi.mock("@/lib/env", async () => {
   return {
     ...actual,
     hasSupabasePublicEnv: () => hasSupabasePublicEnvMock(),
-    hasSupabaseServiceRole: () => hasSupabaseServiceRoleMock(),
+    hasSupabaseSecretKey: () => hasSupabaseSecretKeyMock(),
   };
 });
 
@@ -68,14 +68,14 @@ describe("getDashboardSnapshot", () => {
   beforeEach(() => {
     vi.resetModules();
     hasSupabasePublicEnvMock.mockReset();
-    hasSupabaseServiceRoleMock.mockReset();
+    hasSupabaseSecretKeyMock.mockReset();
     createSupabasePublicClientMock.mockReset();
     createSupabaseAdminClientMock.mockReset();
   });
 
   it("blocks dashboard contacts instead of showing demo leads when service role is missing", async () => {
     hasSupabasePublicEnvMock.mockReturnValue(true);
-    hasSupabaseServiceRoleMock.mockReturnValue(false);
+    hasSupabaseSecretKeyMock.mockReturnValue(false);
 
     createSupabasePublicClientMock.mockReturnValue({
       from: (table: string) => {
@@ -99,7 +99,7 @@ describe("getDashboardSnapshot", () => {
     const snapshot = await getDashboardSnapshot();
 
     expect(snapshot.leads).toEqual([]);
-    expect(snapshot.warning).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(snapshot.warning).toContain("SUPABASE_SECRET_KEY");
     expect(snapshot.settings.site_name).toBe("Nuova Forza real");
   });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest";
-import { requireRoles, validateBody } from "../api-utils";
+import { requireRoles, validateBody, validateRequestOrigin } from "../api-utils";
 import { z } from "zod";
 import { DASHBOARD_ADMIN_ROLE } from "../user-roles";
 
@@ -159,6 +159,36 @@ describe("api-utils", () => {
           error: "Sesion local no permitida en produccion.",
         });
       }
+    });
+  });
+
+  describe("validateRequestOrigin", () => {
+    it("accepts a same-origin production mutation", () => {
+      setNodeEnv("production");
+      const request = new Request("https://gym.test/api/account", {
+        headers: {
+          host: "gym.test",
+          origin: "https://gym.test",
+        },
+        method: "POST",
+      });
+
+      expect(validateRequestOrigin(request)).toEqual({ success: true });
+    });
+
+    it("rejects cross-origin and spoofed X-Requested-With mutations", () => {
+      setNodeEnv("production");
+      const crossOrigin = new Request("https://gym.test/api/account", {
+        headers: { host: "gym.test", origin: "https://evil.test" },
+        method: "POST",
+      });
+      const missingOrigin = new Request("https://gym.test/api/account", {
+        headers: { host: "gym.test", "x-requested-with": "XMLHttpRequest" },
+        method: "POST",
+      });
+
+      expect(validateRequestOrigin(crossOrigin).success).toBe(false);
+      expect(validateRequestOrigin(missingOrigin).success).toBe(false);
     });
   });
 });

@@ -2,24 +2,24 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const envMocks = vi.hoisted(() => ({
   hasMedusaAdminEnv: vi.fn(),
-  hasSupabaseServiceRole: vi.fn(),
+  hasSupabaseSecretKey: vi.fn(),
 }));
 
 vi.mock("@/lib/env", () => ({
   hasMedusaAdminEnv: () => envMocks.hasMedusaAdminEnv(),
-  hasSupabaseServiceRole: () => envMocks.hasSupabaseServiceRole(),
+  hasSupabaseSecretKey: () => envMocks.hasSupabaseSecretKey(),
 }));
 
 describe("store admin runtime guards", () => {
   afterEach(() => {
     vi.resetModules();
     envMocks.hasMedusaAdminEnv.mockReset();
-    envMocks.hasSupabaseServiceRole.mockReset();
+    envMocks.hasSupabaseSecretKey.mockReset();
   });
 
   it("blocks writes when Medusa admin credentials are missing", async () => {
     envMocks.hasMedusaAdminEnv.mockReturnValue(false);
-    envMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    envMocks.hasSupabaseSecretKey.mockReturnValue(true);
 
     const mod = await import("@/lib/data/store-admin");
 
@@ -28,10 +28,10 @@ describe("store admin runtime guards", () => {
 
   it("blocks writes when the Supabase bridge cannot persist ids", async () => {
     envMocks.hasMedusaAdminEnv.mockReturnValue(true);
-    envMocks.hasSupabaseServiceRole.mockReturnValue(false);
+    envMocks.hasSupabaseSecretKey.mockReturnValue(false);
 
     const mod = await import("@/lib/data/store-admin");
 
-    expect(mod.getStoreAdminWriteDisabledReason()).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(mod.getStoreAdminWriteDisabledReason()).toContain("SUPABASE_SECRET_KEY");
   });
 });
