@@ -1,14 +1,14 @@
 import { expect, test } from "@playwright/test";
 
 import { getBaseUrl } from "./helpers/env";
-import { loginAsLocalAdmin } from "./helpers/auth";
+import { loginAsAdmin } from "./helpers/auth";
 
 const CSV_HEADER =
   "id,member_number,full_name,email,phone,status,branch_name,join_date,birth_date,gender,address,district_or_urbanization,occupation,preferred_schedule,external_code,profile_completed,notes,legacy_notes,training_plan_label,membership_plan_id,membership_qr_token,supabase_user_id,trainer_user_id,created_at,updated_at";
 
 test.describe("dashboard members smoke", () => {
   test.beforeEach(async ({ page }) => {
-    await loginAsLocalAdmin(page);
+    await loginAsAdmin(page);
   });
 
   test("keeps members filters in url and exports csv through authenticated request context", async ({
@@ -20,7 +20,7 @@ test.describe("dashboard members smoke", () => {
     await expect(page.getByText("Socios Registrados")).toBeVisible();
 
     await page.getByRole("searchbox").fill("Titan");
-    await page.getByRole("combobox").selectOption("active");
+    await page.locator('select[name="status"]').selectOption("active");
     await page.getByRole("button", { name: "Filtrar" }).click();
 
     await expect(page).toHaveURL(/\/dashboard\/miembros\?q=Titan&status=active/);

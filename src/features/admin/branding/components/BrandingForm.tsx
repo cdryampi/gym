@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, RotateCcw, Sparkles } from "lucide-react";
 import { useTransition } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 import { updateBrandingAction } from "@/app/(admin)/dashboard/actions";
@@ -34,8 +34,10 @@ export default function BrandingForm({ settings, disabledReason }: BrandingFormP
     defaultValues: toBrandingFormValues(settings),
   });
 
-  const gymName = form.watch("gym_name");
-  const primaryColor = form.watch("primary_color");
+  const [gymName, primaryColor] = useWatch({
+    control: form.control,
+    name: ["gym_name", "primary_color"],
+  });
 
   // Sync with provider for "live" preview in Sidebar during editing if desired, 
   // but let's stick to update on save for stability unless requested.

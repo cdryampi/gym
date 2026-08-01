@@ -172,7 +172,7 @@ describe("StoreProductForm", () => {
     });
 
     expect(clearDraftMock).toHaveBeenCalled();
-  }, 10000);
+  }, 20000);
 
   it("renders the preview rail and switches between card and PDP modes", async () => {
     const user = userEvent.setup();

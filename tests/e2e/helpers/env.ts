@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 export function getBaseUrl() {
-  return process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000";
+  return process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
 }
 
 export function getAdminCredentials() {

@@ -6,12 +6,16 @@ import {
 } from "@/lib/firebase/server";
 import { hasFirebaseAdminEnv } from "@/lib/env";
 import { SESSION_COOKIE_OPTIONS } from "@/lib/cookie-policy";
+import { validateRequestOrigin } from "@/lib/api-utils";
 
 function buildResponse() {
   return NextResponse.json({ success: true });
 }
 
 export async function POST(request: Request) {
+  const originCheck = validateRequestOrigin(request);
+  if (!originCheck.success) return originCheck.errorResponse;
+
   const response = buildResponse();
 
   if (!hasFirebaseAdminEnv()) {
@@ -47,7 +51,10 @@ export async function POST(request: Request) {
   return response;
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
+  const originCheck = validateRequestOrigin(request);
+  if (!originCheck.success) return originCheck.errorResponse;
+
   const response = buildResponse();
   response.cookies.set(FIREBASE_SESSION_COOKIE, "", {
     ...SESSION_COOKIE_OPTIONS,

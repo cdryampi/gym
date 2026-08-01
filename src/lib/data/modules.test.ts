@@ -137,6 +137,33 @@ describe("modules data service", () => {
     expect(modulesMocks.notFound).not.toHaveBeenCalled();
   });
 
+  it("does not read session state when a public module is enabled", async () => {
+    modulesMocks.hasSupabaseServiceRole.mockReturnValue(true);
+    modulesMocks.createSupabaseAdminClient.mockReturnValue({
+      from: vi.fn(() => ({
+        select: vi.fn(async () => ({
+          data: [
+            {
+              id: 1,
+              name: "tienda",
+              is_enabled: true,
+              description: "Store",
+              updated_at: "2026-04-22T00:00:00.000Z",
+            },
+          ],
+          error: null,
+        })),
+      })),
+    });
+
+    const { assertModuleEnabledOrNotFound } = await importModulesData();
+
+    await assertModuleEnabledOrNotFound("tienda");
+
+    expect(modulesMocks.getDashboardAccessState).not.toHaveBeenCalled();
+    expect(modulesMocks.notFound).not.toHaveBeenCalled();
+  });
+
   it("calls notFound for disabled modules when access is not superadmin", async () => {
     modulesMocks.hasSupabaseServiceRole.mockReturnValue(true);
     modulesMocks.createSupabaseAdminClient.mockReturnValue({

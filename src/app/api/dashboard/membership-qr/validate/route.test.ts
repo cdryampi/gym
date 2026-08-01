@@ -93,7 +93,11 @@ describe("POST /api/dashboard/membership-qr/validate", () => {
     } as unknown as Response);
 
     const response = await POST(
-      new Request("http://localhost", { method: "POST", body: JSON.stringify({ scannedValue: "token" }) })
+      new Request("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ scannedValue: "token" }),
+        headers: { host: "localhost", origin: "http://localhost" },
+      })
     );
     expect(response.status).toBe(200);
   });
@@ -105,7 +109,11 @@ describe("POST /api/dashboard/membership-qr/validate", () => {
     mocks.parseMembershipQrScanToken.mockImplementation(() => { throw new Error("Fallback failed"); });
 
     const response = await POST(
-      new Request("http://localhost", { method: "POST", body: JSON.stringify({ scannedValue: "token" }) })
+      new Request("http://localhost", {
+        method: "POST",
+        body: JSON.stringify({ scannedValue: "token" }),
+        headers: { host: "localhost", origin: "http://localhost" },
+      })
     );
 
     expect(response.status).toBe(503);

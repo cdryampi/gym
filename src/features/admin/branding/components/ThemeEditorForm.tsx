@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RotateCcw, Palette, Info, FileCode } from "lucide-react";
 import { useTransition, useEffect } from "react";
-import { useForm, useFormContext, type Path } from "react-hook-form";
+import { useForm, useFormContext, useWatch, type Path } from "react-hook-form";
 import { toast } from "sonner";
 
 import { updateThemeAction } from "@/app/(admin)/dashboard/actions";
@@ -28,13 +28,13 @@ export default function ThemeEditorForm({ initialConfig, isReadOnly }: ThemeEdit
     defaultValues: initialConfig,
   });
 
-  const currentValues = form.watch();
+  const currentValues = useWatch({ control: form.control });
 
   useEffect(() => {
     const root = document.documentElement;
     if (currentValues.colors) {
-      root.style.setProperty("--brand-primary", currentValues.colors.primary);
-      root.style.setProperty("--surface-background", currentValues.colors.background);
+      root.style.setProperty("--brand-primary", currentValues.colors.primary ?? null);
+      root.style.setProperty("--surface-background", currentValues.colors.background ?? null);
     }
     
     let styleTag = document.getElementById("dynamic-theme-preview");

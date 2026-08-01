@@ -39,6 +39,17 @@ export async function loginAsLocalAdmin(page: Page) {
   ]);
 }
 
+export async function loginAsAdmin(page: Page) {
+  const baseUrl = new URL(getBaseUrl());
+  const isLocal = baseUrl.hostname === "localhost" || baseUrl.hostname === "127.0.0.1";
+
+  if (isLocal) {
+    return loginAsLocalAdmin(page);
+  }
+
+  return loginViaUi(page);
+}
+
 export async function overrideDashboardRole(page: Page, role: TestDashboardRole) {
   const response = await page.context().request.post(`${getBaseUrl()}/api/dev-role`, {
     data: { role },
@@ -57,12 +68,12 @@ export async function loginViaUi(page: Page) {
   const { identity, password } = getAdminCredentials();
 
   await page.goto("/login");
-  await expect(page.getByRole("heading", { name: "Acceso al backoffice" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Bienvenido de nuevo" })).toBeVisible();
 
   await page.getByLabel("Email o usuario").fill(identity);
-  await page.getByPlaceholder("********").fill(password);
-  await page.getByRole("button", { name: "Entrar" }).click();
+  await page.getByLabel("Contrasena").fill(password);
+  await page.getByRole("button", { name: "Iniciar Sesion" }).click();
 
   await page.waitForURL("**/dashboard");
-  await expect(page.getByRole("heading", { name: "Resumen" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "COMMAND CENTER" })).toBeVisible();
 }

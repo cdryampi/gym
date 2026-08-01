@@ -83,6 +83,8 @@ jobs:
       SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
       SMTP_FROM_EMAIL: ${{ secrets.SMTP_FROM_EMAIL }}
       ADMIN_ALLOWED_EMAILS: ${{ vars.ADMIN_ALLOWED_EMAILS }}
+      ADMIN_USER: ${{ secrets.ADMIN_USER }}
+      ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -105,13 +107,19 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint
-        run: pnpm run lint
+        run: pnpm run lint -- --max-warnings=0
 
       - name: Typecheck
         run: pnpm run typecheck
 
       - name: Test
-        run: pnpm run test
+        run: pnpm run test:coverage
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: pnpm run test:e2e:critical
 
       - name: Build
         run: pnpm run build
@@ -181,7 +189,11 @@ jobs:
 
       - name: Security Audit (Medusa)
         if: steps.medusa_changes.outputs.changed == 'true'
-        run: npm audit --audit-level=critical
+        run: npm audit --audit-level=high
+
+      - name: Unit tests
+        if: steps.medusa_changes.outputs.changed == 'true'
+        run: npm run test:unit
 
       - name: Build
         if: steps.medusa_changes.outputs.changed == 'true'

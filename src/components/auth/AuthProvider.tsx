@@ -104,6 +104,7 @@ export default function AuthProvider({
                     alt="Nova Forza Gym"
                     fill
                     className="object-contain"
+                    sizes="96px"
                     priority
                   />
                 </motion.div>

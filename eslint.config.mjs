@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     "apps/medusa/src/scripts/**",
     "out/**",
     "build/**",
+    "coverage/**",
     "output/**",
     "playwright-report/**",
     "test-results/**",

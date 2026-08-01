@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, MessageSquareQuote, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,7 +82,8 @@ export default function MemberTestimonialForm({
     },
   });
 
-  const rating = form.watch("rating") ?? 5;
+  const rating = useWatch({ control: form.control, name: "rating" }) ?? 5;
+  const quote = useWatch({ control: form.control, name: "quote" }) ?? "";
 
   const moderationCopy = useMemo(() => {
     if (!currentTestimonial) {
@@ -293,7 +294,7 @@ export default function MemberTestimonialForm({
             </p>
 
             <p className="border-l-2 border-[#d71920] pl-4 text-sm leading-7 text-white/75">
-              &ldquo;{form.watch("quote") || "Tu comentario publicado aparecera aqui cuando lo guardes."}
+              &ldquo;{quote || "Tu comentario publicado aparecera aqui cuando lo guardes."}
               &rdquo;
             </p>
 

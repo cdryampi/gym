@@ -123,12 +123,17 @@ export async function assertModuleEnabledOrNotFound(
   name: SystemModuleName,
   accessState?: Awaited<ReturnType<typeof getDashboardAccessState>>,
 ) {
-  const [activeModules, resolvedAccessState] = await Promise.all([
-    getActiveModules(),
-    accessState ? Promise.resolve(accessState) : getDashboardAccessState(),
-  ]);
+  const activeModules = await getActiveModules();
 
-  if (activeModules[name] || canBypassDisabledModules(resolvedAccessState.accessMode)) {
+  // Public routes stay cacheable while their module is enabled. Session lookup
+  // reads cookies, so only resolve it for the disabled-module superadmin bypass.
+  if (activeModules[name]) {
+    return;
+  }
+
+  const resolvedAccessState = accessState ?? await getDashboardAccessState();
+
+  if (canBypassDisabledModules(resolvedAccessState.accessMode)) {
     return;
   }
 

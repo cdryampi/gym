@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+.codegraph/
 .playwright-cli/
 /playwright-report/
 /test-results/

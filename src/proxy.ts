@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { getServerSupabaseEnv, hasSupabaseServiceRole, hasLocalAdminEnv } from "@/lib/env";
 import type { Database } from "@/lib/supabase/database.types";
 import { verifyFirebaseSessionToken } from "@/lib/firebase/server";
+import { buildNonceContentSecurityPolicy } from "@/lib/security/csp";
 import { SUPERADMIN_ROLE } from "@/lib/user-roles";
 
 const ADMIN_ROUTES = ["/dashboard"];
@@ -12,6 +13,16 @@ const LOGIN_PATH = "/login";
 const GATED_404_PATH = "/_gated-404";
 const FIREBASE_SESSION_COOKIE = "gym_firebase_session";
 const LOCAL_ADMIN_COOKIE = "gym_admin_session";
+const NONCE_PROTECTED_ROUTE_PREFIXES = [
+  "/acceso",
+  "/actualizar-contrasena",
+  "/carrito",
+  "/dashboard",
+  "/login",
+  "/mi-cuenta",
+  "/recuperar-contrasena",
+  "/registro",
+] as const;
 
 const MODULE_ROUTE_PREFIXES = {
   tienda: ["/dashboard/tienda", "/tienda", "/carrito"],
@@ -27,6 +38,12 @@ type ModuleName = keyof typeof MODULE_ROUTE_PREFIXES;
 function isAdminRoute(pathname: string) {
   return ADMIN_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
+function needsNoncePolicy(pathname: string) {
+  return NONCE_PROTECTED_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
@@ -139,7 +156,31 @@ async function isSuperadminRequest(userId: string | null) {
 }
 
 export async function proxy(request: NextRequest) {
-  const response = NextResponse.next({ request });
+  const requestHeaders = new Headers(request.headers);
+  const nonce = needsNoncePolicy(request.nextUrl.pathname)
+    ? Buffer.from(crypto.randomUUID()).toString("base64")
+    : null;
+  const noncePolicy = nonce
+    ? buildNonceContentSecurityPolicy(nonce, process.env.NODE_ENV !== "production")
+    : null;
+
+  if (nonce && noncePolicy) {
+    requestHeaders.set("x-nonce", nonce);
+    requestHeaders.set("Content-Security-Policy", noncePolicy);
+  }
+
+  const finalizeResponse = (response: NextResponse) => {
+    if (noncePolicy) {
+      response.headers.set("Content-Security-Policy", noncePolicy);
+    }
+    return response;
+  };
+
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
   const firebaseSession = request.cookies.get(FIREBASE_SESSION_COOKIE)?.value;
   const firebaseUserId = await verifyFirebaseUserId(firebaseSession ?? null);
   const hasFirebaseSession = Boolean(firebaseUserId);
@@ -155,7 +196,7 @@ export async function proxy(request: NextRequest) {
         const loginUrl = new URL(LOGIN_PATH, request.url);
         loginUrl.searchParams.set("next", request.nextUrl.pathname);
         loginUrl.searchParams.set("error", "admin-only");
-        return NextResponse.redirect(loginUrl);
+        return finalizeResponse(NextResponse.redirect(loginUrl));
       }
     }
   }
@@ -163,7 +204,7 @@ export async function proxy(request: NextRequest) {
   const moduleName = getModuleNameForPathname(request.nextUrl.pathname);
 
   if (!moduleName) {
-    return response;
+    return finalizeResponse(response);
   }
 
   const [isEnabled, isSuperadmin] = await Promise.all([
@@ -172,12 +213,22 @@ export async function proxy(request: NextRequest) {
   ]);
 
   if (!isEnabled && !isSuperadmin) {
-    return NextResponse.rewrite(new URL(GATED_404_PATH, request.url));
+    return finalizeResponse(NextResponse.rewrite(new URL(GATED_404_PATH, request.url)));
   }
 
-  return response;
+  return finalizeResponse(response);
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/tienda/:path*", "/tienda", "/carrito/:path*", "/carrito"],
+  matcher: [
+    "/acceso/:path*",
+    "/actualizar-contrasena/:path*",
+    "/carrito/:path*",
+    "/dashboard/:path*",
+    "/login/:path*",
+    "/mi-cuenta/:path*",
+    "/recuperar-contrasena/:path*",
+    "/registro/:path*",
+    "/tienda/:path*",
+  ],
 };

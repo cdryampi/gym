@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 
+import { buildStaticContentSecurityPolicy } from "./src/lib/security/csp";
+
 function buildMedusaRemotePatterns() {
   const configuredUrl =
     process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL ?? process.env.MEDUSA_BACKEND_URL;
@@ -27,21 +29,7 @@ function buildMedusaRemotePatterns() {
 const nextConfig: NextConfig = {
   output: process.env.VERCEL ? undefined : "standalone",
   async headers() {
-    const cspHeader = `
-      default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.paypal.com https://www.gstatic.com https://apis.google.com https://*.firebaseapp.com;
-      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-      img-src 'self' blob: data: https://*.supabase.co https://*.supabase.in https://*.paypal.com https://*.paypalobjects.com https://*.googleusercontent.com https://medusa-public-images.s3.eu-west-1.amazonaws.com https://*.gstatic.com;
-      media-src 'self' https://*.supabase.co https://*.supabase.in;
-      font-src 'self' https://fonts.gstatic.com;
-      object-src 'none';
-      base-uri 'self';
-      form-action 'self';
-      frame-ancestors 'none';
-      frame-src https://www.paypal.com https://*.firebaseapp.com;
-      connect-src 'self' https://*.supabase.co https://*.supabase.in https://*.googleapis.com https://*.paypal.com https://*.firebaseio.com https://*.googleapis.com;
-      upgrade-insecure-requests;
-    `.replace(/\s{2,}/g, " ").trim();
+    const cspHeader = buildStaticContentSecurityPolicy(process.env.NODE_ENV !== "production");
 
     const securityHeaders = [
       {

@@ -224,20 +224,14 @@ export function getClientIp(request: Request) {
 export function validateRequestOrigin(
   request: Request,
 ): { success: true } | { success: false; errorResponse: NextResponse } {
-  if (process.env.NODE_ENV === "development") return { success: true };
+  // Los runners y el servidor local no tienen un proxy de confianza que
+  // garantice estas cabeceras. El control estricto es un gate de produccion.
+  if (process.env.NODE_ENV !== "production") return { success: true };
 
   const origin = request.headers.get("origin");
   const host = request.headers.get("host");
 
   if (!origin || !host) {
-    // Si no hay origin (ej. peticion directa o bot basico), 
-    // verificamos que sea una peticion que no dependa de cookies (ej. webhook con firma)
-    // Para rutas que si dependen de cookies, requerimos X-Requested-With
-    const requestedWith = request.headers.get("x-requested-with");
-    if (requestedWith === "XMLHttpRequest") {
-      return { success: true };
-    }
-    
     return { 
       success: false,
       errorResponse: NextResponse.json({ error: "Falta cabecera de origen o validacion CSRF." }, { status: 403 }) 
