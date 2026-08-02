@@ -82,10 +82,13 @@ export default function ProductToolbar({
           <div className="relative group/search">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/60 group-focus-within/search:text-[#d71920] transition-colors" />
             <input
+              id="catalog-search"
+              name="q"
               type="search"
               value={localQuery}
               onChange={(e) => setLocalQuery(e.target.value)}
               placeholder="Buscar productos, marcas o categorías..."
+              autoComplete="off"
               className="h-14 w-full border border-white/10 bg-white/5 pl-12 pr-6 text-sm text-white outline-none transition-all focus:border-white/20 focus:bg-white/10 placeholder:text-white/60"
             />
           </div>

@@ -72,6 +72,7 @@ export default function HeroPhoneMedia({
         sizes="(min-width: 1024px) 360px, (min-width: 640px) 320px, 280px"
         quality={58}
         priority
+        fetchPriority="high"
       />
       {shouldRenderVideo ? (
         <video
